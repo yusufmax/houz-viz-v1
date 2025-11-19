@@ -34,10 +34,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, [])
 
     const signInWithGoogle = async () => {
+        // Use production URL if available, fallback to current origin
+        const redirectUrl = window.location.hostname === 'localhost'
+            ? `${window.location.origin}/`
+            : `${window.location.origin}/`;
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/`
+                redirectTo: redirectUrl
             }
         })
         if (error) throw error

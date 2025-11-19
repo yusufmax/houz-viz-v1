@@ -13,6 +13,8 @@ import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, 
 import { generateImage, editImage, enhancePrompt, upscaleImage } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useLanguage } from '../LanguageContext';
+import { useAuth } from '../contexts/AuthProvider';
+import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 
 const STYLE_LIBRARY = [
   // Living Complex / House
@@ -50,6 +52,7 @@ const GuideTooltip = ({ text, className, side = 'left' }: { text: string, classN
 
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -60,31 +63,46 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // History
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Which image is being edited in DrawEditor
+  // Reference Images: Use custom or fallback to defaults
+  const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
+  const styleLibrary = customReferenceImages.length > 0
+    ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
+    : STYLE_LIBRARY;
+
+  // Drawing
   const [drawingTarget, setDrawingTarget] = useState<'source' | 'result' | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  // Settings
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState<RenderStyle>(RenderStyle.None);
-  const [atmosphere, setAtmosphere] = useState<Atmosphere[]>([Atmosphere.None]);
+  const [atmosphere, setAtmosphere] = useState<Atmosphere[]>([]);
   const [camera, setCamera] = useState<CameraAngle>(CameraAngle.Default);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('Original');
-
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [sceneElements, setSceneElements] = useState<SceneElements>({
     people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
   });
 
-  // Load History
+  // Fullscreen
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+
+  // Load history and custom reference images on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('arch_genius_history');
-      if (saved) setHistory(JSON.parse(saved));
-    } catch (e) {
-      console.warn("Failed to load history", e);
+    const saved = localStorage.getItem('arch_genius_history');
+    if (saved) {
+      try { setHistory(JSON.parse(saved)); } catch (e) { }
     }
-  }, []);
+
+    // Fetch user's custom reference images
+    if (user) {
+      fetchUserReferenceImages(user.id).then(refs => {
+        setCustomReferenceImages(refs);
+      }).catch(err => {
+        console.error('Failed to load custom reference images:', err);
+      });
+    }
+  }, [user]);
 
   const saveToHistory = (url: string, usedPrompt: string) => {
     const newItem: HistoryItem = {
@@ -443,7 +461,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               />
               {/* Style Library Grid */}
               <div className="grid grid-cols-5 gap-1 mt-2">
-                {STYLE_LIBRARY.map((style, idx) => (
+                {styleLibrary.map((style, idx) => (
                   <button
                     key={idx}
                     onClick={() => convertUrlToBase64(style.url)}
