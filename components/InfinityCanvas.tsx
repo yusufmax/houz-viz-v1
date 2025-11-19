@@ -1116,7 +1116,12 @@ const InfinityCanvas: React.FC = () => {
 
                                     {/* Processor Controls */}
                                     {isProcessor && node.data.settings && (
-                                        <div className="flex flex-col gap-3 flex-none">
+                                        <div
+                                            className="space-y-2 overflow-y-auto custom-scrollbar"
+                                            style={{
+                                                maxHeight: node.height ? `${node.height - 100}px` : '500px'
+                                            }}
+                                        >
                                             <textarea
                                                 className="w-full h-16 bg-slate-950 border border-slate-800 rounded p-2 text-[10px] text-slate-300 resize-none focus:border-indigo-500 outline-none"
                                                 placeholder={t('nodePrompt')}
