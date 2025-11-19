@@ -87,6 +87,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
 
+  // Ref for file input
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Load history and custom reference images on mount
   useEffect(() => {
     const saved = localStorage.getItem('arch_genius_history');
