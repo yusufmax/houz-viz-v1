@@ -9,7 +9,7 @@ interface Project {
     name: string;
     description: string;
     updated_at: string;
-    data: any;
+    user_id: string;
 }
 
 const ProfilePage: React.FC = () => {
@@ -26,9 +26,10 @@ const ProfilePage: React.FC = () => {
 
     const fetchProjects = async () => {
         try {
+            // Only fetch metadata, not the full 'data' field which contains all images
             const { data, error } = await supabase
                 .from('projects')
-                .select('*')
+                .select('id, name, description, updated_at, user_id')
                 .order('updated_at', { ascending: false });
 
             if (error) throw error;
