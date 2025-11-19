@@ -3,7 +3,7 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import { GenerationSettings, RenderStyle, Atmosphere, CameraAngle } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
 
 /**
  * Helper to extract MIME type and base64 data from a Data URL
