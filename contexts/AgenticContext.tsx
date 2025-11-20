@@ -4,7 +4,7 @@ import { RealtimeClient } from '../services/realtimeClient';
 interface AgenticContextType {
     isActive: boolean;
     toggleAgenticMode: () => void;
-    status: 'connected' | 'disconnected' | 'connecting';
+    status: 'connected' | 'disconnected' | 'connecting' | 'reconnecting';
     isListening: boolean; // Kept for compatibility, maps to connected
     isProcessing: boolean; // Kept for compatibility
     isSpeaking: boolean; // Kept for compatibility
@@ -18,7 +18,7 @@ const AgenticContext = createContext<AgenticContextType | undefined>(undefined);
 
 export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [isActive, setIsActive] = useState(false);
-    const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting'>('disconnected');
+    const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'reconnecting'>('disconnected');
     const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
     const [lastAgentMessage, setLastAgentMessage] = useState<string | null>(null);
 
@@ -75,7 +75,7 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
             toggleAgenticMode,
             status,
             isListening: status === 'connected',
-            isProcessing: status === 'connecting',
+            isProcessing: status === 'connecting' || status === 'reconnecting',
             isSpeaking: false, // Realtime handles audio playback internally
             lastUserMessage,
             lastAgentMessage,

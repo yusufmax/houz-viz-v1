@@ -7,13 +7,18 @@ const URI = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeSer
 export interface RealtimeClientCallbacks {
     onText: (text: string) => void;
     onToolCall: (toolCall: any) => void;
-    onStatusChange: (status: 'connected' | 'disconnected' | 'connecting') => void;
+    onStatusChange: (status: 'connected' | 'disconnected' | 'connecting' | 'reconnecting') => void;
 }
 
 export class RealtimeClient {
     private ws: WebSocket | null = null;
     private audioManager: AudioManager;
     private callbacks: RealtimeClientCallbacks;
+    private reconnectAttempts = 0;
+    private maxReconnectAttempts = 3;
+    private reconnectDelay = 1000; // Start with 1 second
+    private keepAliveInterval: number | null = null;
+    private isManualDisconnect = false;
 
     constructor(callbacks: RealtimeClientCallbacks) {
         this.callbacks = callbacks;
@@ -28,15 +33,19 @@ export class RealtimeClient {
             return;
         }
 
-        this.callbacks.onStatusChange('connecting');
+        this.isManualDisconnect = false;
+        this.callbacks.onStatusChange(this.reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
         const url = `${URI}?key=${API_KEY}`;
         this.ws = new WebSocket(url);
 
         this.ws.onopen = () => {
-            console.log("Connected to Gemini Realtime");
+            console.log("✅ Connected to Gemini Realtime");
+            this.reconnectAttempts = 0; // Reset on successful connection
+            this.reconnectDelay = 1000;
             this.callbacks.onStatusChange('connected');
             this.sendSetupMessage();
             this.audioManager.startRecording();
+            this.startKeepAlive();
         };
 
         this.ws.onmessage = async (event) => {
@@ -54,23 +63,78 @@ export class RealtimeClient {
         };
 
         this.ws.onclose = (event) => {
-            console.log("Disconnected from Gemini Realtime", event.code, event.reason);
-            this.callbacks.onStatusChange('disconnected');
+            console.log(`🔌 Disconnected from Gemini Realtime [Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}]`);
+            this.stopKeepAlive();
             this.audioManager.stopRecording();
+
+            // Don't reconnect if it was a manual disconnect
+            if (!this.isManualDisconnect) {
+                this.handleReconnect(event.code);
+            } else {
+                this.callbacks.onStatusChange('disconnected');
+            }
         };
 
         this.ws.onerror = (error) => {
-            console.error("WebSocket Error:", error);
-            this.callbacks.onStatusChange('disconnected');
+            console.error("❌ WebSocket Error:", error);
+            // onclose will be called after onerror, so we handle reconnection there
         };
     }
 
     disconnect() {
+        this.isManualDisconnect = true;
+        this.reconnectAttempts = 0;
+        this.stopKeepAlive();
         if (this.ws) {
-            this.ws.close();
+            this.ws.close(1000, "Manual disconnect"); // 1000 = normal closure
             this.ws = null;
         }
         this.audioManager.stopRecording();
+        this.callbacks.onStatusChange('disconnected');
+    }
+
+    private handleReconnect(closeCode: number) {
+        // Don't reconnect on certain close codes (e.g., authentication failure)
+        if (closeCode === 1008 || closeCode === 1003) {
+            console.error("🚫 Cannot reconnect: Authentication or protocol error");
+            this.callbacks.onStatusChange('disconnected');
+            return;
+        }
+
+        if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.reconnectAttempts++;
+            const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1); // Exponential backoff
+            console.log(`🔄 Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+
+            setTimeout(() => {
+                if (!this.isManualDisconnect) {
+                    this.connect();
+                }
+            }, delay);
+        } else {
+            console.error("❌ Max reconnection attempts reached. Please reconnect manually.");
+            this.callbacks.onStatusChange('disconnected');
+        }
+    }
+
+    private startKeepAlive() {
+        this.stopKeepAlive(); // Clear any existing interval
+
+        // Send a ping every 30 seconds to keep connection alive
+        this.keepAliveInterval = window.setInterval(() => {
+            if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+                // Send an empty client_content as a keep-alive
+                this.send({ client_content: {} });
+                console.log("💓 Keep-alive ping sent");
+            }
+        }, 30000);
+    }
+
+    private stopKeepAlive() {
+        if (this.keepAliveInterval !== null) {
+            clearInterval(this.keepAliveInterval);
+            this.keepAliveInterval = null;
+        }
     }
 
     private sendSetupMessage() {
@@ -93,6 +157,12 @@ export class RealtimeClient {
     }
 
     private sendAudio(base64PCM: string) {
+        // Check buffer before sending to prevent overflow
+        if (this.ws && this.ws.bufferedAmount > 1024 * 1024) { // 1MB threshold
+            console.warn("⚠️ WebSocket buffer full, skipping audio chunk");
+            return;
+        }
+
         const msg = {
             realtime_input: {
                 media_chunks: [
@@ -123,7 +193,13 @@ export class RealtimeClient {
 
     private send(data: any) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify(data));
+            try {
+                this.ws.send(JSON.stringify(data));
+            } catch (e) {
+                console.error("Failed to send message:", e);
+            }
+        } else {
+            console.warn("⚠️ Cannot send message: WebSocket not open (state:", this.ws?.readyState, ")");
         }
     }
 

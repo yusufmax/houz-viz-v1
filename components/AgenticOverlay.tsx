@@ -37,7 +37,7 @@ const AgenticOverlay: React.FC = () => {
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4">
 
             {/* Chat Bubble Area */}
-            {(lastUserMessage || lastAgentMessage || status === 'connecting') && expanded && (
+            {(lastUserMessage || lastAgentMessage || status === 'connecting' || status === 'reconnecting') && expanded && (
                 <div className="bg-slate-900/90 backdrop-blur border border-slate-700 rounded-2xl p-4 w-80 shadow-2xl mb-2 flex flex-col gap-3">
                     {lastUserMessage && (
                         <div className="self-end bg-indigo-600/20 text-indigo-100 px-3 py-2 rounded-xl rounded-tr-none text-sm">
@@ -54,14 +54,19 @@ const AgenticOverlay: React.FC = () => {
                             <Activity size={12} /> Connecting to Gemini Live...
                         </div>
                     )}
+                    {status === 'reconnecting' && (
+                        <div className="self-start text-yellow-400 text-xs animate-pulse flex items-center gap-1">
+                            <Activity size={12} /> Reconnecting...
+                        </div>
+                    )}
                 </div>
             )}
 
             {/* Main Orb / Controller */}
-            <div className={`bg-slate-900 border border-slate-700 rounded-full p-2 flex items-center gap-2 shadow-xl transition-all duration-300 ${status === 'connected' ? 'ring-2 ring-green-500/50' : ''} ${status === 'connecting' ? 'ring-2 ring-yellow-500/50' : ''}`}>
+            <div className={`bg-slate-900 border border-slate-700 rounded-full p-2 flex items-center gap-2 shadow-xl transition-all duration-300 ${status === 'connected' ? 'ring-2 ring-green-500/50' : ''} ${status === 'connecting' ? 'ring-2 ring-yellow-500/50' : ''} ${status === 'reconnecting' ? 'ring-2 ring-orange-500/50 animate-pulse' : ''}`}>
 
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center relative overflow-hidden">
-                    {status === 'connecting' ? (
+                    {status === 'connecting' || status === 'reconnecting' ? (
                         <div className="absolute inset-0 bg-white/20 animate-spin-slow" style={{ borderRadius: '40%' }}></div>
                     ) : null}
                     {status === 'connected' ? (
