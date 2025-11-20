@@ -38,8 +38,19 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
             onToolCall: (toolCall) => {
                 console.log("🔧 Tool Call:", toolCall);
                 // Execute tool if executor is set
-                if (toolExecutorRef.current && toolCall.name && toolCall.args) {
-                    toolExecutorRef.current(toolCall.name, toolCall.args);
+                if (toolExecutorRef.current) {
+                    // Handle both formats: direct call or functionCalls array
+                    if (toolCall.functionCalls && Array.isArray(toolCall.functionCalls)) {
+                        // Array format from Gemini API
+                        toolCall.functionCalls.forEach((fc: any) => {
+                            if (fc.name && fc.args && toolExecutorRef.current) {
+                                toolExecutorRef.current(fc.name, fc.args);
+                            }
+                        });
+                    } else if (toolCall.name && toolCall.args) {
+                        // Direct format
+                        toolExecutorRef.current(toolCall.name, toolCall.args);
+                    }
                 }
             },
             onStatusChange: (newStatus) => {
