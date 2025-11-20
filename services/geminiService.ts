@@ -139,9 +139,7 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
           aspectRatio: settings.aspectRatio && settings.aspectRatio !== 'Original' ? settings.aspectRatio : '16:9',
-          imageSize: settings.resolution || '4K',
-          // @ts-ignore - Trying snake_case as fallback
-          image_size: settings.resolution || '4K'
+          imageSize: '4K'
         }
       };
 
@@ -247,9 +245,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
           aspectRatio: settings.aspectRatio !== 'Original' ? settings.aspectRatio : '16:9', // Default if original
-          imageSize: settings.resolution || '4K',
-          // @ts-ignore - Trying snake_case as fallback
-          image_size: settings.resolution || '4K'
+          imageSize: '4K'
         }
       };
 
