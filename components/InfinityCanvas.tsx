@@ -19,6 +19,23 @@ import { upscaleImageReplicate } from '../services/replicateService';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
 import { useSearchParams } from 'react-router-dom';
+import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
+
+const STYLE_LIBRARY = [
+    // Living Complex / House
+    { name: 'Modern Villa', url: 'https://images.unsplash.com/photo-1600596542815-3ad196bb8700?w=200&q=80' },
+    { name: 'Luxury Apt', url: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=200&q=80' },
+    { name: 'Townhouse', url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&q=80' },
+    // Commercial
+    { name: 'Office Tower', url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80' },
+    { name: 'Retail Store', url: 'https://images.unsplash.com/photo-1564069114553-7215e1ff1890?w=200&q=80' },
+    { name: 'Museum', url: 'https://images.unsplash.com/photo-1503594384566-461fe158e797?w=200&q=80' },
+    // Cultural Styles
+    { name: 'Pan Arabic', url: 'https://images.unsplash.com/photo-1544211210-082b71d0630c?w=200&q=80' },
+    { name: 'Asian Zen', url: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=200&q=80' },
+    { name: 'Mediterranean', url: 'https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=200&q=80' },
+    { name: 'Brutalist', url: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?w=200&q=80' }
+];
 
 const InfinityCanvas: React.FC = () => {
     const { t } = useLanguage();
@@ -91,6 +108,9 @@ const InfinityCanvas: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const projectId = searchParams.get('projectId');
 
+    // Reference Images
+    const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
+
     // ---- Initialization & Autosave ----
     useEffect(() => {
         const loadProject = async () => {
@@ -160,11 +180,20 @@ const InfinityCanvas: React.FC = () => {
             // Load history
             const savedHistory = localStorage.getItem('arch_genius_history');
             if (savedHistory) setHistory(JSON.parse(savedHistory));
+
+            // Fetch user's custom reference images
+            if (user) {
+                fetchUserReferenceImages(user.id).then(refs => {
+                    setCustomReferenceImages(refs);
+                }).catch(err => {
+                    console.error('Failed to load custom reference images:', err);
+                });
+            }
         };
 
         loadProject();
 
-    }, [projectId]);
+    }, [projectId, user]);
 
     // Autosave effect (Disabled to prevent Quota Exceeded errors with large images)
     // TODO: Implement Supabase Autosave
@@ -1132,6 +1161,40 @@ const InfinityCanvas: React.FC = () => {
                                                 }}
                                                 onMouseDown={(e) => e.stopPropagation()}
                                             />
+
+                                            {/* Reference Image Selector */}
+                                            <div className="space-y-1">
+                                                <label className="text-[9px] text-slate-500 font-bold uppercase block">Style Reference (Optional)</label>
+                                                <div className="grid grid-cols-5 gap-1">
+                                                    {(customReferenceImages.length > 0
+                                                        ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
+                                                        : STYLE_LIBRARY
+                                                    ).map((styleRef, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const isSelected = node.data.settings?.styleReferenceImage === styleRef.url;
+                                                                setNodes(prev => prev.map(n =>
+                                                                    n.id === node.id
+                                                                        ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : styleRef.url } } }
+                                                                        : n
+                                                                ));
+                                                            }}
+                                                            className={`relative aspect-square rounded overflow-hidden border ${node.data.settings?.styleReferenceImage === styleRef.url
+                                                                ? 'border-indigo-500 ring-2 ring-indigo-500/50'
+                                                                : 'border-slate-700 hover:border-indigo-500'
+                                                                } group transition-all`}
+                                                            title={styleRef.name}
+                                                        >
+                                                            <img src={styleRef.url} alt={styleRef.name} className="w-full h-full object-cover" />
+                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[7px] text-center text-white p-0.5 transition-opacity">
+                                                                {styleRef.name}
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
 
                                             {/* Aspect Ratio & Camera */}
                                             <div className="space-y-2">
