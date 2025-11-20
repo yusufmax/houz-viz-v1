@@ -783,20 +783,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     try {
                       const response = await fetch(resultImage);
                       const blob = await response.blob();
-                      const imageBitmap = await createImageBitmap(blob);
-                      const canvas = document.createElement('canvas');
-                      canvas.width = imageBitmap.width;
-                      canvas.height = imageBitmap.height;
-                      const ctx = canvas.getContext('2d');
-                      ctx?.drawImage(imageBitmap, 0, 0);
-                      const pngUrl = canvas.toDataURL('image/png');
-
+                      const url = window.URL.createObjectURL(blob);
                       const link = document.createElement('a');
-                      link.href = pngUrl;
+                      link.href = url;
                       link.download = `arch-render-${Date.now()}.png`;
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);
+                      window.URL.revokeObjectURL(url);
                     } catch (err: any) {
                       console.error("Download failed", err);
                       alert(`Download failed: ${err.message}`);
