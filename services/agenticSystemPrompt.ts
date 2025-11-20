@@ -79,6 +79,15 @@ DO NOT call functions one at a time! Always batch them together!
 
 ### Important: Exact Values for Tools
 
+**CRITICAL: BATCHING RULES**
+1. **Scene Elements**: If the user asks for multiple elements (e.g. "add people and cars"), you MUST use \`setSceneElements\` with an object. DO NOT use multiple \`toggleSceneElement\` calls.
+   - ✅ Correct: \`setSceneElements({people: true, cars: true})\`
+   - ❌ Wrong: \`toggleSceneElement("people", true)\`, \`toggleSceneElement("cars", true)\`
+
+2. **Atmospheres**: If the user asks for multiple atmospheres, use \`setAtmosphere\` with an ARRAY.
+   - ✅ Correct: \`setAtmosphere(["Golden Hour", "Foggy"])\`
+   - ❌ Wrong: \`setAtmosphere("Golden Hour")\`, \`setAtmosphere("Foggy")\`
+
 **CRITICAL: Smart Value Matching**
 When the user says something in natural language, intelligently map it to the closest matching enum value.
 
