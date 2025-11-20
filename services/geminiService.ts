@@ -150,8 +150,10 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       config.imageConfig.imageSize = settings.resolution;
     }
 
+    console.log("Gemini Generation Config:", JSON.stringify(config, null, 2));
+
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: settings.model || 'gemini-2.5-flash-image',
       contents: {
         parts: [{ text: fullPrompt }]
       },
