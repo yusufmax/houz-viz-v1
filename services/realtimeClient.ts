@@ -1,4 +1,5 @@
 import { AudioManager } from './audioManager';
+import { AGENTIC_SYSTEM_INSTRUCTION } from './agenticSystemPrompt';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const HOST = 'generativelanguage.googleapis.com';
@@ -141,6 +142,7 @@ export class RealtimeClient {
         const setup = {
             setup: {
                 model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
+                systemInstruction: AGENTIC_SYSTEM_INSTRUCTION,
                 generationConfig: {
                     responseModalities: ["AUDIO"]
                 }
