@@ -147,7 +147,11 @@ export class RealtimeClient {
         const setup = {
             setup: {
                 model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
-                systemInstruction: AGENTIC_SYSTEM_INSTRUCTION,
+                systemInstruction: {
+                    parts: [{
+                        text: AGENTIC_SYSTEM_INSTRUCTION
+                    }]
+                },
                 tools: AGENTIC_TOOLS.map(tool => ({
                     functionDeclarations: [{
                         name: tool.name,
