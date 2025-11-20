@@ -1178,17 +1178,17 @@ const InfinityCanvas: React.FC = () => {
                                                 <div>
                                                     <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('atmosphere')}</label>
                                                     {/* Multi-Select Grid for Node */}
-                                                    <div className="grid grid-cols-3 gap-1">
+                                                    <div className="grid grid-cols-3 gap-1 overflow-hidden">
                                                         {Object.values(Atmosphere).slice(0, 20).map(atm => {
                                                             const isSelected = (node.data.settings!.atmosphere || []).includes(atm);
                                                             return (
                                                                 <button
                                                                     key={atm}
                                                                     onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(node.id, atm); }}
-                                                                    className={`px-1 py-1 text-[8px] rounded border truncate ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                                                                    className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
                                                                     title={atm}
                                                                 >
-                                                                    {t(atm as any)}
+                                                                    <span className="truncate block">{t(atm as any)}</span>
                                                                 </button>
                                                             )
                                                         })}
