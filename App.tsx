@@ -142,8 +142,9 @@ const AppContent: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/dev" element={<GeminiPlayground />} />
+        <Route path="/playground" element={<GeminiPlayground />} />
         <Route path="/" element={<Home />} />
+        <Route path="*" element={<div className="p-10 text-center">404 - Page Not Found</div>} />
       </Routes>
       <AgenticOverlay />
     </Router>
