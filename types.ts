@@ -166,6 +166,16 @@ export interface Connection {
   to: string;
 }
 
+export interface Profile {
+  id: string;
+  username: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  website: string | null;
+  updated_at: string;
+  generation_quota: number;
+  generations_used: number;
+}
 export interface Project {
   id: string;
   name: string;

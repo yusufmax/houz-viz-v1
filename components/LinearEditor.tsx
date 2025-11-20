@@ -14,6 +14,7 @@ import { generateImage, editImage, enhancePrompt, upscaleImage } from '../servic
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
+import { quotaService } from '../services/quotaService';
 import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 
@@ -304,14 +305,45 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const handleEnhancePrompt = async () => {
     if (!prompt) return;
     setIsEnhancing(true);
-    const improved = await enhancePrompt(prompt);
-    setPrompt(improved);
-    setIsEnhancing(false);
+    try {
+      const enhanced = await enhancePrompt(prompt);
+      setPrompt(enhanced);
+    } catch (error) {
+      console.error("Failed to enhance prompt", error);
+    } finally {
+      setIsEnhancing(false);
+    }
   };
 
-  const executeGeneration = async (overrideSource?: string) => {
+  const loadQuota = async () => {
+    if (!user) return;
+    const q = await quotaService.getUserQuota(user.id);
+    if (q) {
+      setQuota({ used: q.used, limit: q.quota });
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadQuota();
+    }
+  }, [user]);
+
+  const executeGeneration = async (overrideSource?: string, settingsOverride?: Partial<GenerationSettings>) => {
+    if (!user) {
+      alert("Please sign in to generate images.");
+      return;
+    }
+
+    // Check Quota
+    const canGenerate = await quotaService.checkQuota(user.id);
+    if (!canGenerate) {
+      alert("🚫 Quota Exceeded! You have used all your generation credits. Please contact support or wait for a reset.");
+      return;
+    }
+
     const src = overrideSource || sourceImage;
-    if (!prompt && !src && !styleReferenceImage) {
+    if (!prompt && !src && !styleReferenceImage && !settingsOverride?.prompt) {
       alert("Please provide at least a text prompt, an image, or a style reference.");
       return;
     }
@@ -326,7 +358,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       sceneElements,
       styleReferenceImage,
       model,
-      resolution
+      resolution,
+      ...settingsOverride
     };
 
     try {
@@ -336,11 +369,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       } else {
         resultUrl = await generateImage(settings);
       }
+
+      // Increment Quota on Success
+      await quotaService.incrementUsage(user.id);
+      loadQuota(); // Refresh UI
+
       setResultImage(resultUrl);
       saveToHistory(resultUrl, settings.prompt);
     } catch (error) {
-      console.error(error);
-      alert("Failed to generate image. Please check API key.");
+      console.error("Generation failed:", error);
+      alert("Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -817,18 +855,39 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             <div className="relative">
               {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-              <button
-                onClick={handleGenerate}
-                disabled={isGenerating}
-                className={`w-full py-4 rounded-lg font-semibold text-white shadow-lg shadow-indigo-900/20 transition-all flex items-center justify-center gap-2
-                    ${isGenerating ? 'bg-indigo-800 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400'}`}
-              >
-                {isGenerating ? (
-                  <><Loader2 className="animate-spin" size={20} /> {t('generating')}</>
-                ) : (
-                  <>{t('generate')}</>
-                )}
-              </button>
+              <div className="flex items-center justify-between mb-4">
+                <button
+                  onClick={() => handleGenerate()}
+                  disabled={isGenerating || (quota ? quota.used >= quota.limit : false)}
+                  className={`
+                flex-1 py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]
+                ${isGenerating
+                      ? 'bg-gray-700 cursor-not-allowed text-gray-400'
+                      : (quota && quota.used >= quota.limit)
+                        ? 'bg-red-900/50 cursor-not-allowed text-red-200 border border-red-800'
+                        : 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-blue-900/20'
+                    }
+              `}
+                >
+                  {isGenerating ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Generating...
+                    </span>
+                  ) : (quota && quota.used >= quota.limit) ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <Lock className="w-5 h-5" />
+                      Quota Exceeded ({quota.used}/{quota.limit})
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center gap-2">
+                      <Sparkles className="w-5 h-5" />
+                      Generate Render
+                      {quota && <span className="text-xs opacity-70 ml-1">({quota.limit - quota.used} left)</span>}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>
@@ -922,7 +981,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
