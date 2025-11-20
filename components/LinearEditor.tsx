@@ -476,12 +476,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
                   <Maximize2 size={14} /> Resolution
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['2K', '4K'].map((res) => (
+                <div className="grid grid-cols-3 gap-2">
+                  {['1K', '2K', '4K'].map((res) => (
                     <button
                       key={res}
                       onClick={() => setResolution(res)}
-                      className={`px-3 py-2 text-xs rounded border transition-all ${resolution === res
+                      className={`px-2 py-2 text-xs rounded border transition-all ${resolution === res
                         ? 'bg-indigo-600 border-indigo-500 text-white'
                         : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
                         }`}

@@ -157,13 +157,22 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
 
     console.log("Gemini Generation Config:", JSON.stringify(config, null, 2));
 
-    const response = await ai.models.generateContent({
+    const generateParams: any = {
       model: settings.model || 'gemini-2.5-flash-image',
-      contents: {
-        parts: [{ text: fullPrompt }]
-      },
       config: config
-    });
+    };
+
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      generateParams.contents = fullPrompt;
+    } else {
+      generateParams.contents = {
+        parts: [{ text: fullPrompt }]
+      };
+    }
+
+    console.log("Gemini Generation Config:", JSON.stringify(config, null, 2));
+
+    const response = await ai.models.generateContent(generateParams);
 
     const candidates = response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
@@ -248,11 +257,18 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       config.imageConfig.imageSize = settings.resolution;
     }
 
-    const response = await ai.models.generateContent({
+    const generateParams: any = {
       model: settings.model || 'gemini-2.5-flash-image',
-      contents: { parts },
       config: config
-    });
+    };
+
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      generateParams.contents = parts;
+    } else {
+      generateParams.contents = { parts };
+    }
+
+    const response = await ai.models.generateContent(generateParams);
 
     const candidates = response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
