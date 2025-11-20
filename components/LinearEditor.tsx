@@ -187,7 +187,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           console.warn(`⚠️ Unknown tool: ${toolName}`);
       }
     });
-  }, [sourceImage, setToolExecutor]);
+  }, [sourceImage, setToolExecutor, setStyle, setAtmosphere, setCamera, setModel, setResolution, setAspectRatio, setSceneElements, setPrompt]);
 
   // Load history and custom reference images on mount
   useEffect(() => {
