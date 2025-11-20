@@ -83,6 +83,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
+  const [resolution, setResolution] = useState<string>('4K');
 
   // Fullscreen
   const [showPreview, setShowPreview] = useState(false);
@@ -227,7 +228,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       aspectRatio,
       sceneElements,
       styleReferenceImage,
-      model
+      model,
+      resolution
     };
 
     try {
@@ -467,6 +469,29 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
               </select>
             </div>
+
+            {/* Resolution Selection (Gemini 3 Pro Only) */}
+            {model === 'gemini-3-pro-image-preview' && (
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                  <Maximize2 size={14} /> Resolution
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {['2K', '4K'].map((res) => (
+                    <button
+                      key={res}
+                      onClick={() => setResolution(res)}
+                      className={`px-3 py-2 text-xs rounded border transition-all ${resolution === res
+                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                        }`}
+                    >
+                      {res}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Style Reference & Library */}
             <div className="space-y-2">

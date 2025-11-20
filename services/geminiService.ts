@@ -141,9 +141,13 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
     if (settings.aspectRatio && settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else {
-      // Default to 16:9 for T2I if no preference is set, as 'Original' implies no specific constraint
-      // but usually T2I needs a target.
+      // Default to 16:9 for T2I if no preference is set
       config.imageConfig = { aspectRatio: "16:9" };
+    }
+
+    // Add Resolution for Gemini 3 Pro
+    if (settings.model === 'gemini-3-pro-image-preview' && settings.resolution) {
+      config.imageConfig.imageSize = settings.resolution;
     }
 
     const response = await ai.models.generateContent({
@@ -224,6 +228,12 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       if (settings.styleReferenceImage) {
         parts[0].text += " Do NOT change the aspect ratio to match the style reference image. The first image dictates the dimensions.";
       }
+    }
+
+    // Add Resolution for Gemini 3 Pro
+    if (settings.model === 'gemini-3-pro-image-preview' && settings.resolution) {
+      if (!config.imageConfig) config.imageConfig = {};
+      config.imageConfig.imageSize = settings.resolution;
     }
 
     const response = await ai.models.generateContent({

@@ -134,6 +134,7 @@ export interface GenerationSettings {
   sceneElements: SceneElements;
   styleReferenceImage?: string | null;
   model?: string;
+  resolution?: string;
 }
 
 // Infinity Node Types
