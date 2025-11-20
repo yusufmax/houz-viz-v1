@@ -138,6 +138,11 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       responseModalities: [Modality.IMAGE],
     };
 
+    // Gemini 3 Pro requires specific handling
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      config.responseModalities = ['TEXT', 'IMAGE'];
+    }
+
     if (settings.aspectRatio && settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else {
@@ -220,6 +225,11 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     const config: any = {
       responseModalities: [Modality.IMAGE],
     };
+
+    // Gemini 3 Pro requires specific handling
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      config.responseModalities = ['TEXT', 'IMAGE'];
+    }
 
     if (settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
