@@ -1,6 +1,6 @@
 /**
  * Audio Manager for Gemini Realtime API
- * Handles recording (Input) and playback (Output) of PCM 16-bit 24kHz audio.
+ * Handles recording (Input) and playback (Output) of PCM 16-bit 16kHz audio.
  */
 
 export class AudioManager {
@@ -14,7 +14,7 @@ export class AudioManager {
 
     async initialize() {
         if (!this.audioContext) {
-            this.audioContext = new AudioContext({ sampleRate: 24000 });
+            this.audioContext = new AudioContext({ sampleRate: 16000 });
             await this.audioContext.audioWorklet.addModule(
                 `data:text/javascript;base64,${btoa(audioWorkletCode)}`
             );
@@ -65,7 +65,7 @@ export class AudioManager {
     }
 
     /**
-     * Queues and plays PCM 16-bit 24kHz audio chunks.
+     * Queues and plays PCM 16-bit 16kHz audio chunks.
      */
     playAudioChunk(base64PCM: string) {
         if (!this.audioContext) return;
@@ -74,7 +74,7 @@ export class AudioManager {
         const int16Array = new Int16Array(arrayBuffer);
         const float32Array = this.convertInt16ToFloat32(int16Array);
 
-        const buffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
+        const buffer = this.audioContext.createBuffer(1, float32Array.length, 16000);
         buffer.getChannelData(0).set(float32Array);
 
         const source = this.audioContext.createBufferSource();

@@ -167,7 +167,7 @@ export class RealtimeClient {
             realtime_input: {
                 media_chunks: [
                     {
-                        mime_type: "audio/pcm;rate=24000",
+                        mime_type: "audio/pcm;rate=16000",
                         data: base64PCM
                     }
                 ]
