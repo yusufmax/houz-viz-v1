@@ -320,6 +320,32 @@ export const editImage = async (sourceImage: string | null, settings: Generation
   }
 };
 
+export const generateRaw = async (prompt: string, model: string, config: any) => {
+  try {
+    // Use the existing initialized client if possible, or create new one with env var
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+    const genAI = new GoogleGenAI({ apiKey });
+
+    // @ts-ignore - The SDK types might be slightly different for this specific call pattern
+    const aiModel = genAI.models;
+
+    console.log("Raw Generation Config:", JSON.stringify(config, null, 2));
+
+    // Using the same pattern as the rest of the file: ai.models.generateContent
+    // But here we want to be specific about the model passed in
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: config
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Raw generation failed", error);
+    throw error;
+  }
+};
+
 export const upscaleImage = async (image: string): Promise<string> => {
   // Simulating upscale by refining with a "High Resolution" prompt pass
   const settings: GenerationSettings = {

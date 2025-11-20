@@ -15,6 +15,7 @@ import LoginPage from './pages/Auth/LoginPage';
 
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import ProfilePage from './pages/Profile/ProfilePage';
+import GeminiPlayground from './pages/Dev/GeminiPlayground';
 import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
@@ -141,8 +142,10 @@ const AppContent: React.FC = () => {
     <Router>
       <Routes>
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/dev" element={<GeminiPlayground />} />
         <Route path="/" element={<Home />} />
       </Routes>
+      <AgenticOverlay />
     </Router>
   );
 };
