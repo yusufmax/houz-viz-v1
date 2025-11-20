@@ -121,6 +121,37 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           }
           break;
 
+        case 'setModel':
+          if (args.model) {
+            setModel(args.model);
+            console.log(`✅ Model changed to: ${args.model}`);
+          }
+          break;
+
+        case 'setResolution':
+          if (args.resolution) {
+            setResolution(args.resolution);
+            console.log(`✅ Resolution changed to: ${args.resolution}`);
+          }
+          break;
+
+        case 'setAspectRatio':
+          if (args.aspectRatio) {
+            setAspectRatio(args.aspectRatio);
+            console.log(`✅ Aspect ratio changed to: ${args.aspectRatio}`);
+          }
+          break;
+
+        case 'toggleSceneElement':
+          if (args.element && typeof args.enabled === 'boolean') {
+            setSceneElements(prev => ({
+              ...prev,
+              [args.element]: args.enabled
+            }));
+            console.log(`✅ Scene element ${args.element} ${args.enabled ? 'enabled' : 'disabled'}`);
+          }
+          break;
+
         case 'generateImage':
           if (args.prompt && sourceImage) {
             setPrompt(args.prompt);

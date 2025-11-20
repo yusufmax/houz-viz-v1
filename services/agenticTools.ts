@@ -62,6 +62,70 @@ export const AGENTIC_TOOLS: AgenticTool[] = [
         }
     },
     {
+        name: 'setModel',
+        description: 'Select the AI model to use for generation',
+        parameters: {
+            type: 'object',
+            properties: {
+                model: {
+                    type: 'string',
+                    enum: ['gemini-2.5-flash-image', 'gemini-3-pro-image-preview'],
+                    description: 'The model to use'
+                }
+            },
+            required: ['model']
+        }
+    },
+    {
+        name: 'setResolution',
+        description: 'Set the output resolution',
+        parameters: {
+            type: 'object',
+            properties: {
+                resolution: {
+                    type: 'string',
+                    enum: ['1K', '2K', '4K'],
+                    description: 'The resolution to set'
+                }
+            },
+            required: ['resolution']
+        }
+    },
+    {
+        name: 'setAspectRatio',
+        description: 'Set the aspect ratio for the output',
+        parameters: {
+            type: 'object',
+            properties: {
+                aspectRatio: {
+                    type: 'string',
+                    enum: ['1:1', '16:9', '9:16', '4:3', '3:4'],
+                    description: 'The aspect ratio to set'
+                }
+            },
+            required: ['aspectRatio']
+        }
+    },
+    {
+        name: 'toggleSceneElement',
+        description: 'Toggle scene elements like people, cars, vegetation, etc.',
+        parameters: {
+            type: 'object',
+            properties: {
+                element: {
+                    type: 'string',
+                    enum: ['people', 'cars', 'clouds', 'vegetation', 'city', 'motionBlur', 'enhanceFacade'],
+                    description: 'The scene element to toggle'
+                },
+                enabled: {
+                    type: 'boolean',
+                    description: 'Whether to enable or disable the element'
+                }
+            },
+            required: ['element', 'enabled']
+        }
+    },
+    {
         name: 'generateImage',
         description: 'Trigger image generation with a specific prompt',
         parameters: {
