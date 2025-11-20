@@ -111,6 +111,9 @@ const InfinityCanvas: React.FC = () => {
     // Reference Images
     const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
 
+    // Model Selection
+    const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-image');
+
     // ---- Initialization & Autosave ----
     useEffect(() => {
         const loadProject = async () => {
@@ -702,7 +705,7 @@ const InfinityCanvas: React.FC = () => {
         }
     };
 
-    const handleDrawRender = async (img: string, prompt?: string, refImage?: string | null, ratio?: AspectRatio) => {
+    const handleDrawRender = async (img: string, prompt?: string, refImage?: string | null, ratio?: AspectRatio, model?: string) => {
         if (!drawingNodeId) return;
         const originalNode = nodes.find(n => n.id === drawingNodeId);
         setDrawingNodeId(null);
@@ -743,7 +746,8 @@ const InfinityCanvas: React.FC = () => {
                 ...baseSettings,
                 prompt: prompt || baseSettings.prompt || "High quality architectural render",
                 styleReferenceImage: refImage || baseSettings.styleReferenceImage,
-                aspectRatio: ratio || baseSettings.aspectRatio || 'Original' // Use passed ratio or base
+                aspectRatio: ratio || baseSettings.aspectRatio || 'Original', // Use passed ratio or base
+                model: model || selectedModel // Use passed model or current selection
             };
 
             const result = await editImage(img, settings);
@@ -1402,6 +1406,8 @@ const InfinityCanvas: React.FC = () => {
                     onSave={handleDrawSave}
                     onRender={handleDrawRender}
                     onClose={() => setDrawingNodeId(null)}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
                 />
             )}
         </div>
