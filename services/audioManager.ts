@@ -65,7 +65,7 @@ export class AudioManager {
     }
 
     /**
-     * Queues and plays PCM 16-bit 16kHz audio chunks.
+     * Queues and plays PCM 16-bit audio chunks (input: 16kHz, output: 24kHz).
      */
     playAudioChunk(base64PCM: string) {
         if (!this.audioContext) return;
@@ -74,7 +74,7 @@ export class AudioManager {
         const int16Array = new Int16Array(arrayBuffer);
         const float32Array = this.convertInt16ToFloat32(int16Array);
 
-        const buffer = this.audioContext.createBuffer(1, float32Array.length, 16000);
+        const buffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
         buffer.getChannelData(0).set(float32Array);
 
         const source = this.audioContext.createBufferSource();
