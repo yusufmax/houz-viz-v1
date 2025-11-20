@@ -108,9 +108,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           break;
 
         case 'setAtmosphere':
-          if (args.atmosphere && Object.values(Atmosphere).includes(args.atmosphere)) {
-            setAtmosphere([args.atmosphere as Atmosphere]);
-            console.log(`✅ Atmosphere changed to: ${args.atmosphere}`);
+          if (args.atmospheres && Array.isArray(args.atmospheres)) {
+            const validAtmospheres = args.atmospheres
+              .filter((atm: string) => Object.values(Atmosphere).includes(atm))
+              .slice(0, 3); // Max 3 atmospheres
+            if (validAtmospheres.length > 0) {
+              setAtmosphere(validAtmospheres as Atmosphere[]);
+              console.log(`✅ Atmospheres changed to: ${validAtmospheres.join(', ')}`);
+            }
           }
           break;
 
@@ -149,6 +154,19 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               [args.element]: args.enabled
             }));
             console.log(`✅ Scene element ${args.element} ${args.enabled ? 'enabled' : 'disabled'}`);
+          }
+          break;
+
+        case 'setSceneElements':
+          if (args.elements && typeof args.elements === 'object') {
+            setSceneElements(prev => ({
+              ...prev,
+              ...args.elements
+            }));
+            const changed = Object.entries(args.elements)
+              .map(([key, val]) => `${key}: ${val ? 'on' : 'off'}`)
+              .join(', ');
+            console.log(`✅ Scene elements updated: ${changed}`);
           }
           break;
 

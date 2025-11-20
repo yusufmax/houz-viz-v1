@@ -33,17 +33,21 @@ export const AGENTIC_TOOLS: AgenticTool[] = [
     },
     {
         name: 'setAtmosphere',
-        description: 'Set the atmosphere/lighting for the render',
+        description: 'Set the atmosphere/lighting for the render. Can set up to 3 atmospheres at once.',
         parameters: {
             type: 'object',
             properties: {
-                atmosphere: {
-                    type: 'string',
-                    enum: Object.values(Atmosphere),
-                    description: 'The atmosphere to set'
+                atmospheres: {
+                    type: 'array',
+                    items: {
+                        type: 'string',
+                        enum: Object.values(Atmosphere)
+                    },
+                    description: 'Array of atmospheres to set (max 3)',
+                    maxItems: 3
                 }
             },
-            required: ['atmosphere']
+            required: ['atmospheres']
         }
     },
     {
@@ -108,7 +112,7 @@ export const AGENTIC_TOOLS: AgenticTool[] = [
     },
     {
         name: 'toggleSceneElement',
-        description: 'Toggle scene elements like people, cars, vegetation, etc.',
+        description: 'Toggle a single scene element like people, cars, vegetation, etc.',
         parameters: {
             type: 'object',
             properties: {
@@ -123,6 +127,29 @@ export const AGENTIC_TOOLS: AgenticTool[] = [
                 }
             },
             required: ['element', 'enabled']
+        }
+    },
+    {
+        name: 'setSceneElements',
+        description: 'Set multiple scene elements at once. Use this when user wants to enable/disable multiple elements in one command.',
+        parameters: {
+            type: 'object',
+            properties: {
+                elements: {
+                    type: 'object',
+                    properties: {
+                        people: { type: 'boolean' },
+                        cars: { type: 'boolean' },
+                        clouds: { type: 'boolean' },
+                        vegetation: { type: 'boolean' },
+                        city: { type: 'boolean' },
+                        motionBlur: { type: 'boolean' },
+                        enhanceFacade: { type: 'boolean' }
+                    },
+                    description: 'Object with scene elements to set'
+                }
+            },
+            required: ['elements']
         }
     },
     {
