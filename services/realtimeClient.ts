@@ -1,5 +1,7 @@
 import { AudioManager } from './audioManager';
 import { AGENTIC_SYSTEM_INSTRUCTION } from './agenticSystemPrompt';
+import { AGENTIC_TOOLS } from './agenticTools';
+import html2canvas from 'html2canvas';
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const HOST = 'generativelanguage.googleapis.com';
@@ -19,6 +21,7 @@ export class RealtimeClient {
     private maxReconnectAttempts = 3;
     private reconnectDelay = 1000; // Start with 1 second
     private keepAliveInterval: number | null = null;
+    private screenCaptureInterval: number | null = null;
     private isManualDisconnect = false;
 
     constructor(callbacks: RealtimeClientCallbacks) {
@@ -47,6 +50,7 @@ export class RealtimeClient {
             this.sendSetupMessage();
             this.audioManager.startRecording();
             this.startKeepAlive();
+            this.startScreenCapture();
         };
 
         this.ws.onmessage = async (event) => {
@@ -66,6 +70,7 @@ export class RealtimeClient {
         this.ws.onclose = (event) => {
             console.log(`🔌 Disconnected from Gemini Realtime [Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}]`);
             this.stopKeepAlive();
+            this.stopScreenCapture();
             this.audioManager.stopRecording();
 
             // Don't reconnect if it was a manual disconnect
@@ -143,12 +148,47 @@ export class RealtimeClient {
             setup: {
                 model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
                 systemInstruction: AGENTIC_SYSTEM_INSTRUCTION,
+                tools: AGENTIC_TOOLS.map(tool => ({
+                    functionDeclarations: [{
+                        name: tool.name,
+                        description: tool.description,
+                        parameters: tool.parameters
+                    }]
+                })),
                 generationConfig: {
                     responseModalities: ["AUDIO"]
                 }
             }
         };
         this.send(setup);
+    }
+
+    private startScreenCapture() {
+        this.stopScreenCapture(); // Clear any existing interval
+
+        // Capture screen every 1 second
+        this.screenCaptureInterval = window.setInterval(async () => {
+            try {
+                const canvas = await html2canvas(document.body, {
+                    scale: 0.5, // Reduce quality to save bandwidth
+                    logging: false,
+                    useCORS: true
+                });
+                const base64 = canvas.toDataURL('image/jpeg', 0.6);
+                const base64Data = base64.split(',')[1]; // Remove data:image prefix
+                this.sendScreenCapture(base64Data);
+                console.log("📸 Screen capture sent");
+            } catch (e) {
+                console.error("Screen capture failed:", e);
+            }
+        }, 1000);
+    }
+
+    private stopScreenCapture() {
+        if (this.screenCaptureInterval !== null) {
+            clearInterval(this.screenCaptureInterval);
+            this.screenCaptureInterval = null;
+        }
     }
 
     private sendAudio(base64PCM: string) {
