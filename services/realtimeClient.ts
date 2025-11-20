@@ -140,7 +140,7 @@ export class RealtimeClient {
     private sendSetupMessage() {
         const setup = {
             setup: {
-                model: "models/gemini-2.0-flash-exp", // Using the experimental model for realtime
+                model: "models/gemini-2.0-flash-preview", // Using the preview model for realtime (exp has quota limits)
                 generation_config: {
                     response_modalities: ["AUDIO", "TEXT"],
                     speech_config: {
