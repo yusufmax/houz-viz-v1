@@ -53,8 +53,8 @@ export class RealtimeClient {
             }
         };
 
-        this.ws.onclose = () => {
-            console.log("Disconnected from Gemini Realtime");
+        this.ws.onclose = (event) => {
+            console.log("Disconnected from Gemini Realtime", event.code, event.reason);
             this.callbacks.onStatusChange('disconnected');
             this.audioManager.stopRecording();
         };
