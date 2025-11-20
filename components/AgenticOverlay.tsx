@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Mic, MicOff, Activity, X, Sparkles } from 'lucide-react';
+import { Mic, MicOff, Activity, X, Sparkles, Monitor, MonitorOff } from 'lucide-react';
 import { useAgentic } from '../contexts/AgenticContext';
 
 const AgenticOverlay: React.FC = () => {
@@ -10,7 +10,9 @@ const AgenticOverlay: React.FC = () => {
         lastUserMessage,
         lastAgentMessage,
         startListening,
-        stopListening
+        stopListening,
+        screenShareEnabled,
+        toggleScreenShare
     } = useAgentic();
 
     const [expanded, setExpanded] = useState(false);
@@ -82,6 +84,14 @@ const AgenticOverlay: React.FC = () => {
                         title={status === 'connected' ? "Disconnect" : "Connect"}
                     >
                         {status === 'connected' ? <MicOff size={20} /> : <Mic size={20} />}
+                    </button>
+
+                    <button
+                        onClick={toggleScreenShare}
+                        className={`p-2 rounded-full transition-colors ${screenShareEnabled ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
+                        title={screenShareEnabled ? "Screen sharing enabled" : "Screen sharing disabled"}
+                    >
+                        {screenShareEnabled ? <Monitor size={20} /> : <MonitorOff size={20} />}
                     </button>
 
                     <button

@@ -12,6 +12,9 @@ interface AgenticContextType {
     lastAgentMessage: string | null;
     startListening: () => void;
     stopListening: () => void;
+    screenShareEnabled: boolean;
+    toggleScreenShare: () => void;
+    setToolExecutor: (executor: (toolName: string, args: any) => void) => void;
 }
 
 const AgenticContext = createContext<AgenticContextType | undefined>(undefined);
@@ -21,8 +24,10 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [status, setStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'reconnecting'>('disconnected');
     const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
     const [lastAgentMessage, setLastAgentMessage] = useState<string | null>(null);
+    const [screenShareEnabled, setScreenShareEnabled] = useState(true); // Enabled by default
 
     const clientRef = useRef<RealtimeClient | null>(null);
+    const toolExecutorRef = useRef<((toolName: string, args: any) => void) | null>(null);
 
     useEffect(() => {
         // Initialize client on mount, but don't connect yet
@@ -31,9 +36,11 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 setLastAgentMessage(prev => (prev || '') + text);
             },
             onToolCall: (toolCall) => {
-                console.log("Tool Call:", toolCall);
-                // Handle tool calls (e.g. switch mode)
-                // For V1 of realtime, we might need to parse text or implement tool handlers
+                console.log("🔧 Tool Call:", toolCall);
+                // Execute tool if executor is set
+                if (toolExecutorRef.current && toolCall.name && toolCall.args) {
+                    toolExecutorRef.current(toolCall.name, toolCall.args);
+                }
             },
             onStatusChange: (newStatus) => {
                 setStatus(newStatus);
@@ -69,6 +76,20 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (isActive) setIsActive(false);
     };
 
+    const toggleScreenShare = () => {
+        const newValue = !screenShareEnabled;
+        setScreenShareEnabled(newValue);
+        if (newValue) {
+            clientRef.current?.startScreenCapture?.();
+        } else {
+            clientRef.current?.stopScreenCapture?.();
+        }
+    };
+
+    const setToolExecutor = (executor: (toolName: string, args: any) => void) => {
+        toolExecutorRef.current = executor;
+    };
+
     return (
         <AgenticContext.Provider value={{
             isActive,
@@ -80,7 +101,10 @@ export const AgenticProvider: React.FC<{ children: React.ReactNode }> = ({ child
             lastUserMessage,
             lastAgentMessage,
             startListening,
-            stopListening
+            stopListening,
+            screenShareEnabled,
+            toggleScreenShare,
+            setToolExecutor
         }}>
             {children}
         </AgenticContext.Provider>

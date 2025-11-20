@@ -170,7 +170,7 @@ export class RealtimeClient {
     private startScreenCapture() {
         this.stopScreenCapture(); // Clear any existing interval
 
-        // Capture screen every 1 second
+        // Capture screen every 5 seconds
         this.screenCaptureInterval = window.setInterval(async () => {
             try {
                 const canvas = await html2canvas(document.body, {
@@ -185,7 +185,7 @@ export class RealtimeClient {
             } catch (e) {
                 console.error("Screen capture failed:", e);
             }
-        }, 1000);
+        }, 5000);
     }
 
     private stopScreenCapture() {
