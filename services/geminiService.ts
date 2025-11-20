@@ -148,7 +148,13 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
         contents: fullPrompt,
-        config: config
+        config: {
+          responseModalities: ['TEXT', 'IMAGE'],
+          imageConfig: {
+            aspectRatio: "16:9",
+            imageSize: '4K',
+          },
+        }
       });
 
       const candidates = response.candidates;
