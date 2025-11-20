@@ -138,7 +138,7 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       const config = {
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
-          aspectRatio: settings.aspectRatio && settings.aspectRatio !== 'Original' ? settings.aspectRatio : '16:9',
+          aspectRatio: settings.aspectRatio,
           imageSize: '4K'
         }
       };
@@ -343,18 +343,19 @@ export const generateRaw = async (prompt: string, model: string, config: any) =>
   } catch (error) {
     console.error("Raw generation failed", error);
     throw error;
-  }
-};
 
-export const upscaleImage = async (image: string): Promise<string> => {
-  // Simulating upscale by refining with a "High Resolution" prompt pass
-  const settings: GenerationSettings = {
-    prompt: "Enhance details, sharpen image, 4k resolution, photorealistic",
-    style: RenderStyle.Photorealistic,
-    atmosphere: [Atmosphere.None],
-    camera: CameraAngle.Default,
-    aspectRatio: 'Original',
-    sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: true }
-  };
-  return await editImage(image, settings);
-}
+
+
+    export const upscaleImage = async (image: string): Promise<string> => {
+      // Simulating upscale by refining with a "High Resolution" prompt pass
+      const settings: GenerationSettings = {
+        prompt: "Enhance details, sharpen image, 4k resolution, photorealistic",
+        style: RenderStyle.Photorealistic,
+        atmosphere: [Atmosphere.None],
+        camera: CameraAngle.Default,
+        aspectRatio: 'Original',
+        sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: true }
+      };
+      return await editImage(image, settings);
+    };
+
