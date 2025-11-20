@@ -140,16 +140,9 @@ export class RealtimeClient {
     private sendSetupMessage() {
         const setup = {
             setup: {
-                model: "models/gemini-2.5-flash-native-audio-preview-09-2025", // Native audio model with better quota
-                generation_config: {
-                    response_modalities: ["AUDIO", "TEXT"],
-                    speech_config: {
-                        voice_config: {
-                            prebuilt_voice_config: {
-                                voice_name: "Puck" // or "Charon", "Kore", "Fenrir", "Aoede"
-                            }
-                        }
-                    }
+                model: "models/gemini-2.5-flash-native-audio-preview-09-2025",
+                generationConfig: {
+                    responseModalities: ["AUDIO"]
                 }
             }
         };
