@@ -14,6 +14,7 @@ import { generateImage, editImage, enhancePrompt, upscaleImage } from '../servic
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
+import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 
 const STYLE_LIBRARY = [
@@ -53,6 +54,7 @@ const GuideTooltip = ({ text, className, side = 'left' }: { text: string, classN
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const { setToolExecutor } = useAgentic();
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
@@ -91,6 +93,52 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Setup tool executor for Agentic Mode
+  useEffect(() => {
+    setToolExecutor((toolName: string, args: any) => {
+      console.log(`🔧 Executing tool: ${toolName}`, args);
+
+      switch (toolName) {
+        case 'selectStyle':
+          if (args.style && Object.values(RenderStyle).includes(args.style)) {
+            setStyle(args.style as RenderStyle);
+            console.log(`✅ Style changed to: ${args.style}`);
+          }
+          break;
+
+        case 'setAtmosphere':
+          if (args.atmosphere && Object.values(Atmosphere).includes(args.atmosphere)) {
+            setAtmosphere([args.atmosphere as Atmosphere]);
+            console.log(`✅ Atmosphere changed to: ${args.atmosphere}`);
+          }
+          break;
+
+        case 'setCameraAngle':
+          if (args.angle && Object.values(CameraAngle).includes(args.angle)) {
+            setCamera(args.angle as CameraAngle);
+            console.log(`✅ Camera angle changed to: ${args.angle}`);
+          }
+          break;
+
+        case 'generateImage':
+          if (args.prompt && sourceImage) {
+            setPrompt(args.prompt);
+            // Trigger generation after a short delay to let prompt update
+            setTimeout(() => handleGenerate(), 100);
+            console.log(`✅ Generating image with prompt: ${args.prompt}`);
+          }
+          break;
+
+        case 'navigateToMode':
+          console.log(`ℹ️ Navigate to ${args.mode} mode - not implemented in Linear Editor`);
+          break;
+
+        default:
+          console.warn(`⚠️ Unknown tool: ${toolName}`);
+      }
+    });
+  }, [sourceImage, setToolExecutor]);
 
   // Load history and custom reference images on mount
   useEffect(() => {
