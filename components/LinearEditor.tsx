@@ -82,6 +82,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [sceneElements, setSceneElements] = useState<SceneElements>({
     people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
   });
+  const [model, setModel] = useState<string>('gemini-2.5-flash-image');
 
   // Fullscreen
   const [showPreview, setShowPreview] = useState(false);
@@ -225,7 +226,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       camera,
       aspectRatio,
       sceneElements,
-      styleReferenceImage
+      styleReferenceImage,
+      model
     };
 
     try {
@@ -449,6 +451,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 placeholder={t('instructionsPlaceholder')}
                 className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
               />
+            </div>
+
+            {/* Model Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                <Zap size={14} /> Model
+              </label>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+              >
+                <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
+                <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
+              </select>
             </div>
 
             {/* Style Reference & Library */}

@@ -66,7 +66,7 @@ export enum RenderStyle {
   SalesRealEstate = 'Interior Sales: Real Estate Center',
   SalesReception = 'Interior Sales: Corporate Reception',
   SalesGallery = 'Interior Sales: Sales Gallery / Exhibition',
-  
+
   // Exterior
   Biophilic = 'Exterior: Biophilic',
   GlassFacade = 'Exterior: Glass Facade',
@@ -119,7 +119,7 @@ export interface SceneElements {
   cars: boolean;
   clouds: boolean;
   vegetation: boolean;
-  city: boolean; 
+  city: boolean;
   motionBlur: boolean;
   enhanceFacade: boolean;
 }
@@ -133,6 +133,7 @@ export interface GenerationSettings {
   negativePrompt?: string;
   sceneElements: SceneElements;
   styleReferenceImage?: string | null;
+  model?: string;
 }
 
 // Infinity Node Types
@@ -170,7 +171,7 @@ export interface Project {
   lastModified: number;
   nodes: Node[];
   connections: Connection[];
-  pan: {x: number, y: number};
+  pan: { x: number, y: number };
   zoom: number;
 }
 

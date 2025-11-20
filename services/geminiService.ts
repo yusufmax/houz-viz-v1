@@ -227,7 +227,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
+      model: settings.model || 'gemini-2.5-flash-image',
       contents: { parts },
       config: config
     });
