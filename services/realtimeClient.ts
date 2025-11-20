@@ -243,6 +243,8 @@ export class RealtimeClient {
     }
 
     private handleServerMessage(data: any) {
+        console.log("📨 Server message:", JSON.stringify(data, null, 2));
+
         // Handle Server Content
         if (data.serverContent) {
             const { modelTurn } = data.serverContent;
@@ -255,6 +257,14 @@ export class RealtimeClient {
                         // Audio chunk
                         this.audioManager.playAudioChunk(part.inlineData.data);
                     }
+                    if (part.functionCall) {
+                        // Handle function/tool calls
+                        console.log("🔧 Function call detected:", part.functionCall);
+                        this.callbacks.onToolCall({
+                            name: part.functionCall.name,
+                            args: part.functionCall.args
+                        });
+                    }
                     if (part.executableCode) {
                         // Handle code execution if needed
                     }
@@ -266,7 +276,7 @@ export class RealtimeClient {
             }
         }
 
-        // Handle Tool Calls
+        // Handle Tool Calls (legacy format)
         if (data.toolCall) {
             this.callbacks.onToolCall(data.toolCall);
         }
