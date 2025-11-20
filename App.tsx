@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Hexagon, Layers, GitBranch, HelpCircle, Globe } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
@@ -16,13 +16,31 @@ import LoginPage from './pages/Auth/LoginPage';
 import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import ProfilePage from './pages/Profile/ProfilePage';
 import { User } from 'lucide-react';
+import { AgenticProvider } from './contexts/AgenticContext';
+import AgenticOverlay from './components/AgenticOverlay';
 
 const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialMode = searchParams.get('mode') === 'infinity' ? Mode.Infinity : Mode.Linear;
+
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showInstructions, setShowInstructions] = useState(false);
   const { lang, setLang, t } = useLanguage();
+
+  useEffect(() => {
+    const handleAgentAction = (event: CustomEvent) => {
+      const action = event.detail;
+      if (action.type === 'SWITCH_MODE') {
+        if (action.payload === 'infinity') setMode(Mode.Infinity);
+        if (action.payload === 'linear') setMode(Mode.Linear);
+      }
+    };
+
+    window.addEventListener('agent-action' as any, handleAgentAction as any);
+    return () => {
+      window.removeEventListener('agent-action' as any, handleAgentAction as any);
+    };
+  }, []);
 
   const toggleLang = () => {
     setLang(lang === 'en' ? 'ru' : 'en');
@@ -45,8 +63,8 @@ const Home: React.FC = () => {
           <button
             onClick={() => setMode(Mode.Linear)}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Linear
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
           >
             <Layers size={16} />
@@ -55,8 +73,8 @@ const Home: React.FC = () => {
           <button
             onClick={() => setMode(Mode.Infinity)}
             className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Infinity
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
               }`}
           >
             <GitBranch size={16} />
@@ -102,8 +120,10 @@ const Home: React.FC = () => {
           <InfinityCanvas />
         </div>
       </main>
+      <AgenticOverlay />
     </div>
   );
+
 };
 
 const AppContent: React.FC = () => {
@@ -131,7 +151,9 @@ const App: React.FC = () => {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <AgenticProvider>
+          <AppContent />
+        </AgenticProvider>
       </AuthProvider>
     </LanguageProvider>
   );
