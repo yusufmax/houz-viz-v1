@@ -133,46 +133,57 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
   try {
     const fullPrompt = await constructFullPrompt(settings);
 
-    // Configure aspect ratio via imageConfig
+    // Gemini 3 Pro Logic
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      const config = {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: {
+          aspectRatio: settings.aspectRatio && settings.aspectRatio !== 'Original' ? settings.aspectRatio : "16:9",
+          imageSize: settings.resolution || '4K',
+          // @ts-ignore - Trying snake_case as fallback
+          image_size: settings.resolution || '4K'
+        }
+      };
+
+      console.log("Gemini 3 Pro Config:", JSON.stringify(config, null, 2));
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: fullPrompt,
+        config: config
+      });
+
+      const candidates = response.candidates;
+      if (candidates && candidates[0]?.content?.parts) {
+        for (const part of candidates[0].content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+          }
+        }
+      }
+      throw new Error("No image generated from Gemini 3 Pro");
+    }
+
+    // Gemini Flash Logic (Legacy/Default)
     const config: any = {
       responseModalities: [Modality.IMAGE],
     };
 
-    // Gemini 3 Pro requires specific handling
-    if (settings.model === 'gemini-3-pro-image-preview') {
-      config.responseModalities = ['TEXT', 'IMAGE'];
-    }
-
     if (settings.aspectRatio && settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else {
-      // Default to 16:9 for T2I if no preference is set
       config.imageConfig = { aspectRatio: "16:9" };
     }
 
-    // Add Resolution for Gemini 3 Pro
-    if (settings.model === 'gemini-3-pro-image-preview' && settings.resolution) {
-      config.imageConfig.imageSize = settings.resolution;
-    }
+    console.log("Gemini Flash Config:", JSON.stringify(config, null, 2));
 
-    console.log("Gemini Generation Config:", JSON.stringify(config, null, 2));
-
-    const generateParams: any = {
+    const response = await ai.models.generateContent({
       model: settings.model || 'gemini-2.5-flash-image',
-      config: config
-    };
-
-    if (settings.model === 'gemini-3-pro-image-preview') {
-      generateParams.contents = fullPrompt;
-    } else {
-      generateParams.contents = {
+      contents: {
         parts: [{ text: fullPrompt }]
-      };
-    }
-
-    console.log("Gemini Generation Config:", JSON.stringify(config, null, 2));
-
-    const response = await ai.models.generateContent(generateParams);
+      },
+      config: config
+    });
 
     const candidates = response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
@@ -230,45 +241,66 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       }
     }
 
-    // Configure aspect ratio via imageConfig
+    // Gemini 3 Pro Logic
+    if (settings.model === 'gemini-3-pro-image-preview') {
+      const config = {
+        responseModalities: ['TEXT', 'IMAGE'],
+        imageConfig: {
+          aspectRatio: settings.aspectRatio !== 'Original' ? settings.aspectRatio : "16:9", // Default if original
+          imageSize: settings.resolution || '4K',
+          // @ts-ignore - Trying snake_case as fallback
+          image_size: settings.resolution || '4K'
+        }
+      };
+
+      // If Original aspect ratio is requested, we might need to handle it carefully.
+      // For now, we'll default to 16:9 if Original to ensure imageSize works, 
+      // as strict original aspect ratio might conflict with fixed resolutions if not handled by API.
+      // But let's try to respect the user's intent if possible, or just fallback.
+      if (settings.aspectRatio === 'Original') {
+        // If we can't send 'Original', we send undefined or a default. 
+        // Let's send 16:9 for now to be safe with 4K.
+        config.imageConfig.aspectRatio = "16:9";
+      }
+
+      console.log("Gemini 3 Pro Edit Config:", JSON.stringify(config, null, 2));
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-pro-image-preview',
+        contents: parts,
+        config: config
+      });
+
+      const candidates = response.candidates;
+      if (candidates && candidates[0]?.content?.parts) {
+        for (const part of candidates[0].content.parts) {
+          if (part.inlineData && part.inlineData.data) {
+            return `data:image/png;base64,${part.inlineData.data}`;
+          }
+        }
+      }
+      throw new Error("No image generated from Gemini 3 Pro Edit");
+    }
+
+    // Gemini Flash Logic (Legacy/Default)
     const config: any = {
       responseModalities: [Modality.IMAGE],
     };
 
-    // Gemini 3 Pro requires specific handling
-    if (settings.model === 'gemini-3-pro-image-preview') {
-      config.responseModalities = ['TEXT', 'IMAGE'];
-    }
-
     if (settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else if (sourceImage) {
-      // If Original and Source exists, we ideally don't set aspectRatio to let it follow the input,
-      // but we add text guidance to be safe.
       parts[0].text += " Strictly maintain the exact aspect ratio and composition of the source image (first image).";
       if (settings.styleReferenceImage) {
         parts[0].text += " Do NOT change the aspect ratio to match the style reference image. The first image dictates the dimensions.";
       }
     }
 
-    // Add Resolution for Gemini 3 Pro
-    if (settings.model === 'gemini-3-pro-image-preview' && settings.resolution) {
-      if (!config.imageConfig) config.imageConfig = {};
-      config.imageConfig.imageSize = settings.resolution;
-    }
-
-    const generateParams: any = {
+    const response = await ai.models.generateContent({
       model: settings.model || 'gemini-2.5-flash-image',
+      contents: { parts },
       config: config
-    };
-
-    if (settings.model === 'gemini-3-pro-image-preview') {
-      generateParams.contents = parts;
-    } else {
-      generateParams.contents = { parts };
-    }
-
-    const response = await ai.models.generateContent(generateParams);
+    });
 
     const candidates = response.candidates;
     if (candidates && candidates[0]?.content?.parts) {
