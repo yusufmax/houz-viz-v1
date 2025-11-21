@@ -774,6 +774,20 @@ const InfinityCanvas: React.FC = () => {
         setProcessingNodes(prev => new Set(prev).add(newNodeId));
 
         try {
+            // Check quota before generation
+            if (!user) {
+                alert("Please sign in to generate images.");
+                setNodes(prev => prev.filter(n => n.id !== newNodeId));
+                return;
+            }
+
+            const canGenerate = await quotaService.checkQuota(user.id);
+            if (!canGenerate) {
+                alert("🚫 Quota Exceeded! You have used all your generation credits. Please contact support or upgrade your plan.");
+                setNodes(prev => prev.filter(n => n.id !== newNodeId));
+                return;
+            }
+
             const defaultSettings: GenerationSettings = {
                 style: RenderStyle.Photorealistic, atmosphere: [], camera: CameraAngle.Default, aspectRatio: 'Original', prompt: '',
                 sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: true }
@@ -790,6 +804,15 @@ const InfinityCanvas: React.FC = () => {
             };
 
             const result = await editImage(img, settings);
+
+            // Increment quota after successful generation
+            await quotaService.incrementUsage(user.id);
+
+            // Refresh quota display
+            const updatedQuota = await quotaService.getUserQuota(user.id);
+            if (updatedQuota) {
+                setQuota({ used: updatedQuota.used, limit: updatedQuota.quota });
+            }
 
             setNodes(prev => prev.map(n => n.id === newNodeId ? {
                 ...n,
