@@ -515,6 +515,44 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const handleGenerate = () => executeGeneration();
 
+  // Helper to resize image to max 2K resolution
+  const resizeImage = (imageSrc: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 2048; // 2K resolution limit
+
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        // Get base64 string (this also handles the URL -> Base64 conversion)
+        const base64 = canvas.toDataURL('image/jpeg', 0.9);
+        resolve(base64);
+      };
+      img.onerror = (err) => reject(err);
+      img.src = imageSrc;
+    });
+  };
+
   const handleGenerateVideo = async () => {
     if (!resultImage || !user) {
       alert('Please generate an image first and sign in');
@@ -532,18 +570,26 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         return;
       }
 
+      // Resize/Process image before sending
+      // This handles:
+      // 1. Downscaling to 2K (Kling limit)
+      // 2. Converting URL to Base64 (for Gemini 3.0 results)
+      // 3. Ensuring valid Base64 format
+      const processedImage = await resizeImage(resultImage);
+
       // Call Netlify function to generate video
       const response = await fetch('/.netlify/functions/kling-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'generate',
-          image: resultImage,
+          image: processedImage,
           model: videoSettings.model,
           duration: videoSettings.duration,
           aspectRatio: videoSettings.aspectRatio,
           prompt: videoSettings.prompt,
-          cfgScale: videoSettings.cfgScale || 0.5
+          cfgScale: videoSettings.cfgScale || 0.5,
+          mode: videoSettings.mode // Pass quality mode
         })
       });
 
@@ -1192,8 +1238,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       <button
                         onClick={() => setVideoSettings({ ...videoSettings, mode: 'std' })}
                         className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode !== 'pro'
-                            ? 'bg-gray-700 text-white shadow-sm'
-                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
+                          ? 'bg-gray-700 text-white shadow-sm'
+                          : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
                           }`}
                       >
                         Standard
@@ -1201,8 +1247,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       <button
                         onClick={() => setVideoSettings({ ...videoSettings, mode: 'pro' })}
                         className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode === 'pro'
-                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/20'
-                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/20'
+                          : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
                           }`}
                       >
                         Professional
