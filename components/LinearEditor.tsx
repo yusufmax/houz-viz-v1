@@ -1180,7 +1180,37 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </select>
                   </div>
 
-                  {/* Duration */}
+                  {/* Quality Selector */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-medium text-gray-400">Quality</label>
+                      <span className="text-[10px] text-gray-500 bg-gray-800/50 px-1.5 py-0.5 rounded">
+                        {videoSettings.mode === 'pro' ? '1080p' : '720p'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 p-1 bg-gray-800/30 rounded-lg border border-gray-700/50">
+                      <button
+                        onClick={() => setVideoSettings({ ...videoSettings, mode: 'std' })}
+                        className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode !== 'pro'
+                            ? 'bg-gray-700 text-white shadow-sm'
+                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
+                          }`}
+                      >
+                        Standard
+                      </button>
+                      <button
+                        onClick={() => setVideoSettings({ ...videoSettings, mode: 'pro' })}
+                        className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode === 'pro'
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-900/20'
+                            : 'text-gray-400 hover:text-gray-300 hover:bg-gray-700/30'
+                          }`}
+                      >
+                        Professional
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Duration Selector */}
                   <div className="mb-3">
                     <label className="block text-xs text-slate-400 mb-1">Duration</label>
                     <div className="flex gap-2">

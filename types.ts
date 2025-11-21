@@ -207,6 +207,7 @@ export interface VideoGenerationSettings {
   prompt: string;
   cfgScale?: number;
   cameraMovement?: string;
+  mode?: 'std' | 'pro';
 }
 
 export interface VideoGeneration {
