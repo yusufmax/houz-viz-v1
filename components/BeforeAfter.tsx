@@ -12,7 +12,7 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent parent node dragging
+    // e.stopPropagation(); // Removed to allow scrolling
     setIsDragging(true);
   };
 
@@ -41,7 +41,7 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
   }, [isDragging]);
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative w-full h-full select-none overflow-hidden rounded-lg cursor-col-resize group bg-slate-900"
       onMouseDown={handleMouseDown}
@@ -50,7 +50,7 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
       <img src={afterImage} alt="After" className="absolute inset-0 w-full h-full object-contain" />
 
       {/* Before Image (Foreground clipped) */}
-      <div 
+      <div
         className="absolute inset-0 w-full h-full overflow-hidden border-r-2 border-white/50"
         style={{ width: `${sliderPosition}%` }}
       >
@@ -58,15 +58,15 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
       </div>
 
       {/* Slider Handle */}
-      <div 
+      <div
         className="absolute top-0 bottom-0 w-1 bg-transparent cursor-col-resize flex items-center justify-center"
         style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
       >
         <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-900 transform scale-0 group-hover:scale-100 transition-transform">
-            <MoveHorizontal size={16} />
+          <MoveHorizontal size={16} />
         </div>
       </div>
-      
+
       <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded z-10">Original</div>
       <div className="absolute top-2 right-2 bg-indigo-600/80 text-white text-xs px-2 py-1 rounded z-10">Render</div>
     </div>
