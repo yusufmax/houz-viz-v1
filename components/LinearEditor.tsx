@@ -512,7 +512,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-full gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
 
 
       {/* Full Screen Preview */}
