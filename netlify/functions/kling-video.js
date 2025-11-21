@@ -1,5 +1,5 @@
 // Official Kling AI API - With JWT Authentication & Logging
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY;
 const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY;
@@ -29,7 +29,7 @@ function generateJWT(accessKey, secretKey) {
     }
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
     // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
