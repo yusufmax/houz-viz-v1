@@ -12,7 +12,7 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // e.stopPropagation(); // Removed to allow scrolling
+    e.stopPropagation();
     setIsDragging(true);
   };
 
