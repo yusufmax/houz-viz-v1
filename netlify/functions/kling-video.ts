@@ -81,10 +81,13 @@ export const handler: Handler = async (event) => {
             };
 
             // Build request body according to official API spec
+            // Ensure image is stripped of data URI prefix if present
+            const base64Image = params.image.replace(/^data:image\/\w+;base64,/, '');
+
             const requestBody: any = {
                 model_name: modelMap[params.model] || 'kling-v1',
                 duration: String(params.duration || 5), // Must be string: "5" or "10"
-                image: params.image, // Base64 or URL
+                image: base64Image, // Base64 without prefix
                 prompt: params.prompt || ''
             };
 
