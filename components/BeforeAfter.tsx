@@ -43,7 +43,7 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full select-none overflow-hidden rounded-lg cursor-col-resize group bg-slate-900"
+      className="relative w-full h-full select-none overflow-hidden rounded-lg cursor-col-resize group bg-slate-900 touch-pan-y"
       onMouseDown={handleMouseDown}
     >
       {/* After Image (Background) */}

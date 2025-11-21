@@ -66,7 +66,7 @@ const BatchResults: React.FC<BatchResultsProps> = ({ results, onClose }) => {
             </div>
 
             {/* Results Grid */}
-            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-scroll p-4">
                 <div className="grid grid-cols-1 gap-6">
                     {results.map((result) => (
                         <div key={result.index} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden flex flex-col">
