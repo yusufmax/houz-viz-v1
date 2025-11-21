@@ -81,8 +81,20 @@ export const handler: Handler = async (event) => {
             };
 
             // Build request body according to official API spec
-            // Ensure image is stripped of data URI prefix if present
-            const base64Image = params.image.replace(/^data:image\/\w+;base64,/, '');
+            if (!params.image) {
+                throw new Error('Missing image parameter');
+            }
+
+            // Ensure image is stripped of data URI prefix and newlines
+            const base64Image = params.image
+                .replace(/^data:image\/\w+;base64,/, '')
+                .replace(/\s/g, '');
+
+            console.log('[Kling API] Image format check:', {
+                originalLength: params.image.length,
+                cleanedLength: base64Image.length,
+                prefix: base64Image.substring(0, 50) + '...'
+            });
 
             const requestBody: any = {
                 model_name: modelMap[params.model] || 'kling-v1',
@@ -110,9 +122,7 @@ export const handler: Handler = async (event) => {
             console.log('[Kling API] Sending request to:', `${KLING_API_BASE}/videos/image2video`);
             // Log payload but truncate image data
             const logPayload = { ...requestBody };
-            if (logPayload.image && logPayload.image.length > 100) {
-                logPayload.image = '[BASE64_IMAGE_TRUNCATED]';
-            }
+            logPayload.image = logPayload.image ? `${logPayload.image.substring(0, 20)}...[TRUNCATED]` : null;
             console.log('[Kling API] Request payload:', JSON.stringify(logPayload));
 
             const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
