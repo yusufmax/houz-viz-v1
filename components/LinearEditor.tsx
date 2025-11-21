@@ -83,7 +83,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [style, setStyle] = useState<RenderStyle>(RenderStyle.None);
   const [atmosphere, setAtmosphere] = useState<Atmosphere[]>([]);
   const [camera, setCamera] = useState<CameraAngle>(CameraAngle.Default);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('Original');
   const [sceneElements, setSceneElements] = useState<SceneElements>({
     people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
   });
