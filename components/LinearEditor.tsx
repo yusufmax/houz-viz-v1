@@ -244,6 +244,35 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   }, [user]);
 
+  // Auto-detect aspect ratio from result image
+  useEffect(() => {
+    if (resultImage) {
+      const img = new Image();
+      img.onload = () => {
+        const width = img.width;
+        const height = img.height;
+        const ratio = width / height;
+
+        // Determine closest aspect ratio
+        let detectedRatio = '16:9';
+        if (Math.abs(ratio - 16 / 9) < 0.1) detectedRatio = '16:9';
+        else if (Math.abs(ratio - 9 / 16) < 0.1) detectedRatio = '9:16';
+        else if (Math.abs(ratio - 1) < 0.1) detectedRatio = '1:1';
+        else if (Math.abs(ratio - 4 / 3) < 0.1) detectedRatio = '4:3';
+        else if (Math.abs(ratio - 3 / 4) < 0.1) detectedRatio = '3:4';
+
+        console.log(`Original aspect ratio enforced: ${detectedRatio} (${width}x${height})`);
+
+        setVideoSettings(prev => ({
+          ...prev,
+          aspectRatio: detectedRatio as any
+        }));
+      };
+      img.src = resultImage;
+    }
+  }, [resultImage]);
+
+
   const saveToHistory = (url: string, usedPrompt: string) => {
     const newItem: HistoryItem = {
       id: Date.now().toString(),
@@ -1207,8 +1236,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     onClick={handleGenerateVideo}
                     disabled={!resultImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)}
                     className={`w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${!resultImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)
-                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+                      ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
                       }`}
                   >
                     {isGeneratingVideo ? (
