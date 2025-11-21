@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthProvider';
 import { supabase } from '../../lib/supabaseClient';
-import { Trash2, FolderOpen, Plus, Image as ImageIcon, Edit2, X } from 'lucide-react';
+import { Trash2, FolderOpen, Plus, Image as ImageIcon, Edit2, X, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { quotaService } from '../../services/quotaService';
 
 interface Project {
     id: string;
@@ -29,14 +30,28 @@ const ProfilePage: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editName, setEditName] = useState('');
+    const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         if (user) {
             fetchProjects();
             fetchReferences();
+            fetchQuota();
         }
     }, [user]);
+
+    const fetchQuota = async () => {
+        if (!user) return;
+        try {
+            const q = await quotaService.getUserQuota(user.id);
+            if (q) {
+                setQuota({ used: q.used, limit: q.quota });
+            }
+        } catch (error) {
+            console.error('Error fetching quota:', error);
+        }
+    };
 
     const fetchProjects = async () => {
         try {
@@ -157,6 +172,55 @@ const ProfilePage: React.FC = () => {
                         Sign Out
                     </button>
                 </div>
+
+                {/* Quota Section */}
+                {quota && (
+                    <div className="mb-12 bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/30 rounded-2xl p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Zap className="text-indigo-400" size={24} />
+                                    <h2 className="text-xl font-bold text-white">Generation Credits</h2>
+                                </div>
+                                <p className="text-slate-400 text-sm">Track your image generation usage</p>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-4xl font-bold text-white mb-1">
+                                    {quota.limit - quota.used}
+                                </div>
+                                <div className="text-sm text-slate-400">
+                                    of {quota.limit} remaining
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="mt-6">
+                            <div className="flex justify-between text-xs text-slate-400 mb-2">
+                                <span>Used: {quota.used}</span>
+                                <span>{Math.round((quota.used / quota.limit) * 100)}%</span>
+                            </div>
+                            <div className="h-3 bg-slate-800 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full transition-all duration-500 ${quota.used / quota.limit > 0.9
+                                            ? 'bg-gradient-to-r from-red-500 to-red-600'
+                                            : quota.used / quota.limit > 0.7
+                                                ? 'bg-gradient-to-r from-yellow-500 to-orange-500'
+                                                : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                                        }`}
+                                    style={{ width: `${Math.min((quota.used / quota.limit) * 100, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        {quota.used >= quota.limit && (
+                            <div className="mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                                <p className="text-red-300 text-sm font-medium">⚠️ Quota Exceeded</p>
+                                <p className="text-red-400/80 text-xs mt-1">Contact support to increase your generation limit</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Reference Images Section */}
                 <div className="mb-12">
