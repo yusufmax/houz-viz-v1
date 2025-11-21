@@ -1,4 +1,4 @@
-// Official Kling AI API - With JWT Authentication & Logging
+import { Handler } from '@netlify/functions';
 import jwt from 'jsonwebtoken';
 
 const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY;
@@ -6,7 +6,7 @@ const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY;
 const KLING_API_BASE = 'https://api-singapore.klingai.com/v1';
 
 // Generate JWT token for Kling AI API authentication
-function generateJWT(accessKey, secretKey) {
+function generateJWT(accessKey: string, secretKey: string): string {
     try {
         const payload = {
             iss: accessKey,
@@ -29,7 +29,7 @@ function generateJWT(accessKey, secretKey) {
     }
 }
 
-export const handler = async (event) => {
+export const handler: Handler = async (event) => {
     // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -73,7 +73,7 @@ export const handler = async (event) => {
 
         if (action === 'generate') {
             // Map our model names to official Kling model names
-            const modelMap = {
+            const modelMap: Record<string, string> = {
                 'kling-v1': 'kling-v1',
                 'kling-v1-5': 'kling-v1-5',
                 'kling-v2-1': 'kling-v2-1',
@@ -81,7 +81,7 @@ export const handler = async (event) => {
             };
 
             // Build request body according to official API spec
-            const requestBody = {
+            const requestBody: any = {
                 model_name: modelMap[params.model] || 'kling-v1',
                 duration: String(params.duration || 5), // Must be string: "5" or "10"
                 image: params.image, // Base64 or URL
@@ -105,7 +105,12 @@ export const handler = async (event) => {
             }
 
             console.log('[Kling API] Sending request to:', `${KLING_API_BASE}/videos/image2video`);
-            console.log('[Kling API] Request payload:', JSON.stringify({ ...requestBody, image: requestBody.image ? '[BASE64_IMAGE]' : null }));
+            // Log payload but truncate image data
+            const logPayload = { ...requestBody };
+            if (logPayload.image && logPayload.image.length > 100) {
+                logPayload.image = '[BASE64_IMAGE_TRUNCATED]';
+            }
+            console.log('[Kling API] Request payload:', JSON.stringify(logPayload));
 
             const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
                 method: 'POST',
@@ -195,7 +200,7 @@ export const handler = async (event) => {
             };
         }
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('[Kling API] Function Error:', error);
         return {
             statusCode: 500,
