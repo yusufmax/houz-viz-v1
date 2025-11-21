@@ -67,6 +67,50 @@ const toInlineData = async (input: string) => {
   }
 };
 
+/**
+ * Helper to get image dimensions from base64 data URL
+ */
+const getImageDimensions = (dataUrl: string): Promise<{ width: number; height: number }> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      resolve({ width: img.width, height: img.height });
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+};
+
+/**
+ * Calculate the closest standard aspect ratio from dimensions
+ */
+const calculateAspectRatio = (width: number, height: number): string => {
+  const ratio = width / height;
+
+  // Define standard aspect ratios with tolerance
+  const ratios = [
+    { value: 1, label: '1:1' },
+    { value: 16 / 9, label: '16:9' },
+    { value: 9 / 16, label: '9:16' },
+    { value: 4 / 3, label: '4:3' },
+    { value: 3 / 4, label: '3:4' }
+  ];
+
+  // Find closest match
+  let closest = ratios[0];
+  let minDiff = Math.abs(ratio - ratios[0].value);
+
+  for (const r of ratios) {
+    const diff = Math.abs(ratio - r.value);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = r;
+    }
+  }
+
+  return closest.label;
+};
+
 const constructFullPrompt = async (settings: GenerationSettings): Promise<string> => {
   const translatedPrompt = await translateIfNeeded(settings.prompt);
 
@@ -292,9 +336,19 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     if (settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else if (sourceImage) {
-      parts[0].text += " Strictly maintain the exact aspect ratio and composition of the source image (first image).";
+      // Calculate actual aspect ratio from source image
+      try {
+        const dimensions = await getImageDimensions(sourceImage);
+        const calculatedRatio = calculateAspectRatio(dimensions.width, dimensions.height);
+        config.imageConfig = { aspectRatio: calculatedRatio };
+        console.log(`Original aspect ratio enforced: ${calculatedRatio} (${dimensions.width}x${dimensions.height})`);
+      } catch (error) {
+        console.warn('Failed to calculate aspect ratio, falling back to text instruction', error);
+        parts[0].text += " Strictly maintain the exact aspect ratio and composition of the source image (first image).";
+      }
+
       if (settings.styleReferenceImage) {
-        parts[0].text += " Do NOT change the aspect ratio to match the style reference image. The first image dictates the dimensions.";
+        parts[0].text += " Use the style reference for colors and mood only, NOT for aspect ratio or composition.";
       }
     }
 
