@@ -1,9 +1,7 @@
-import { Handler } from '@netlify/functions';
-
 const KLING_API_KEY = process.env.KLING_API_KEY;
 const KLING_API_BASE = 'https://api.klingai.com/v1';
 
-export const handler: Handler = async (event) => {
+exports.handler = async (event) => {
     // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -86,7 +84,7 @@ export const handler: Handler = async (event) => {
             };
         }
 
-    } catch (error: any) {
+    } catch (error) {
         console.error('Kling video function error:', error);
         return {
             statusCode: 500,
