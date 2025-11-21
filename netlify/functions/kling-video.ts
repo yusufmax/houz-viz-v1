@@ -85,12 +85,32 @@ export const handler: Handler = async (event) => {
                 throw new Error('Missing image parameter');
             }
 
-            // Ensure image is stripped of data URI prefix and newlines
-            const base64Image = params.image
-                .replace(/^data:image\/\w+;base64,/, '')
-                .replace(/\s/g, '');
+            let base64Image = params.image;
+
+            // Check if image is a URL
+            if (params.image.startsWith('http://') || params.image.startsWith('https://')) {
+                console.log('[Kling API] Image is a URL, fetching content...');
+                try {
+                    const imageResponse = await fetch(params.image);
+                    if (!imageResponse.ok) {
+                        throw new Error(`Failed to fetch image from URL: ${imageResponse.statusText}`);
+                    }
+                    const arrayBuffer = await imageResponse.arrayBuffer();
+                    base64Image = Buffer.from(arrayBuffer).toString('base64');
+                    console.log('[Kling API] Successfully converted URL to base64');
+                } catch (fetchError: any) {
+                    console.error('[Kling API] Error fetching image URL:', fetchError);
+                    throw new Error(`Failed to process image URL: ${fetchError.message}`);
+                }
+            } else {
+                // Ensure image is stripped of data URI prefix and newlines
+                base64Image = params.image
+                    .replace(/^data:image\/\w+;base64,/, '')
+                    .replace(/\s/g, '');
+            }
 
             console.log('[Kling API] Image format check:', {
+                isUrl: params.image.startsWith('http'),
                 originalLength: params.image.length,
                 cleanedLength: base64Image.length,
                 prefix: base64Image.substring(0, 50) + '...'
