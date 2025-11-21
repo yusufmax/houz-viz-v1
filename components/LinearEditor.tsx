@@ -3,12 +3,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2,
   Zap, Cloud, Camera, LayoutTemplate, Loader2,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles
+  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
 import DrawEditor from './DrawEditor';
 import FullScreenPreview from './FullScreenPreview';
+import BatchImageUpload from './BatchImageUpload';
+import BatchResults from './BatchResults';
 import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem } from '../types';
 import { generateImage, editImage, enhancePrompt, upscaleImage } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
@@ -90,6 +92,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+
+  // Batch mode state
+  const [batchMode, setBatchMode] = useState(false);
+  const [batchImages, setBatchImages] = useState<string[]>([]);
+  const [batchResults, setBatchResults] = useState<Array<{ input: string, output: string | null, index: number }>>([]);
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 });
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [showBatchResults, setShowBatchResults] = useState(false);
 
   // Fullscreen
   const [showPreview, setShowPreview] = useState(false);
@@ -387,6 +397,69 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
+  const processBatch = async () => {
+    if (!user) {
+      alert("Please sign in to generate images.");
+      return;
+    }
+
+    if (batchImages.length === 0) {
+      alert("Please upload images first.");
+      return;
+    }
+
+    // Check quota
+    const requiredCredits = batchImages.length;
+    const quotaData = await quotaService.getUserQuota(user.id);
+
+    if (!quotaData || (quotaData.quota - quotaData.used) < requiredCredits) {
+      const remaining = quotaData ? (quotaData.quota - quotaData.used) : 0;
+      alert(`🚫 Not enough credits! Need ${requiredCredits}, have ${remaining}.\n\nPlease upgrade your plan or contact support.`);
+      return;
+    }
+
+    // Confirm with user
+    const confirmed = window.confirm(
+      `This batch will process ${batchImages.length} image${batchImages.length > 1 ? 's' : ''} and use ${requiredCredits} credit${requiredCredits > 1 ? 's' : ''}.\n\nContinue?`
+    );
+
+    if (!confirmed) return;
+
+    setIsBatchProcessing(true);
+    setBatchProgress({ current: 0, total: batchImages.length });
+    const results: Array<{ input: string, output: string | null, index: number }> = [];
+
+    const settings: GenerationSettings = {
+      prompt: prompt || "High quality architecture render",
+      style,
+      atmosphere,
+      camera,
+      aspectRatio,
+      sceneElements,
+      styleReferenceImage,
+      model,
+      resolution
+    };
+
+    for (let i = 0; i < batchImages.length; i++) {
+      setBatchProgress({ current: i + 1, total: batchImages.length });
+
+      try {
+        const result = await editImage(batchImages[i], settings);
+        results.push({ input: batchImages[i], output: result, index: i });
+        await quotaService.incrementUsage(user.id);
+      } catch (error) {
+        console.error(`Failed to process image ${i + 1}:`, error);
+        results.push({ input: batchImages[i], output: null, index: i });
+      }
+    }
+
+    setBatchResults(results);
+    setIsBatchProcessing(false);
+    setShowBatchResults(true);
+    loadQuota(); // Refresh quota display
+  };
+
   const handleGenerate = () => executeGeneration();
 
   const handleUpscale = async () => {
@@ -543,21 +616,77 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
-          <div className="flex-1 min-h-[200px]">
-            <ImageUpload
-              selectedImage={sourceImage}
-              onImageSelected={setSourceImage}
-              label={t('dropSketch')}
-            />
+          {/* Batch Mode Toggle */}
+          <div className="mb-4">
+            <button
+              onClick={() => {
+                setBatchMode(!batchMode);
+                if (batchMode) {
+                  setBatchImages([]);
+                  setBatchResults([]);
+                }
+              }}
+              className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+            >
+              <Layers size={16} />
+              {batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}
+            </button>
+            {batchMode && (
+              <p className="text-xs text-slate-400 mt-2 text-center">
+                Upload up to 10 images to process with same settings
+              </p>
+            )}
           </div>
 
-          {!sourceImage && (
-            <button
-              onClick={() => setDrawingTarget('source')}
-              className="mt-4 w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-400 text-sm hover:text-indigo-400 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2"
-            >
-              <Pencil size={14} /> {t('startBlank')}
-            </button>
+          {/* Conditional: Batch or Single Upload */}
+          {batchMode ? (
+            <div className="space-y-4">
+              <BatchImageUpload
+                onImagesSelected={setBatchImages}
+                maxImages={10}
+              />
+              {batchImages.length > 0 && (
+                <button
+                  onClick={processBatch}
+                  disabled={isBatchProcessing}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isBatchProcessing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Processing {batchProgress.current}/{batchProgress.total}...
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={18} />
+                      Generate Batch ({batchImages.length} images)
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 min-h-[200px]">
+                <ImageUpload
+                  selectedImage={sourceImage}
+                  onImageSelected={setSourceImage}
+                  label={t('dropSketch')}
+                />
+              </div>
+
+              {!sourceImage && (
+                <button
+                  onClick={() => setDrawingTarget('source')}
+                  className="mt-4 w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-400 text-sm hover:text-indigo-400 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2"
+                >
+                  <Pencil size={14} /> {t('startBlank')}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -986,6 +1115,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           </div>
         </div>
       </div>
+
+      {/* Batch Results Modal */}
+      {showBatchResults && batchResults.length > 0 && (
+        <BatchResults
+          results={batchResults}
+          onClose={() => {
+            setShowBatchResults(false);
+            setBatchResults([]);
+            setBatchImages([]);
+          }}
+        />
+      )}
     </div>
   );
 };
