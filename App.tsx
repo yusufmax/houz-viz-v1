@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Hexagon, Layers, GitBranch, HelpCircle, Globe } from 'lucide-react';
+import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
 import { LanguageProvider, useLanguage } from './LanguageContext';
@@ -19,6 +19,7 @@ import GeminiPlayground from './pages/Dev/GeminiPlayground';
 import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
+import { quotaService } from './services/quotaService';
 
 const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -27,6 +28,8 @@ const Home: React.FC = () => {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showInstructions, setShowInstructions] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const { user } = useAuth();
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
 
   useEffect(() => {
     const handleAgentAction = (event: CustomEvent) => {
@@ -42,6 +45,26 @@ const Home: React.FC = () => {
       window.removeEventListener('agent-action' as any, handleAgentAction as any);
     };
   }, []);
+
+  // Load quota
+  useEffect(() => {
+    const loadQuota = async () => {
+      if (!user) return;
+      try {
+        const q = await quotaService.getUserQuota(user.id);
+        if (q) {
+          setQuota({ used: q.used, limit: q.quota });
+        }
+      } catch (error) {
+        console.error('Error fetching quota:', error);
+      }
+    };
+    loadQuota();
+
+    // Refresh quota every 10 seconds
+    const interval = setInterval(loadQuota, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const toggleLang = () => {
     setLang(lang === 'en' ? 'ru' : 'en');
@@ -84,11 +107,21 @@ const Home: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4">
-          {/* API Key Indicator (Mock) */}
-          <div className="hidden md:flex items-center gap-2 text-xs text-green-400 bg-green-400/10 px-3 py-1 rounded-full border border-green-400/20">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            Gemini Connected
-          </div>
+          {/* Credits Indicator */}
+          {quota && (
+            <div className="hidden md:flex items-center gap-2 text-xs bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg">
+              <Zap className={`${quota.limit - quota.used <= 5
+                  ? 'text-red-400'
+                  : quota.limit - quota.used <= 10
+                    ? 'text-yellow-400'
+                    : 'text-indigo-400'
+                }`} size={14} />
+              <span className="font-medium text-white">{quota.limit - quota.used}</span>
+              <span className="text-slate-400">/</span>
+              <span className="text-slate-400">{quota.limit}</span>
+              <span className="text-slate-500">credits</span>
+            </div>
+          )}
 
           {/* Language Toggle */}
           <button
