@@ -21,7 +21,48 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
   const processFile = (file: File) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      onImageSelected(reader.result as string);
+      const img = new Image();
+      img.onload = () => {
+        // Create canvas for compression
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // Calculate new dimensions (max 1920px on longest side)
+        const maxSize = 1920;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+
+        // Set canvas size and draw compressed image
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to base64 with compression (0.85 quality for JPEG)
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+        // Calculate compression ratio
+        const originalSize = (reader.result as string).length;
+        const compressedSize = compressedBase64.length;
+        const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
+
+        console.log(`Image compressed: ${ratio}% smaller (${(originalSize / 1024).toFixed(0)}KB → ${(compressedSize / 1024).toFixed(0)}KB)`);
+
+        onImageSelected(compressedBase64);
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   };
@@ -49,7 +90,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
     return (
       <div className={`relative group w-full ${compact ? 'h-32' : 'h-full'} rounded-lg overflow-hidden border border-slate-600 bg-slate-900`}>
         <img src={selectedImage} alt="Selected" className="w-full h-full object-contain" />
-        <button 
+        <button
           onClick={() => onImageSelected(null)}
           className="absolute top-2 right-2 p-1 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
         >
