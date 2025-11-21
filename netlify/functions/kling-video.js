@@ -1,6 +1,28 @@
-// Official Kling AI API - Based on official documentation
-const KLING_API_KEY = process.env.KLING_API_KEY;
+// Official Kling AI API - With JWT Authentication
+const jwt = require('jsonwebtoken');
+
+const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY;
+const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY;
 const KLING_API_BASE = 'https://api-singapore.klingai.com/v1';
+
+// Generate JWT token for Kling AI API authentication
+function generateJWT(accessKey, secretKey) {
+    const payload = {
+        iss: accessKey,
+        exp: Math.floor(Date.now() / 1000) + 1800, // Current time + 30 minutes
+        nbf: Math.floor(Date.now() / 1000) - 5 // Current time - 5 seconds
+    };
+
+    const token = jwt.sign(payload, secretKey, {
+        algorithm: 'HS256',
+        header: {
+            alg: 'HS256',
+            typ: 'JWT'
+        }
+    });
+
+    return token;
+}
 
 exports.handler = async (event) => {
     // CORS headers
@@ -23,8 +45,23 @@ exports.handler = async (event) => {
         };
     }
 
+    // Check for required credentials
+    if (!KLING_ACCESS_KEY || !KLING_SECRET_KEY) {
+        return {
+            statusCode: 500,
+            headers,
+            body: JSON.stringify({
+                error: 'Missing Kling AI credentials. Please set KLING_ACCESS_KEY and KLING_SECRET_KEY environment variables.'
+            })
+        };
+    }
+
     try {
         const { action, ...params } = JSON.parse(event.body || '{}');
+
+        // Generate JWT token for authentication
+        const jwtToken = generateJWT(KLING_ACCESS_KEY, KLING_SECRET_KEY);
+        const authHeader = `Bearer ${jwtToken}`;
 
         if (action === 'generate') {
             // Map our model names to official Kling model names
@@ -70,7 +107,7 @@ exports.handler = async (event) => {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${KLING_API_KEY}`
+                    'Authorization': authHeader
                 },
                 body: JSON.stringify(requestBody)
             });
@@ -86,7 +123,7 @@ exports.handler = async (event) => {
 
             // Check for API-level errors
             if (data.code !== 0) {
-                throw new Error(data.message || 'Kling API returned error code');
+                throw new Error(data.message || `Kling API error code: ${data.code}`);
             }
 
             // Return task_id for polling
@@ -104,7 +141,7 @@ exports.handler = async (event) => {
             const response = await fetch(`${KLING_API_BASE}/videos/image2video/${params.task_id}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${KLING_API_KEY}`
+                    'Authorization': authHeader
                 }
             });
 
@@ -118,7 +155,7 @@ exports.handler = async (event) => {
 
             // Check for API-level errors
             if (data.code !== 0) {
-                throw new Error(data.message || 'Kling API returned error code');
+                throw new Error(data.message || `Kling API error code: ${data.code}`);
             }
 
             // Transform response to match our expected format
