@@ -9,10 +9,15 @@ export const quotaService = {
             .from('profiles')
             .select('generation_quota, generations_used')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error('Error fetching quota:', error);
+            return null;
+        }
+
+        if (!data) {
+            console.warn('No profile data found for user:', userId);
             return null;
         }
 
