@@ -79,7 +79,7 @@ const Home: React.FC = () => {
           <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Hexagon fill="white" size={20} className="text-white" />
           </div>
-          <h1 className="font-bold text-lg tracking-tight text-white hidden sm:block">ArchGenius <span className="text-indigo-400 font-light">AI</span></h1>
+          <h1 className="font-bold text-lg tracking-tight text-white hidden sm:block">HOUZ.AI</h1>
         </div>
 
         {/* Mode Switcher */}

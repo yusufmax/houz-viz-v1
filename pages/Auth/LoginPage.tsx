@@ -13,7 +13,7 @@ const LoginPage: React.FC = () => {
                         <Hexagon fill="white" size={28} className="text-white" />
                     </div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
-                    <p className="text-slate-400 mt-2">Sign in to continue to ArchGenius AI</p>
+                    <p className="text-slate-400 mt-2">Sign in to continue to HOUZ.AI</p>
                 </div>
 
                 <button
