@@ -674,7 +674,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 2: CONTROLS */}
       <div className="w-full lg:w-1/4 flex flex-col gap-4 relative h-auto lg:h-full min-h-0">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 h-full overflow-y-auto custom-scrollbar relative">
+        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 h-auto lg:h-full lg:overflow-y-auto custom-scrollbar relative">
           {showInstructions && <GuideTooltip text={t('guideStyles')} className="top-4 right-4" side="right" />}
 
           <div className="flex items-center gap-2 mb-6 text-indigo-400 font-semibold">
