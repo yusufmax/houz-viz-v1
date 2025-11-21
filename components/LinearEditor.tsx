@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2,
   Zap, Cloud, Camera, LayoutTemplate, Loader2,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture
+  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -88,6 +88,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
   const [resolution, setResolution] = useState<string>('4K');
 
+  // Quota state
+  const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+
   // Fullscreen
   const [showPreview, setShowPreview] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
@@ -111,7 +114,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         case 'setAtmosphere':
           if (args.atmospheres && Array.isArray(args.atmospheres)) {
             const validAtmospheres = args.atmospheres
-              .filter((atm: string) => Object.values(Atmosphere).includes(atm))
+              .filter((atm: string) => Object.values(Atmosphere).includes(atm as Atmosphere))
               .slice(0, 3); // Max 3 atmospheres
             if (validAtmospheres.length > 0) {
               setAtmosphere(validAtmospheres as Atmosphere[]);
