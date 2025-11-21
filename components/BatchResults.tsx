@@ -1,6 +1,7 @@
 import React from 'react';
 import { Download, X } from 'lucide-react';
 import { downloadAsZip, downloadSingleImage } from '../utils/zipUtils';
+import BeforeAfter from './BeforeAfter';
 
 interface BatchResult {
     input: string;
@@ -35,9 +36,9 @@ const BatchResults: React.FC<BatchResultsProps> = ({ results, onClose }) => {
     const failCount = results.filter(r => !r.output).length;
 
     return (
-        <div className="w-full h-full flex flex-col bg-slate-900/50">
+        <div className="w-full h-full flex flex-col bg-slate-900/50 min-h-0">
             {/* Header */}
-            <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-900/80 backdrop-blur">
+            <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-900/80 backdrop-blur shrink-0">
                 <div>
                     <h2 className="text-lg font-bold text-white">Batch Results</h2>
                     <p className="text-xs text-slate-400 mt-0.5">
@@ -66,41 +67,38 @@ const BatchResults: React.FC<BatchResultsProps> = ({ results, onClose }) => {
 
             {/* Results Grid */}
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                <div className="grid grid-cols-1 gap-4">
+                <div className="grid grid-cols-1 gap-6">
                     {results.map((result) => (
-                        <div key={result.index} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
-                            {/* Before/After */}
-                            <div className="grid grid-cols-2 gap-1 p-2">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] text-slate-400 text-center uppercase tracking-wider">Input #{result.index + 1}</p>
-                                    <img src={result.input} alt={`Input ${result.index + 1}`} className="w-full aspect-video object-cover rounded bg-slate-900" />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] text-slate-400 text-center uppercase tracking-wider">Output</p>
-                                    {result.output ? (
-                                        <img src={result.output} alt={`Output ${result.index + 1}`} className="w-full aspect-video object-cover rounded bg-slate-900" />
-                                    ) : (
-                                        <div className="w-full aspect-video bg-slate-900 rounded flex items-center justify-center border border-slate-700 border-dashed">
-                                            <p className="text-xs text-red-400 flex items-center gap-1">
-                                                <X size={12} /> Failed
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Download Button */}
-                            {result.output && (
-                                <div className="px-2 pb-2">
+                        <div key={result.index} className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden flex flex-col">
+                            {/* Header for Item */}
+                            <div className="px-3 py-2 border-b border-slate-700/50 flex justify-between items-center bg-slate-800/80">
+                                <span className="text-xs font-medium text-slate-300">Image #{result.index + 1}</span>
+                                {result.output && (
                                     <button
                                         onClick={() => handleDownloadSingle(result)}
-                                        className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white text-xs rounded transition-colors border border-slate-600 hover:border-slate-500"
+                                        className="flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors"
                                     >
-                                        <Download size={12} />
-                                        Download Result
+                                        <Download size={12} /> Save
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
+
+                            {/* Before/After Slider */}
+                            <div className="aspect-video w-full relative bg-slate-900">
+                                {result.output ? (
+                                    <BeforeAfter beforeImage={result.input} afterImage={result.output} />
+                                ) : (
+                                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-2">
+                                        <div className="w-full h-full absolute inset-0 opacity-20">
+                                            <img src={result.input} alt="Input" className="w-full h-full object-cover grayscale" />
+                                        </div>
+                                        <div className="z-10 bg-slate-900/80 p-4 rounded-lg border border-red-500/30 flex flex-col items-center">
+                                            <X size={24} className="text-red-500 mb-2" />
+                                            <span className="text-sm font-medium text-red-400">Generation Failed</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
