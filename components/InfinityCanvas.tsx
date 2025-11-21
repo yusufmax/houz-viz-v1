@@ -20,6 +20,7 @@ import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
 import { useSearchParams } from 'react-router-dom';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
+import { quotaService } from '../services/quotaService';
 
 const STYLE_LIBRARY = [
     // Living Complex / House
@@ -638,6 +639,18 @@ const InfinityCanvas: React.FC = () => {
         setProcessingNodes(prev => new Set(prev).add(nodeId));
 
         try {
+            // Check quota before generation
+            if (!user) {
+                alert("Please sign in to generate images.");
+                return;
+            }
+
+            const canGenerate = await quotaService.checkQuota(user.id);
+            if (!canGenerate) {
+                alert("🚫 Quota Exceeded! You have used all your generation credits. Please contact support or upgrade your plan.");
+                return;
+            }
+
             const inputConns = currentConnections.filter(c => c.to === nodeId);
             let sourceImg = null;
             let promptText = node.data.settings?.prompt || "";
@@ -660,6 +673,9 @@ const InfinityCanvas: React.FC = () => {
             } else {
                 result = await generateImage(settings);
             }
+
+            // Increment quota after successful generation
+            await quotaService.incrementUsage(user.id);
 
             // Create a new output node
             const newNodeId = Math.random().toString(36).substr(2, 9);
