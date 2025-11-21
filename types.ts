@@ -1,6 +1,6 @@
 
 export enum RenderStyle {
-  None = 'None',
+  None = 'Photorealistic',
   // General
   Photorealistic = 'Photorealistic',
   cinematic = 'Cinematic & Dramatic',
@@ -80,9 +80,9 @@ export enum Atmosphere {
   None = 'None',
   Sunny = 'Sunny Day',
   Sunset = 'Golden Hour Sunset',
-  Night = 'Night with City Lights',
+  Night = 'Realistic Night time',
   Foggy = 'Foggy & Mysterious',
-  Rainy = 'Rainy Neon Reflections',
+  Rainy = 'Rainy Reflections',
   Snowy = 'Snowy Winter',
   Overcast = 'Soft Overcast',
   Dawn = 'Blue Hour Dawn',
@@ -192,4 +192,41 @@ export interface HistoryItem {
   prompt: string;
   timestamp: number;
   style: RenderStyle;
+}
+
+// Video Generation Types
+export enum KlingModel {
+  V2_5_Turbo = 'kling-v2-5-turbo',
+  V2_1 = 'kling-v2-1'
+}
+
+export interface VideoGenerationSettings {
+  model: KlingModel;
+  duration: 5 | 10;
+  aspectRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
+  prompt: string;
+  cfgScale?: number;
+  cameraMovement?: string;
+}
+
+export interface VideoGeneration {
+  id: string;
+  user_id: string;
+  task_id: string;
+  source_image: string;
+  model: string;
+  duration: number;
+  aspect_ratio: string;
+  prompt: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  video_url?: string;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VideoQuota {
+  used: number;
+  quota: number;
+  last_reset: string;
 }

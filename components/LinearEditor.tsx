@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2,
   Zap, Cloud, Camera, LayoutTemplate, Loader2,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers
+  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -11,12 +11,13 @@ import DrawEditor from './DrawEditor';
 import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem } from '../types';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota } from '../types';
 import { generateImage, editImage, enhancePrompt, upscaleImage } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
 import { quotaService } from '../services/quotaService';
+import { videoQuotaService } from '../services/videoQuotaService';
 import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 
@@ -64,6 +65,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isUpscaling, setIsUpscaling] = useState(false);
+
+  // Video Generation
+  const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
+    model: KlingModel.V2_5_Turbo,
+    duration: 5,
+    aspectRatio: '16:9',
+    prompt: ''
+  });
+  const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+  const [videoQuota, setVideoQuota] = useState<VideoQuota | null>(null);
+  const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+  const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
 
   // History
   const [showHistory, setShowHistory] = useState(false);
@@ -216,6 +229,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         setCustomReferenceImages(refs);
       }).catch(err => {
         console.error('Failed to load custom reference images:', err);
+      });
+    }
+  }, [user]);
+
+  // Load video quota
+  useEffect(() => {
+    if (user) {
+      videoQuotaService.getUserVideoQuota(user.id).then(quota => {
+        setVideoQuota(quota);
+      }).catch(err => {
+        console.error('Failed to load video quota:', err);
       });
     }
   }, [user]);
@@ -461,6 +485,96 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   const handleGenerate = () => executeGeneration();
+
+  const handleGenerateVideo = async () => {
+    if (!resultImage || !user) {
+      alert('Please generate an image first and sign in');
+      return;
+    }
+
+    try {
+      setIsGeneratingVideo(true);
+
+      // Check quota
+      const canGenerate = await videoQuotaService.canGenerateVideo(user.id);
+      if (!canGenerate) {
+        alert('Video quota exceeded. Please upgrade or wait for monthly reset.');
+        setIsGeneratingVideo(false);
+        return;
+      }
+
+      // Call Netlify function to generate video
+      const response = await fetch('/.netlify/functions/kling-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generate',
+          image: resultImage,
+          model: videoSettings.model,
+          duration: videoSettings.duration,
+          aspectRatio: videoSettings.aspectRatio,
+          prompt: videoSettings.prompt,
+          cfgScale: videoSettings.cfgScale || 0.5
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start video generation');
+      }
+
+      const { task_id } = await response.json();
+      setVideoTaskId(task_id);
+
+      // Increment usage
+      await videoQuotaService.incrementVideoUsage(user.id);
+
+      // Refresh quota
+      const updatedQuota = await videoQuotaService.getUserVideoQuota(user.id);
+      setVideoQuota(updatedQuota);
+
+      // Poll for completion
+      const pollInterval = setInterval(async () => {
+        try {
+          const pollResponse = await fetch('/.netlify/functions/kling-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'poll',
+              task_id
+            })
+          });
+
+          if (!pollResponse.ok) {
+            throw new Error('Failed to check video status');
+          }
+
+          const status = await pollResponse.json();
+
+          if (status.status === 'completed') {
+            clearInterval(pollInterval);
+            setGeneratedVideoUrl(status.video_url);
+            setIsGeneratingVideo(false);
+            setVideoTaskId(null);
+          } else if (status.status === 'failed') {
+            clearInterval(pollInterval);
+            alert('Video generation failed: ' + (status.error_message || 'Unknown error'));
+            setIsGeneratingVideo(false);
+            setVideoTaskId(null);
+          }
+        } catch (error: any) {
+          console.error('Polling error:', error);
+          clearInterval(pollInterval);
+          setIsGeneratingVideo(false);
+          setVideoTaskId(null);
+        }
+      }, 5000); // Poll every 5 seconds
+
+    } catch (error: any) {
+      console.error('Video generation error:', error);
+      alert('Failed to generate video: ' + error.message);
+      setIsGeneratingVideo(false);
+    }
+  };
 
   const handleUpscale = async () => {
     if (!resultImage) return;
@@ -1005,6 +1119,130 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   )
                 )}
               </button>
+
+              {/* Video Generation Section */}
+              {!batchMode && resultImage && (
+                <div className="mt-6 pt-6 border-t border-slate-700">
+                  <h3 className="text-sm font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                    <Film size={16} />
+                    Generate Video
+                  </h3>
+
+                  {/* Video Quota Display */}
+                  {videoQuota && (
+                    <div className="mb-3 p-2 bg-slate-800 rounded text-xs">
+                      <span className="text-slate-400">Video Credits: </span>
+                      <span className="text-white font-semibold">
+                        {videoQuota.quota - videoQuota.used} / {videoQuota.quota}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Model Selection */}
+                  <div className="mb-3">
+                    <label className="block text-xs text-slate-400 mb-1">Model</label>
+                    <select
+                      value={videoSettings.model}
+                      onChange={(e) => setVideoSettings({ ...videoSettings, model: e.target.value as KlingModel })}
+                      className="w-full bg-slate-800 text-white px-3 py-2 rounded text-sm border border-slate-700 focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value={KlingModel.V2_5_Turbo}>Kling 2.5 Turbo (Faster)</option>
+                      <option value={KlingModel.V2_1}>Kling 2.1 (Higher Quality)</option>
+                    </select>
+                  </div>
+
+                  {/* Duration */}
+                  <div className="mb-3">
+                    <label className="block text-xs text-slate-400 mb-1">Duration</label>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setVideoSettings({ ...videoSettings, duration: 5 })}
+                        className={`flex-1 py-2 rounded text-sm transition-colors ${videoSettings.duration === 5 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                      >
+                        5 seconds
+                      </button>
+                      <button
+                        onClick={() => setVideoSettings({ ...videoSettings, duration: 10 })}
+                        className={`flex-1 py-2 rounded text-sm transition-colors ${videoSettings.duration === 10 ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+                      >
+                        10 seconds
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Aspect Ratio */}
+                  <div className="mb-3">
+                    <label className="block text-xs text-slate-400 mb-1">Aspect Ratio</label>
+                    <select
+                      value={videoSettings.aspectRatio}
+                      onChange={(e) => setVideoSettings({ ...videoSettings, aspectRatio: e.target.value as any })}
+                      className="w-full bg-slate-800 text-white px-3 py-2 rounded text-sm border border-slate-700 focus:border-indigo-500 focus:outline-none"
+                    >
+                      <option value="16:9">16:9 (Landscape)</option>
+                      <option value="9:16">9:16 (Portrait)</option>
+                      <option value="1:1">1:1 (Square)</option>
+                      <option value="4:3">4:3 (Classic)</option>
+                      <option value="3:4">3:4 (Portrait Classic)</option>
+                    </select>
+                  </div>
+
+                  {/* Prompt */}
+                  <div className="mb-3">
+                    <label className="block text-xs text-slate-400 mb-1">Prompt (Optional)</label>
+                    <textarea
+                      value={videoSettings.prompt}
+                      onChange={(e) => setVideoSettings({ ...videoSettings, prompt: e.target.value })}
+                      placeholder="Describe the motion or scene..."
+                      className="w-full bg-slate-800 text-white px-3 py-2 rounded text-sm resize-none border border-slate-700 focus:border-indigo-500 focus:outline-none"
+                      rows={3}
+                      maxLength={2500}
+                    />
+                    <div className="text-xs text-slate-500 mt-1">
+                      {videoSettings.prompt.length} / 2500
+                    </div>
+                  </div>
+
+                  {/* Generate Video Button */}
+                  <button
+                    onClick={handleGenerateVideo}
+                    disabled={!resultImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)}
+                    className={`w-full py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-all ${!resultImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)
+                        ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white'
+                      }`}
+                  >
+                    {isGeneratingVideo ? (
+                      <>
+                        <Loader2 className="animate-spin" size={18} />
+                        Generating Video...
+                      </>
+                    ) : (
+                      <>
+                        <Film size={18} />
+                        Generate Video
+                      </>
+                    )}
+                  </button>
+
+                  {/* Generated Video Display */}
+                  {generatedVideoUrl && (
+                    <div className="mt-4">
+                      <video
+                        src={generatedVideoUrl}
+                        controls
+                        className="w-full rounded-lg border border-slate-700"
+                      />
+                      <button
+                        onClick={() => window.open(generatedVideoUrl, '_blank')}
+                        className="w-full mt-2 bg-slate-800 hover:bg-slate-700 text-white py-2 rounded text-sm flex items-center justify-center gap-2"
+                      >
+                        <Download size={16} />
+                        Download Video
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
