@@ -1,5 +1,6 @@
+// Use AI/ML API as the provider for Kling AI
 const KLING_API_KEY = process.env.KLING_API_KEY;
-const KLING_API_BASE = 'https://api.klingai.com/v1';
+const API_BASE = 'https://api.aimlapi.com';
 
 exports.handler = async (event) => {
     // CORS headers
@@ -26,27 +27,27 @@ exports.handler = async (event) => {
         const { action, ...params } = JSON.parse(event.body || '{}');
 
         if (action === 'generate') {
-            // Generate video from image
-            const response = await fetch(`${KLING_API_BASE}/images/generations/image-to-video`, {
+            // Generate video from image using AI/ML API
+            const response = await fetch(`${API_BASE}/v2/generate/video/kling/generation`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${KLING_API_KEY}`
                 },
                 body: JSON.stringify({
-                    image: params.image,
-                    model: params.model,
-                    duration: params.duration,
-                    aspect_ratio: params.aspectRatio,
+                    model: params.model || 'kling-v1-5',
+                    image_url: params.image, // Can be URL or base64
                     prompt: params.prompt || '',
-                    cfg_scale: params.cfgScale || 0.5,
-                    camera_movement: params.cameraMovement
+                    duration: params.duration || 5,
+                    aspect_ratio: params.aspectRatio || '16:9',
+                    cfg_scale: params.cfgScale || 0.5
                 })
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Kling API error: ${response.statusText}`);
+                const errorText = await response.text();
+                console.error('Kling API error:', errorText);
+                throw new Error(`Kling API error: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
@@ -57,23 +58,31 @@ exports.handler = async (event) => {
             };
 
         } else if (action === 'poll') {
-            // Poll for video status
-            const response = await fetch(`${KLING_API_BASE}/tasks/${params.task_id}`, {
+            // Poll for video status using task_id
+            const response = await fetch(`${API_BASE}/v2/generate/video/kling/generation/${params.task_id}`, {
+                method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${KLING_API_KEY}`
                 }
             });
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `Kling API error: ${response.statusText}`);
+                const errorText = await response.text();
+                console.error('Kling polling error:', errorText);
+                throw new Error(`Kling polling error: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
+
+            // Transform response to match our expected format
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify(data)
+                body: JSON.stringify({
+                    status: data.status, // 'pending', 'processing', 'completed', 'failed'
+                    video_url: data.output?.video_url || data.video_url,
+                    error_message: data.error
+                })
             };
 
         } else {
@@ -89,7 +98,11 @@ exports.handler = async (event) => {
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: error.message || 'Internal server error' })
+            body: JSON.stringify({
+                error: error.message || 'Internal server error',
+                details: error.toString()
+            })
         };
     }
 };
+
