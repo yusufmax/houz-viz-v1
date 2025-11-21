@@ -512,7 +512,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] gap-4 p-4 relative overflow-hidden">
+    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)] lg:h-[calc(100vh-64px)] gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
 
 
       {/* Full Screen Preview */}
@@ -586,7 +586,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       )}
 
       {/* COLUMN 1: SOURCE */}
-      <div className="lg:w-1/4 flex flex-col gap-4 min-h-[300px] ml-8 lg:ml-0 transition-all relative h-full min-h-0">
+      <div className="w-full lg:w-1/4 flex flex-col gap-4 min-h-[300px] ml-0 transition-all relative h-auto lg:h-full min-h-0">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
           {showInstructions && <GuideTooltip text={t('guideSource')} className="top-2 right-2 left-auto" side="bottom" />}
 
@@ -673,7 +673,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       </div>
 
       {/* COLUMN 2: CONTROLS */}
-      <div className="lg:w-1/4 flex flex-col gap-4 relative h-full min-h-0">
+      <div className="w-full lg:w-1/4 flex flex-col gap-4 relative h-auto lg:h-full min-h-0">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 h-full overflow-y-auto custom-scrollbar relative">
           {showInstructions && <GuideTooltip text={t('guideStyles')} className="top-4 right-4" side="right" />}
 
@@ -1011,7 +1011,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       </div>
 
       {/* COLUMN 3: RESULT */}
-      <div className="lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-full min-h-0">
+      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-auto lg:h-full min-h-0">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 

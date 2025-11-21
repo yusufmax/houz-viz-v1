@@ -79,7 +79,7 @@ const Home: React.FC = () => {
           <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded flex items-center justify-center shadow-lg shadow-indigo-500/20">
             <Hexagon fill="white" size={20} className="text-white" />
           </div>
-          <h1 className="font-bold text-lg tracking-tight text-white">ArchGenius <span className="text-indigo-400 font-light">AI</span></h1>
+          <h1 className="font-bold text-lg tracking-tight text-white hidden sm:block">ArchGenius <span className="text-indigo-400 font-light">AI</span></h1>
         </div>
 
         {/* Mode Switcher */}
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
               }`}
           >
             <Layers size={16} />
-            {t('linearMode')}
+            <span className="hidden sm:inline">{t('linearMode')}</span>
           </button>
           <button
             onClick={() => setMode(Mode.Infinity)}
@@ -102,7 +102,7 @@ const Home: React.FC = () => {
               }`}
           >
             <GitBranch size={16} />
-            {t('infinityMode')}
+            <span className="hidden sm:inline">{t('infinityMode')}</span>
           </button>
         </div>
 
@@ -111,10 +111,10 @@ const Home: React.FC = () => {
           {quota && (
             <div className="hidden md:flex items-center gap-2 text-xs bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg">
               <Zap className={`${quota.limit - quota.used <= 5
-                  ? 'text-red-400'
-                  : quota.limit - quota.used <= 10
-                    ? 'text-yellow-400'
-                    : 'text-indigo-400'
+                ? 'text-red-400'
+                : quota.limit - quota.used <= 10
+                  ? 'text-yellow-400'
+                  : 'text-indigo-400'
                 }`} size={14} />
               <span className="font-medium text-white">{quota.limit - quota.used}</span>
               <span className="text-slate-400">/</span>
