@@ -975,8 +975,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 onClick={() => batchMode ? processBatch() : handleGenerate()}
                 disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
                 className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt)))
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
+                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
                   }`}
               >
                 {batchMode ? (
@@ -1076,7 +1076,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
-          <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden flex items-center justify-center relative">
+          <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col">
             {batchMode ? (
               batchResults.length > 0 || isBatchProcessing ? (
                 <BatchResults
@@ -1086,7 +1086,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   }}
                 />
               ) : (
-                <div className="text-slate-600 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
                   <Layers size={48} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Batch results will appear here</p>
                   <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
@@ -1094,7 +1094,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               )
             ) : (
               isGenerating ? (
-                <div className="flex flex-col items-center text-indigo-400 animate-pulse">
+                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse">
                   <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                   <p className="text-sm font-mono">{t('simulating')}</p>
                   {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
@@ -1106,7 +1106,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
                 )
               ) : (
-                <div className="text-slate-600 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
                   <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
                   <p className="text-sm">Generations will appear here</p>
                 </div>
