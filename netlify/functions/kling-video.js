@@ -1,28 +1,5 @@
-// Official Kling AI API - With JWT Authentication
-const jwt = require('jsonwebtoken');
-
-const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY;
-const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY;
-const KLING_API_BASE = 'https://api-singapore.klingai.com/v1';
-
-// Generate JWT token for Kling AI API authentication
-function generateJWT(accessKey, secretKey) {
-    const payload = {
-        iss: accessKey,
-        exp: Math.floor(Date.now() / 1000) + 1800, // Current time + 30 minutes
-        nbf: Math.floor(Date.now() / 1000) - 5 // Current time - 5 seconds
-    };
-
-    const token = jwt.sign(payload, secretKey, {
-        algorithm: 'HS256',
-        header: {
-            alg: 'HS256',
-            typ: 'JWT'
-        }
-    });
-
-    return token;
-}
+// AI/ML API Proxy for Kling Video Generation
+const AIML_API_KEY = process.env.AIML_API_KEY;
 
 exports.handler = async (event) => {
     // CORS headers
@@ -45,137 +22,71 @@ exports.handler = async (event) => {
         };
     }
 
-    // Check for required credentials
-    if (!KLING_ACCESS_KEY || !KLING_SECRET_KEY) {
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({
-                error: 'Missing Kling AI credentials. Please set KLING_ACCESS_KEY and KLING_SECRET_KEY environment variables.'
-            })
-        };
-    }
-
     try {
         const { action, ...params } = JSON.parse(event.body || '{}');
 
-        // Generate JWT token for authentication
-        const jwtToken = generateJWT(KLING_ACCESS_KEY, KLING_SECRET_KEY);
-        const authHeader = `Bearer ${jwtToken}`;
-
         if (action === 'generate') {
-            // Map our model names to official Kling model names
-            const modelMap = {
-                'kling-v1': 'kling-v1',
-                'kling-v1-5': 'kling-v1-5',
-                'kling-v2-1': 'kling-v2-1',
-                'kling-v2-5-turbo': 'kling-v2-5-turbo'
-            };
-
-            // Build request body according to official API spec
+            // Generate video from image using AI/ML API
             const requestBody = {
-                model_name: modelMap[params.model] || 'kling-v1',
-                duration: String(params.duration || 5), // Must be string: "5" or "10"
-                image: params.image, // Base64 or URL
-                prompt: params.prompt || ''
+                model: params.model || 'kling-video/v1/standard/image-to-video',
+                image_url: params.image,
+                prompt: params.prompt || '',
+                duration: params.duration || 5,
+                aspect_ratio: params.aspectRatio || '16:9',
+                cfg_scale: params.cfgScale || 0.5
             };
 
-            // Add optional parameters based on model support
-            // cfg_scale only supported by kling-v1 models
-            if (params.model === 'kling-v1' || params.model === 'kling-v1-5') {
-                requestBody.cfg_scale = params.cfgScale || 0.5;
-            }
-
-            // mode parameter (std or pro)
-            if (params.mode) {
-                requestBody.mode = params.mode;
-            }
-
-            // negative_prompt if provided
-            if (params.negativePrompt) {
-                requestBody.negative_prompt = params.negativePrompt;
-            }
-
-            console.log('Kling API Request:', {
-                model_name: requestBody.model_name,
-                duration: requestBody.duration,
-                mode: requestBody.mode,
-                has_image: !!requestBody.image
-            });
-
-            const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
+            const response = await fetch('https://api.aimlapi.com/v2/generate/video/kling/generation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': authHeader
+                    'Authorization': `Bearer ${AIML_API_KEY}`
                 },
                 body: JSON.stringify(requestBody)
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Kling API error:', response.status, errorText);
-                throw new Error(`Kling API error: ${response.status} ${response.statusText}`);
+                console.error('AI/ML API error:', errorText);
+                throw new Error(`AI/ML API error: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
-            console.log('Kling API Response:', data);
-
-            // Check for API-level errors
-            if (data.code !== 0) {
-                throw new Error(data.message || `Kling API error code: ${data.code}`);
-            }
 
             // Return task_id for polling
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    task_id: data.data?.task_id,
-                    task_status: data.data?.task_status
+                    task_id: data.task_id || data.id
                 })
             };
 
         } else if (action === 'poll') {
             // Poll for video status using task_id
-            const response = await fetch(`${KLING_API_BASE}/videos/image2video/${params.task_id}`, {
+            const response = await fetch(`https://api.aimlapi.com/v2/generate/video/kling/status/${params.task_id}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': authHeader
+                    'Authorization': `Bearer ${AIML_API_KEY}`
                 }
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('Kling polling error:', response.status, errorText);
-                throw new Error(`Kling polling error: ${response.status} ${response.statusText}`);
+                console.error('AI/ML polling error:', errorText);
+                throw new Error(`AI/ML polling error: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
 
-            // Check for API-level errors
-            if (data.code !== 0) {
-                throw new Error(data.message || `Kling API error code: ${data.code}`);
-            }
-
             // Transform response to match our expected format
-            // Official API statuses: 'submitted', 'processing', 'succeed', 'failed'
-            let status = 'pending';
-            const taskStatus = data.data?.task_status;
-
-            if (taskStatus === 'succeed') status = 'completed';
-            else if (taskStatus === 'failed') status = 'failed';
-            else if (taskStatus === 'processing') status = 'processing';
-            else if (taskStatus === 'submitted') status = 'pending';
-
             return {
                 statusCode: 200,
                 headers,
                 body: JSON.stringify({
-                    status: status,
-                    video_url: data.data?.task_result?.videos?.[0]?.url || null,
-                    error_message: data.data?.task_status_msg || null,
-                    duration: data.data?.task_result?.videos?.[0]?.duration || null
+                    status: data.status,
+                    video_url: data.video_url || data.output_url || null,
+                    error_message: data.error || null
                 })
             };
 
