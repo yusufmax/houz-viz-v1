@@ -118,6 +118,11 @@ const InfinityCanvas: React.FC = () => {
     // Quota
     const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
 
+    // Project Metadata for Auto-save
+    const [currentProjectName, setCurrentProjectName] = useState<string | null>(null);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [lastSaveTime, setLastSaveTime] = useState<number | null>(null);
+
     // ---- Initialization & Autosave ----
     useEffect(() => {
         // Load quota
@@ -153,6 +158,11 @@ const InfinityCanvas: React.FC = () => {
                         setConnections(projectData.connections || []);
                         setPan(projectData.pan || { x: 0, y: 0 });
                         setZoom(projectData.zoom || 1);
+
+                        // Set project name and reset unsaved changes
+                        setCurrentProjectName(data.name);
+                        setHasUnsavedChanges(false);
+                        setLastSaveTime(Date.now());
                     }
                 } catch (e) {
                     console.error("Failed to load cloud project:", e);
@@ -216,37 +226,44 @@ const InfinityCanvas: React.FC = () => {
 
     }, [projectId, user]);
 
-    // Autosave effect (Disabled to prevent Quota Exceeded errors with large images)
-    // TODO: Implement Supabase Autosave
-    /*
+
+    // Auto-save for cloud projects every 5 minutes
     useEffect(() => {
-        if (nodes.length > 0) {
-            const projectData: Project = {
-                id: 'autosave',
-                name: 'Autosave',
-                lastModified: Date.now(),
-                nodes,
-                connections,
-                pan,
-                zoom
-            };
-            try {
-                localStorage.setItem('arch_genius_autosave', JSON.stringify(projectData));
-            } catch (e) {
-                console.warn("Autosave failed: Storage quota exceeded");
+        if (!user || !projectId || !currentProjectName) return; // Only auto-save named cloud projects
+
+        const autoSaveInterval = setInterval(async () => {
+            if (hasUnsavedChanges) {
+                console.log('Auto-saving project...');
+                await saveProject(false); // Save without prompting
             }
+        }, 5 * 60 * 1000); // 5 minutes
+
+        return () => clearInterval(autoSaveInterval);
+    }, [user, projectId, hasUnsavedChanges, currentProjectName]);
+
+    // Track changes to mark as unsaved
+    useEffect(() => {
+        // Only mark as unsaved if we've saved at least once
+        if (lastSaveTime !== null) {
+            setHasUnsavedChanges(true);
         }
     }, [nodes, connections, pan, zoom]);
-    */
 
-    const saveProject = async () => {
+
+    const saveProject = async (promptForName = false) => {
         if (!user) {
             alert("Please sign in to save projects.");
             return;
         }
 
-        const name = prompt("Enter project name:", `Project ${new Date().toLocaleDateString()} `);
-        if (!name) return;
+        let projectName = currentProjectName;
+
+        // Only prompt if explicitly requested OR if it's a new project without a name
+        if (promptForName || !projectName) {
+            const input = prompt("Enter project name:", projectName || `Project ${new Date().toLocaleDateString()}`);
+            if (!input) return;
+            projectName = input;
+        }
 
         try {
             // Dynamic import to avoid circular deps if any, or just standard import
@@ -302,18 +319,28 @@ const InfinityCanvas: React.FC = () => {
                 const { error } = await supabase
                     .from('projects')
                     .update({
-                        name,
+                        name: projectName,
                         data: projectData,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', currentProjectId);
 
                 if (error) throw error;
-                alert("Project updated successfully!");
+
+                // Update state after successful save
+                setCurrentProjectName(projectName);
+                setHasUnsavedChanges(false);
+                setLastSaveTime(Date.now());
+
+                if (!promptForName) {
+                    console.log(`Project "${projectName}" saved successfully`);
+                } else {
+                    alert(`Project "${projectName}" updated successfully!`);
+                }
             } else {
                 // Create new project
                 const { data, error } = await supabase.from('projects').insert({
-                    name,
+                    name: projectName,
                     description: 'Created via Infinity Canvas',
                     user_id: user.id,
                     data: projectData
@@ -328,7 +355,13 @@ const InfinityCanvas: React.FC = () => {
                         return prev;
                     });
                 }
-                alert("New project saved successfully!");
+
+                // Update state after successful save
+                setCurrentProjectName(projectName);
+                setHasUnsavedChanges(false);
+                setLastSaveTime(Date.now());
+
+                alert(`New project "${projectName}" saved successfully!`);
             }
         } catch (e) {
             console.error("Save failed", e);
@@ -353,6 +386,34 @@ const InfinityCanvas: React.FC = () => {
         document.body.appendChild(el);
         el.click();
         el.remove();
+    };
+
+    const createNewProject = async () => {
+        // Auto-save current project if it has unsaved changes
+        if (hasUnsavedChanges && currentProjectName) {
+            const shouldSave = confirm(`Save changes to "${currentProjectName}" before creating a new project?`);
+            if (shouldSave) {
+                await saveProject(false);
+            }
+        }
+
+        // Clear canvas
+        setNodes([
+            { id: '1', type: 'input', x: 100, y: 100, data: { label: 'Source Image' }, inputs: [] }
+        ]);
+        setConnections([]);
+        setPan({ x: 0, y: 0 });
+        setZoom(1);
+
+        // Reset project state
+        setCurrentProjectName(null);
+        setHasUnsavedChanges(false);
+        setLastSaveTime(null);
+
+        // Clear projectId from URL
+        setSearchParams(new URLSearchParams());
+
+        console.log('New project created');
     };
 
     const importProject = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1016,6 +1077,13 @@ const InfinityCanvas: React.FC = () => {
                     className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs"
                 >
                     <Save size={14} /> {t('save')}
+                </button>
+                <button
+                    onClick={createNewProject}
+                    className="flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-lg border border-emerald-600 hover:bg-emerald-600 text-xs"
+                    title="Create New Project"
+                >
+                    <Plus size={14} /> New
                 </button>
                 <button
                     onClick={exportProject}
