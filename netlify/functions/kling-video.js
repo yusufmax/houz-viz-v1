@@ -26,9 +26,17 @@ exports.handler = async (event) => {
         const { action, ...params } = JSON.parse(event.body || '{}');
 
         if (action === 'generate') {
+            // Map frontend model names to AI/ML API model IDs
+            const modelMap = {
+                'kling-v1': 'kling-video/v1/standard/image-to-video',
+                'kling-v1-5': 'kling-video/v1/standard/image-to-video', // Fallback if v1.5 not supported
+                'kling-v2-1': 'kling-video/v1/standard/image-to-video', // Fallback
+                'kling-v2-5-turbo': 'kling-video/v1/standard/image-to-video' // Fallback
+            };
+
             // Generate video from image using AI/ML API
             const requestBody = {
-                model: params.model || 'kling-video/v1/standard/image-to-video',
+                model: modelMap[params.model] || params.model || 'kling-video/v1/standard/image-to-video',
                 image_url: params.image,
                 prompt: params.prompt || '',
                 duration: params.duration || 5,
