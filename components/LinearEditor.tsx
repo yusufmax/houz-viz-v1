@@ -648,25 +648,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 onImagesSelected={setBatchImages}
                 maxImages={10}
               />
-              {batchImages.length > 0 && (
-                <button
-                  onClick={processBatch}
-                  disabled={isBatchProcessing}
-                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isBatchProcessing ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Processing {batchProgress.current}/{batchProgress.total}...
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={18} />
-                      Generate Batch ({batchImages.length} images)
-                    </>
-                  )}
-                </button>
-              )}
             </div>
           ) : (
             <>
@@ -988,41 +969,43 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             <div className="relative">
               {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-              <div className="flex items-center justify-between mb-4">
-                <button
-                  onClick={() => handleGenerate()}
-                  disabled={isGenerating || (quota ? quota.used >= quota.limit : false)}
-                  className={`
-                flex-1 py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]
-                ${isGenerating
-                      ? 'bg-gray-700 cursor-not-allowed text-gray-400'
-                      : (quota && quota.used >= quota.limit)
-                        ? 'bg-red-900/50 cursor-not-allowed text-red-200 border border-red-800'
-                        : 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white shadow-blue-900/20'
-                    }
-              `}
-                >
-                  {isGenerating ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Generating...
-                    </span>
-                  ) : (quota && quota.used >= quota.limit) ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Lock className="w-5 h-5" />
-                      Quota Exceeded ({quota.used}/{quota.limit})
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center gap-2">
-                      <Sparkles className="w-5 h-5" />
-                      Generate Render
-                      {quota && <span className="text-xs opacity-70 ml-1">({quota.limit - quota.used} left)</span>}
-                    </span>
-                  )}
-                </button>
-              </div>
-            </div>
 
+              {/* Generate Button */}
+              <button
+                onClick={() => batchMode ? processBatch() : handleGenerate()}
+                disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt)))
+                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
+                  }`}
+              >
+                {batchMode ? (
+                  isBatchProcessing ? (
+                    <>
+                      <Loader2 size={24} className="animate-spin" />
+                      Processing {batchProgress.current}/{batchProgress.total}...
+                    </>
+                  ) : (
+                    <>
+                      <Layers size={24} />
+                      Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}
+                    </>
+                  )
+                ) : (
+                  isGenerating ? (
+                    <>
+                      <Loader2 size={24} className="animate-spin" />
+                      {t('generating')}
+                    </>
+                  ) : (
+                    <>
+                      <Zap size={24} fill="currentColor" />
+                      {t('generate')}
+                    </>
+                  )
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1094,39 +1077,44 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           </div>
 
           <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden flex items-center justify-center relative">
-            {isGenerating ? (
-              <div className="flex flex-col items-center text-indigo-400 animate-pulse">
-                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-sm font-mono">{t('simulating')}</p>
-                {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
-              </div>
-            ) : resultImage ? (
-              sourceImage ? (
-                <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+            {batchMode ? (
+              batchResults.length > 0 || isBatchProcessing ? (
+                <BatchResults
+                  results={batchResults}
+                  onClose={() => {
+                    setBatchResults([]);
+                  }}
+                />
               ) : (
-                <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                <div className="text-slate-600 text-center">
+                  <Layers size={48} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Batch results will appear here</p>
+                  <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
+                </div>
               )
             ) : (
-              <div className="text-slate-600 text-center">
-                <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Generations will appear here</p>
-              </div>
+              isGenerating ? (
+                <div className="flex flex-col items-center text-indigo-400 animate-pulse">
+                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-sm font-mono">{t('simulating')}</p>
+                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
+                </div>
+              ) : resultImage ? (
+                sourceImage ? (
+                  <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+                ) : (
+                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                )
+              ) : (
+                <div className="text-slate-600 text-center">
+                  <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Generations will appear here</p>
+                </div>
+              )
             )}
           </div>
         </div>
       </div>
-
-      {/* Batch Results Modal */}
-      {showBatchResults && batchResults.length > 0 && (
-        <BatchResults
-          results={batchResults}
-          onClose={() => {
-            setShowBatchResults(false);
-            setBatchResults([]);
-            setBatchImages([]);
-          }}
-        />
-      )}
     </div>
   );
 };
