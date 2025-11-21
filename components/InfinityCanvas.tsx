@@ -115,8 +115,25 @@ const InfinityCanvas: React.FC = () => {
     // Model Selection
     const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-image');
 
+    // Quota
+    const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+
     // ---- Initialization & Autosave ----
     useEffect(() => {
+        // Load quota
+        const loadQuota = async () => {
+            if (!user) return;
+            try {
+                const q = await quotaService.getUserQuota(user.id);
+                if (q) {
+                    setQuota({ used: q.used, limit: q.quota });
+                }
+            } catch (error) {
+                console.error('Error fetching quota:', error);
+            }
+        };
+        loadQuota();
+
         const loadProject = async () => {
             if (projectId) {
                 try {
@@ -677,6 +694,12 @@ const InfinityCanvas: React.FC = () => {
             // Increment quota after successful generation
             await quotaService.incrementUsage(user.id);
 
+            // Refresh quota display
+            const updatedQuota = await quotaService.getUserQuota(user.id);
+            if (updatedQuota) {
+                setQuota({ used: updatedQuota.used, limit: updatedQuota.quota });
+            }
+
             // Create a new output node
             const newNodeId = Math.random().toString(36).substr(2, 9);
             const newX = node.x + (node.width || 350);
@@ -903,6 +926,32 @@ const InfinityCanvas: React.FC = () => {
             onMouseUp={handleMouseUp}
             onContextMenu={(e) => { e.preventDefault(); handleMouseDown(e); setContextMenu({ x: e.clientX - canvasRef.current!.getBoundingClientRect().left, y: e.clientY - canvasRef.current!.getBoundingClientRect().top, show: true }); }}
         >
+            {/* Credits Indicator Badge */}
+            {quota && (
+                <div className="absolute top-4 right-4 z-40 bg-slate-900/95 border border-slate-700 rounded-lg px-3 py-2 backdrop-blur-sm">
+                    <div className="flex items-center gap-2">
+                        <Zap className={`${quota.limit - quota.used <= 5 ? 'text-red-400' : quota.limit - quota.used <= 10 ? 'text-yellow-400' : 'text-indigo-400'}`} size={16} />
+                        <div className="flex flex-col">
+                            <div className="text-xs font-medium text-white">
+                                {quota.limit - quota.used} / {quota.limit}
+                            </div>
+                            <div className="text-[10px] text-slate-400">credits</div>
+                        </div>
+                    </div>
+                    <div className="mt-1.5 h-1 bg-slate-800 rounded-full overflow-hidden w-20">
+                        <div
+                            className={`h-full transition-all duration-300 ${quota.used / quota.limit > 0.9
+                                ? 'bg-red-500'
+                                : quota.used / quota.limit > 0.7
+                                    ? 'bg-yellow-500'
+                                    : 'bg-indigo-500'
+                                }`}
+                            style={{ width: `${Math.min((quota.used / quota.limit) * 100, 100)}%` }}
+                        />
+                    </div>
+                </div>
+            )}
+
             {/* Full Screen Preview */}
             <FullScreenPreview
                 image={previewImage}

@@ -441,6 +441,32 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-64px)] gap-4 p-4 relative overflow-hidden">
 
+      {/* Credits Indicator Badge */}
+      {quota && (
+        <div className="absolute top-4 right-4 z-40 bg-slate-900/95 border border-slate-700 rounded-lg px-3 py-2 backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <Zap className={`${quota.limit - quota.used <= 5 ? 'text-red-400' : quota.limit - quota.used <= 10 ? 'text-yellow-400' : 'text-indigo-400'}`} size={16} />
+            <div className="flex flex-col">
+              <div className="text-xs font-medium text-white">
+                {quota.limit - quota.used} / {quota.limit}
+              </div>
+              <div className="text-[10px] text-slate-400">credits</div>
+            </div>
+          </div>
+          <div className="mt-1.5 h-1 bg-slate-800 rounded-full overflow-hidden w-20">
+            <div
+              className={`h-full transition-all duration-300 ${quota.used / quota.limit > 0.9
+                  ? 'bg-red-500'
+                  : quota.used / quota.limit > 0.7
+                    ? 'bg-yellow-500'
+                    : 'bg-indigo-500'
+                }`}
+              style={{ width: `${Math.min((quota.used / quota.limit) * 100, 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Full Screen Preview */}
       <FullScreenPreview
         image={previewImage}
