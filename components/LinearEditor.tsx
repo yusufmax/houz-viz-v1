@@ -55,10 +55,52 @@ const GuideTooltip = ({ text, className, side = 'left' }: { text: string, classN
   );
 };
 
+
+type EditorMode = 'exterior' | 'interior' | 'general';
+
+const STYLE_CATEGORIES: Record<EditorMode, RenderStyle[]> = {
+  general: [
+    RenderStyle.Photorealistic, RenderStyle.cinematic,
+    RenderStyle.Sketch, RenderStyle.Watercolor, RenderStyle.Blueprint, RenderStyle.PencilDrawing, RenderStyle.Chalk, RenderStyle.Cyberpunk
+  ],
+  exterior: [
+    RenderStyle.Modernist, RenderStyle.Minimalist, RenderStyle.Brutalism, RenderStyle.Bauhaus,
+    RenderStyle.Colonial, RenderStyle.Rustic, RenderStyle.Parametric, RenderStyle.IndustrialLoft,
+    RenderStyle.PanArabic, RenderStyle.Asian, RenderStyle.Scandic, RenderStyle.Tropical,
+    RenderStyle.Biophilic, RenderStyle.GlassFacade, RenderStyle.Sustainable, RenderStyle.Cottage, RenderStyle.Alpine, RenderStyle.DesertModern
+  ],
+  interior: [
+    RenderStyle.HomeScandi, RenderStyle.HomeJapandi, RenderStyle.HomeBoho, RenderStyle.HomeIndustrial,
+    RenderStyle.HomeLuxury, RenderStyle.HomeMidCentury, RenderStyle.HomeCoastal, RenderStyle.HomeFarmhouse,
+    RenderStyle.HomeWabiSabi, RenderStyle.HomeMaximalist, RenderStyle.HomeArtDeco, RenderStyle.HomeClassic,
+    RenderStyle.OfficeOpenPlan, RenderStyle.OfficeExecutive, RenderStyle.OfficeCreative, RenderStyle.OfficeTech, RenderStyle.OfficeBiophilic,
+    RenderStyle.RetailBoutique, RenderStyle.RetailShowroom, RenderStyle.RetailMall, RenderStyle.RetailMinimal,
+    RenderStyle.HospHotelLobby, RenderStyle.HospRestaurant, RenderStyle.HospCafe, RenderStyle.HospBar,
+    RenderStyle.SalesRealEstate, RenderStyle.SalesReception, RenderStyle.SalesGallery
+  ]
+};
+
+const ATMOSPHERE_CATEGORIES: Record<EditorMode, Atmosphere[]> = {
+  general: [
+    Atmosphere.None, Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Overcast, Atmosphere.Dawn, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Cyber,
+    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
+  ],
+  exterior: [
+    Atmosphere.None, Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Overcast, Atmosphere.Dawn, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Cyber,
+    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
+  ],
+  interior: [
+    Atmosphere.None, Atmosphere.WarmTungsten, Atmosphere.NaturalLight, Atmosphere.Studio, Atmosphere.Candlelight,
+    Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, // Some exterior lighting affects interiors
+    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
+  ]
+};
+
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { setToolExecutor } = useAgentic();
+  const [editorMode, setEditorMode] = useState<EditorMode>('exterior'); // Default to exterior
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
