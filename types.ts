@@ -1,79 +1,36 @@
 
 export enum RenderStyle {
   None = 'Photorealistic',
-  // General
-  Photorealistic = 'Photorealistic',
-  cinematic = 'Cinematic & Dramatic',
-  // Architectural Styles
-  Minimalist = 'Minimalist',
-  Brutalism = 'Brutalism',
-  Modernist = 'Modernist',
-  Futuristic = 'Futuristic Organic',
-  Deconstructivism = 'Deconstructivism',
-  Parametric = 'Parametric Design',
-  Bauhaus = 'Bauhaus',
-  Mediterranean = 'Mediterranean',
-  Colonial = 'Colonial / Neoclassical',
-  Rustic = 'Rustic / Stone & Timber',
-  IndustrialLoft = 'Industrial Loft',
-  // Cultural
-  PanArabic = 'Pan-Arabic / Islamic Modern',
-  Asian = 'Contemporary Asian / Zen',
-  Tropical = 'Tropical Modernism',
-  Scandic = 'Nordic / Scandinavian',
-  // Rendering Techniques
-  Sketch = 'Architectural Sketch',
-  Watercolor = 'Watercolor',
-  Cyberpunk = 'Cyberpunk',
-  PencilDrawing = 'Pencil Drawing',
-  Blueprint = 'Blueprint',
-  Chalk = 'Chalk Sketch',
 
-  // Interior - Home
-  HomeScandi = 'Interior Home: Scandinavian',
-  HomeJapandi = 'Interior Home: Japandi',
-  HomeBoho = 'Interior Home: Bohemian',
-  HomeIndustrial = 'Interior Home: Industrial',
-  HomeLuxury = 'Interior Home: Luxury Contemporary',
-  HomeMidCentury = 'Interior Home: Mid-Century Modern',
-  HomeCoastal = 'Interior Home: Coastal / Hamptons',
-  HomeFarmhouse = 'Interior Home: Modern Farmhouse',
-  HomeWabiSabi = 'Interior Home: Wabi Sabi',
-  HomeMaximalist = 'Interior Home: Maximalist',
-  HomeArtDeco = 'Interior Home: Art Deco',
-  HomeClassic = 'Interior Home: Classic Contemporary',
+  // Office Building
+  OfficeGlass = 'Office: Modern Glass Curtain Wall',
+  OfficeTimber = 'Office: Sustainable Timber Grid',
+  OfficeHighTech = 'Office: High-Tech Kinetic Facade',
+  OfficeBiophilic = 'Office: Biophilic Green Tower',
+  OfficeBrutalist = 'Office: Brutalist Concrete (Modernized)',
 
-  // Interior - Office
-  OfficeOpenPlan = 'Interior Office: Open Plan',
-  OfficeExecutive = 'Interior Office: Executive Suite',
-  OfficeCreative = 'Interior Office: Creative Studio',
-  OfficeTech = 'Interior Office: Tech Startup / Modern',
-  OfficeBiophilic = 'Interior Office: Biophilic / Green',
+  // Mixed Use Building
+  MixedRetailRes = 'Mixed Use: Retail Podium + Residential Tower',
+  MixedIndustrial = 'Mixed Use: Industrial Loft Conversion',
+  MixedBrickGlass = 'Mixed Use: Contemporary Brick & Glass',
+  MixedTerraced = 'Mixed Use: Urban Terraced Garden',
+  MixedOrganic = 'Mixed Use: Futuristic Organic Form',
 
-  // Interior - Retail
-  RetailBoutique = 'Interior Retail: Luxury Boutique',
-  RetailShowroom = 'Interior Retail: Car/Product Showroom',
-  RetailMall = 'Interior Retail: Shopping Mall',
-  RetailMinimal = 'Interior Retail: Minimalist Store',
+  // Apartment Complex
+  AptLuxury = 'Apartment: Luxury Balcony Facade',
+  AptScandi = 'Apartment: Scandinavian Minimalist',
+  AptMediterranean = 'Apartment: Mediterranean Stucco & Tile',
+  AptSocial = 'Apartment: Modern Social Housing (Colorful)',
+  AptClassic = 'Apartment: Classic Brownstone / Brick',
 
-  // Interior - Hospitality
-  HospHotelLobby = 'Interior Hospitality: Hotel Lobby',
-  HospRestaurant = 'Interior Hospitality: Fine Dining',
-  HospCafe = 'Interior Hospitality: Coffee Shop / Cafe',
-  HospBar = 'Interior Hospitality: Lounge Bar',
-
-  // Interior - Sales Office
-  SalesRealEstate = 'Interior Sales: Real Estate Center',
-  SalesReception = 'Interior Sales: Corporate Reception',
-  SalesGallery = 'Interior Sales: Sales Gallery / Exhibition',
-
-  // Exterior
-  Biophilic = 'Exterior: Biophilic',
-  GlassFacade = 'Exterior: Glass Facade',
-  Sustainable = 'Exterior: Sustainable Timber',
-  Cottage = 'Exterior: Modern Cottage',
-  Alpine = 'Exterior: Alpine Chalet',
-  DesertModern = 'Exterior: Desert Modernism'
+  // Home
+  HomeMinimalist = 'Home: Modern Minimalist Villa',
+  HomeFarmhouse = 'Home: Contemporary Farmhouse',
+  HomeMidCentury = 'Home: Mid-Century Modern',
+  HomeCoastal = 'Home: Coastal / Hamptons Style',
+  HomeJapandi = 'Home: Japandi (Japanese-Scandi)',
+  HomeIndustrial = 'Home: Industrial Chic Home',
+  HomeCraftsman = 'Home: Traditional Craftsman'
 }
 
 export enum Atmosphere {

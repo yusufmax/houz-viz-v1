@@ -1075,9 +1075,40 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
               >
                 <option value={RenderStyle.None}>{t('None')}</option>
-                {availableStyles.map(s => (
-                  <option key={s} value={s}>{t(s as any)}</option>
-                ))}
+
+                <optgroup label="Office Building">
+                  <option value={RenderStyle.OfficeGlass}>Modern Glass Curtain Wall</option>
+                  <option value={RenderStyle.OfficeTimber}>Sustainable Timber Grid</option>
+                  <option value={RenderStyle.OfficeHighTech}>High-Tech Kinetic Facade</option>
+                  <option value={RenderStyle.OfficeBiophilic}>Biophilic Green Tower</option>
+                  <option value={RenderStyle.OfficeBrutalist}>Brutalist Concrete (Modernized)</option>
+                </optgroup>
+
+                <optgroup label="Mixed Use Building">
+                  <option value={RenderStyle.MixedRetailRes}>Retail Podium + Residential Tower</option>
+                  <option value={RenderStyle.MixedIndustrial}>Industrial Loft Conversion</option>
+                  <option value={RenderStyle.MixedBrickGlass}>Contemporary Brick & Glass</option>
+                  <option value={RenderStyle.MixedTerraced}>Urban Terraced Garden</option>
+                  <option value={RenderStyle.MixedOrganic}>Futuristic Organic Form</option>
+                </optgroup>
+
+                <optgroup label="Apartment Complex">
+                  <option value={RenderStyle.AptLuxury}>Luxury Balcony Facade</option>
+                  <option value={RenderStyle.AptScandi}>Scandinavian Minimalist</option>
+                  <option value={RenderStyle.AptMediterranean}>Mediterranean Stucco & Tile</option>
+                  <option value={RenderStyle.AptSocial}>Modern Social Housing (Colorful)</option>
+                  <option value={RenderStyle.AptClassic}>Classic Brownstone / Brick</option>
+                </optgroup>
+
+                <optgroup label="Home">
+                  <option value={RenderStyle.HomeMinimalist}>Modern Minimalist Villa</option>
+                  <option value={RenderStyle.HomeFarmhouse}>Contemporary Farmhouse</option>
+                  <option value={RenderStyle.HomeMidCentury}>Mid-Century Modern</option>
+                  <option value={RenderStyle.HomeCoastal}>Coastal / Hamptons Style</option>
+                  <option value={RenderStyle.HomeJapandi}>Japandi (Japanese-Scandi)</option>
+                  <option value={RenderStyle.HomeIndustrial}>Industrial Chic Home</option>
+                  <option value={RenderStyle.HomeCraftsman}>Traditional Craftsman</option>
+                </optgroup>
               </select>
             </div>
 
