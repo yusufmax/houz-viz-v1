@@ -13,7 +13,7 @@ const VideoEditor: React.FC = () => {
     const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
     const [videoQuota, setVideoQuota] = useState<{ used: number; quota: number; last_reset: string } | null>(null);
 
-    const [activeCameraParam, setActiveCameraParam] = useState<string>('zoom');
+
 
     const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
         model: KlingModel.V2_5_Turbo,
@@ -21,11 +21,7 @@ const VideoEditor: React.FC = () => {
         aspectRatio: '16:9',
         prompt: '',
         cfgScale: 0.5,
-        mode: 'std',
-        cameraControl: {
-            type: 'simple',
-            config: { horizontal: 0, vertical: 0, pan: 0, tilt: 0, roll: 0, zoom: 0 }
-        }
+        mode: 'std'
     });
 
     // Load video quota
@@ -113,8 +109,7 @@ const VideoEditor: React.FC = () => {
                     aspectRatio: videoSettings.aspectRatio,
                     prompt: videoSettings.prompt,
                     cfgScale: videoSettings.cfgScale || 0.5,
-                    mode: videoSettings.mode,
-                    cameraControl: videoSettings.cameraControl
+                    mode: videoSettings.mode
                 })
             });
 
@@ -308,107 +303,6 @@ const VideoEditor: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Camera Controls */}
-                        <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                            <label className="block text-xs font-medium text-slate-400 uppercase mb-3">Camera Control</label>
-
-                            {/* Type Selection */}
-                            <select
-                                value={videoSettings.cameraControl?.type || 'simple'}
-                                onChange={(e) => {
-                                    const type = e.target.value as any;
-                                    setVideoSettings({
-                                        ...videoSettings,
-                                        cameraControl: {
-                                            type,
-                                            config: videoSettings.cameraControl?.config || {
-                                                horizontal: 0, vertical: 0, pan: 0, tilt: 0, roll: 0, zoom: 0
-                                            }
-                                        }
-                                    });
-                                }}
-                                className="w-full bg-slate-900 text-white px-3 py-2 rounded-lg border border-slate-600 text-sm mb-4 focus:border-indigo-500 focus:outline-none"
-                            >
-                                <option value="simple">Custom (Simple)</option>
-                                <option value="down_back">Zoom Out & Pan Down</option>
-                                <option value="forward_up">Zoom In & Pan Up</option>
-                                <option value="right_turn_forward">Rotate Right & Move Forward</option>
-                                <option value="left_turn_forward">Rotate Left & Move Forward</option>
-                            </select>
-
-                            {/* Simple Mode Controls */}
-                            {(!videoSettings.cameraControl || videoSettings.cameraControl.type === 'simple') && (
-                                <div className="space-y-4">
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {['horizontal', 'vertical', 'pan', 'tilt', 'roll', 'zoom'].map((param) => {
-                                            const config = videoSettings.cameraControl?.config || { horizontal: 0, vertical: 0, pan: 0, tilt: 0, roll: 0, zoom: 0 };
-                                            return (
-                                                <button
-                                                    key={param}
-                                                    onClick={() => {
-                                                        setActiveCameraParam(param);
-                                                        const val = config[param as keyof typeof config] || 0;
-
-                                                        setVideoSettings(prev => ({
-                                                            ...prev,
-                                                            cameraControl: {
-                                                                type: 'simple',
-                                                                config: {
-                                                                    horizontal: 0, vertical: 0, pan: 0, tilt: 0, roll: 0, zoom: 0,
-                                                                    [param]: val
-                                                                }
-                                                            }
-                                                        }));
-                                                    }}
-                                                    className={`px-2 py-1.5 text-xs rounded border transition-colors capitalize ${activeCameraParam === param
-                                                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
-                                                        }`}
-                                                >
-                                                    {param}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    {/* Slider for active param */}
-                                    <div className="bg-slate-900/50 p-3 rounded border border-slate-800">
-                                        <div className="flex justify-between text-xs mb-2">
-                                            <span className="text-slate-400 capitalize">{activeCameraParam}</span>
-                                            <span className="text-indigo-400 font-mono">
-                                                {videoSettings.cameraControl?.config?.[activeCameraParam as keyof typeof videoSettings.cameraControl.config] || 0}
-                                            </span>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="-10"
-                                            max="10"
-                                            step="1"
-                                            value={videoSettings.cameraControl?.config?.[activeCameraParam as keyof typeof videoSettings.cameraControl.config] || 0}
-                                            onChange={(e) => {
-                                                const val = parseInt(e.target.value);
-                                                setVideoSettings({
-                                                    ...videoSettings,
-                                                    cameraControl: {
-                                                        type: 'simple',
-                                                        config: {
-                                                            horizontal: 0, vertical: 0, pan: 0, tilt: 0, roll: 0, zoom: 0,
-                                                            [activeCameraParam]: val
-                                                        }
-                                                    }
-                                                });
-                                            }}
-                                            className="w-full accent-indigo-500 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                                        />
-                                        <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                                            <span>-10</span>
-                                            <span>0</span>
-                                            <span>10</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
 
                         {/* Prompt */}
                         <div>

@@ -139,29 +139,7 @@ export const handler: Handler = async (event) => {
                 requestBody.negative_prompt = params.negativePrompt;
             }
 
-            // Camera Controls
-            if (params.cameraControl) {
-                const { type, config } = params.cameraControl;
 
-                // Construct camera_control object
-                const cameraControlObj: any = {
-                    type: type
-                };
-
-                // Only populate config if type is 'simple'
-                if (type === 'simple' && config) {
-                    cameraControlObj.config = {
-                        horizontal: config.horizontal || 0,
-                        vertical: config.vertical || 0,
-                        pan: config.pan || 0,
-                        tilt: config.tilt || 0,
-                        roll: config.roll || 0,
-                        zoom: config.zoom || 0
-                    };
-                }
-
-                requestBody.camera_control = cameraControlObj;
-            }
 
             console.log('[Kling API] Sending request to:', `${KLING_API_BASE}/videos/image2video`);
             // Log payload but truncate image data
