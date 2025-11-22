@@ -145,18 +145,11 @@ export const handler: Handler = async (event) => {
 
                 // Construct camera_control object
                 const cameraControlObj: any = {
-                    type: type,
-                    config: {}
+                    type: type
                 };
 
                 // Only populate config if type is 'simple'
                 if (type === 'simple' && config) {
-                    // Ensure only one parameter is non-zero (though UI enforces this, we pass all)
-                    // Actually API says "Choose one out of the following six parameters... only one parameter should be non-zero"
-                    // We just pass what we have, assuming UI did its job.
-                    // But we should probably filter out zeros if the API is strict? 
-                    // "Required Field must be filled out" - implies we send the object.
-                    // Let's send the config object as is.
                     cameraControlObj.config = {
                         horizontal: config.horizontal || 0,
                         vertical: config.vertical || 0,

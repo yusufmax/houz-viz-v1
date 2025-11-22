@@ -119,7 +119,9 @@ const VideoEditor: React.FC = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to start video generation');
+                const errorData = await response.json().catch(() => ({}));
+                const errorMessage = errorData.error || errorData.details || response.statusText || 'Unknown server error';
+                throw new Error(`Server Error (${response.status}): ${errorMessage}`);
             }
 
             const { task_id } = await response.json();
@@ -359,8 +361,8 @@ const VideoEditor: React.FC = () => {
                                                         }));
                                                     }}
                                                     className={`px-2 py-1.5 text-xs rounded border transition-colors capitalize ${activeCameraParam === param
-                                                            ? 'bg-indigo-600 border-indigo-500 text-white'
-                                                            : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
+                                                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'
                                                         }`}
                                                 >
                                                     {param}
