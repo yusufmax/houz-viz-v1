@@ -345,7 +345,6 @@ const ProfilePage: React.FC = () => {
                 </div>
             )}
         </div>
-        </div >
     );
 };
 
