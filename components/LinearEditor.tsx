@@ -144,6 +144,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
   const [resolution, setResolution] = useState<string>('4K');
+  const [keepBuilding, setKeepBuilding] = useState(false);
 
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
@@ -1167,6 +1168,20 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             <div className="relative">
               {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+
+              {/* Keep Building Button (Exterior Only) */}
+              {editorMode === 'exterior' && (
+                <button
+                  onClick={() => setKeepBuilding(!keepBuilding)}
+                  className={`w-full mb-3 py-2 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding
+                    ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200'
+                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                    }`}
+                >
+                  <Lock size={14} />
+                  Keep Building Shape & Details
+                </button>
+              )}
 
               {/* Generate Button */}
               <button
