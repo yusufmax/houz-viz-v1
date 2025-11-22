@@ -1,13 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap } from 'lucide-react';
+import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
+import VideoEditor from './components/VideoEditor';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 
 enum Mode {
   Linear = 'linear',
-  Infinity = 'infinity'
+  Infinity = 'infinity',
+  Video = 'video'
 }
 
 import { AuthProvider, useAuth } from './contexts/AuthProvider';
@@ -104,6 +106,16 @@ const Home: React.FC = () => {
             <GitBranch size={16} />
             <span className="hidden sm:inline">{t('infinityMode')}</span>
           </button>
+          <button
+            onClick={() => setMode(Mode.Video)}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Video
+              ? 'bg-indigo-600 text-white shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+          >
+            <Film size={16} />
+            <span className="hidden sm:inline">Video</span>
+          </button>
         </div>
 
         <div className="flex items-center gap-4">
@@ -152,6 +164,9 @@ const Home: React.FC = () => {
         </div>
         <div className={`absolute inset-0 ${mode === Mode.Infinity ? 'z-10 block' : 'z-0 hidden'}`}>
           <InfinityCanvas />
+        </div>
+        <div className={`absolute inset-0 ${mode === Mode.Video ? 'z-10 block' : 'z-0 hidden'} overflow-y-auto`}>
+          <VideoEditor />
         </div>
       </main>
       <AgenticOverlay />
