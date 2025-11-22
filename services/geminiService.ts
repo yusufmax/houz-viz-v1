@@ -260,21 +260,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       { text: `Generate a high-quality architectural render. ${fullPrompt}` }
     ];
 
-    // Add Source Image (Structure Reference)
-    if (sourceImage) {
-      const { mimeType, data } = await toInlineData(sourceImage);
-      if (data) {
-        parts.push({
-          inlineData: {
-            mimeType: mimeType,
-            data: data
-          }
-        });
-        parts[0].text += " The first image is the PRIMARY SOURCE for structure, geometry, and composition. You MUST follow its lines and perspective exactly.";
-      }
-    }
-
-    // Add Style Reference Image
+    // Add Style Reference Image FIRST
     if (settings.styleReferenceImage) {
       const { mimeType, data } = await toInlineData(settings.styleReferenceImage);
       if (data) {
@@ -284,8 +270,23 @@ export const editImage = async (sourceImage: string | null, settings: Generation
             data: data
           }
         });
-        const refIndex = sourceImage ? "second" : "first";
-        parts[0].text += ` The ${refIndex} image is a STYLE REFERENCE ONLY. Copy its colors, lighting, and materials, but IGNORE its structure and geometry. Do not let the style image influence the building shape.`;
+        parts[0].text += " The first image is a STYLE REFERENCE ONLY. Copy its colors, lighting, and materials, but IGNORE its structure and geometry. Do not let the style image influence the building shape.";
+      }
+    }
+
+    // Add Source Image (Structure Reference) SECOND
+    if (sourceImage) {
+      const { mimeType, data } = await toInlineData(sourceImage);
+      if (data) {
+        parts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: data
+          }
+        });
+
+        const refIndex = settings.styleReferenceImage ? "second" : "first";
+        parts[0].text += ` The ${refIndex} image is the PRIMARY SOURCE for structure, geometry, and composition. You MUST follow its lines and perspective exactly.`;
       }
     }
 
