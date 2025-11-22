@@ -68,3 +68,69 @@ export const quotaService = {
         }
     }
 };
+
+export const videoQuotaService = {
+    /**
+     * Get current video quota and usage for a user
+     */
+    async getUserVideoQuota(userId: string) {
+        const { data, error } = await supabase
+            .from('video_quota')
+            .select('*')
+            .eq('user_id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error fetching video quota:', error);
+            return null;
+        }
+
+        // If no quota record exists, return default (it will be created on first usage)
+        if (!data) {
+            return {
+                used: 0,
+                quota: 10,
+                last_reset: new Date().toISOString()
+            };
+        }
+
+        return data;
+    },
+
+    /**
+     * Check if user can generate video
+     */
+    async canGenerateVideo(userId: string): Promise<boolean> {
+        const quota = await this.getUserVideoQuota(userId);
+        if (!quota) return true; // Allow if no record (default will apply)
+        return quota.used < quota.quota;
+    },
+
+    /**
+     * Increment video usage
+     */
+    async incrementVideoUsage(userId: string) {
+        const { error } = await supabase.rpc('increment_video_usage', { p_user_id: userId });
+
+        if (error) {
+            console.error('Error incrementing video usage:', error);
+            // Fallback to direct insert/update if RPC fails or doesn't exist
+            const { data: current } = await supabase
+                .from('video_quota')
+                .select('used')
+                .eq('user_id', userId)
+                .maybeSingle();
+
+            if (current) {
+                await supabase
+                    .from('video_quota')
+                    .update({ used: current.used + 1 })
+                    .eq('user_id', userId);
+            } else {
+                await supabase
+                    .from('video_quota')
+                    .insert({ user_id: userId, used: 1, quota: 10 });
+            }
+        }
+    }
+};
