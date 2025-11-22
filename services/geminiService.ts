@@ -195,7 +195,7 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
           imageConfig: {
-            aspectRatio: "16:9",
+            aspectRatio: settings.aspectRatio !== 'Original' ? settings.aspectRatio : '16:9',
             imageSize: '4K',
           },
         }
