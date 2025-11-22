@@ -961,6 +961,20 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             ))}
           </div>
 
+          {/* Keep Building Button (Exterior Only) - Moved to top */}
+          {editorMode === 'exterior' && (
+            <button
+              onClick={() => setKeepBuilding(!keepBuilding)}
+              className={`w-full mb-6 py-3 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding
+                ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/20'
+                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+            >
+              <Lock size={16} />
+              {keepBuilding ? 'Building Shape Locked' : 'Lock Building Shape & Details'}
+            </button>
+          )}
+
           <div className="space-y-6">
             {/* Instructions */}
             <div className="space-y-2 relative">
