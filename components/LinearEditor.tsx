@@ -742,6 +742,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
+  // Filtered Options based on Mode
+  const availableStyles = STYLE_CATEGORIES[editorMode];
+  const availableAtmospheres = ATMOSPHERE_CATEGORIES[editorMode];
+
+
   return (
     <div className="flex flex-col lg:flex-row h-full gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
 
@@ -908,9 +913,37 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 h-auto lg:h-full lg:overflow-y-auto custom-scrollbar relative">
           {showInstructions && <GuideTooltip text={t('guideStyles')} className="top-4 right-4" side="right" />}
 
-          <div className="flex items-center gap-2 mb-6 text-indigo-400 font-semibold">
-            <Settings size={18} />
-            <h2>{t('controls')}</h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-indigo-400 font-semibold">
+              <Settings size={18} />
+              <h2>{t('controls')}</h2>
+            </div>
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="bg-slate-900 p-1 rounded-lg flex mb-6 border border-slate-700">
+            {(['exterior', 'interior', 'general'] as EditorMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => {
+                  setEditorMode(mode);
+                  // Reset style/atmosphere if current selection is not in new mode
+                  if (style !== RenderStyle.None && !STYLE_CATEGORIES[mode].includes(style)) {
+                    setStyle(RenderStyle.None);
+                  }
+                  const validAtmospheres = atmosphere.filter(a => ATMOSPHERE_CATEGORIES[mode].includes(a));
+                  if (validAtmospheres.length !== atmosphere.length) {
+                    setAtmosphere(validAtmospheres);
+                  }
+                }}
+                className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+                  }`}
+              >
+                {mode}
+              </button>
+            ))}
           </div>
 
           <div className="space-y-6">
@@ -1013,77 +1046,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
               >
                 <option value={RenderStyle.None}>{t('None')}</option>
-                <optgroup label="General">
-                  <option value={RenderStyle.Photorealistic}>{t(RenderStyle.Photorealistic as any)}</option>
-                  <option value={RenderStyle.cinematic}>{t(RenderStyle.cinematic as any)}</option>
-                </optgroup>
-                <optgroup label="Architectural Styles">
-                  <option value={RenderStyle.Modernist}>{t(RenderStyle.Modernist as any)}</option>
-                  <option value={RenderStyle.Minimalist}>{t(RenderStyle.Minimalist as any)}</option>
-                  <option value={RenderStyle.Brutalism}>{t(RenderStyle.Brutalism as any)}</option>
-                  <option value={RenderStyle.Bauhaus}>{t(RenderStyle.Bauhaus as any)}</option>
-                  <option value={RenderStyle.Colonial}>{t(RenderStyle.Colonial as any)}</option>
-                  <option value={RenderStyle.Rustic}>{t(RenderStyle.Rustic as any)}</option>
-                  <option value={RenderStyle.Parametric}>{t(RenderStyle.Parametric as any)}</option>
-                  <option value={RenderStyle.IndustrialLoft}>{t(RenderStyle.IndustrialLoft as any)}</option>
-                </optgroup>
-                <optgroup label="Cultural">
-                  <option value={RenderStyle.PanArabic}>{t(RenderStyle.PanArabic as any)}</option>
-                  <option value={RenderStyle.Asian}>{t(RenderStyle.Asian as any)}</option>
-                  <option value={RenderStyle.Scandic}>{t(RenderStyle.Scandic as any)}</option>
-                  <option value={RenderStyle.Tropical}>{t(RenderStyle.Tropical as any)}</option>
-                </optgroup>
-                <optgroup label="Interior: Home">
-                  <option value={RenderStyle.HomeScandi}>{t(RenderStyle.HomeScandi as any)}</option>
-                  <option value={RenderStyle.HomeJapandi}>{t(RenderStyle.HomeJapandi as any)}</option>
-                  <option value={RenderStyle.HomeBoho}>{t(RenderStyle.HomeBoho as any)}</option>
-                  <option value={RenderStyle.HomeIndustrial}>{t(RenderStyle.HomeIndustrial as any)}</option>
-                  <option value={RenderStyle.HomeLuxury}>{t(RenderStyle.HomeLuxury as any)}</option>
-                  <option value={RenderStyle.HomeMidCentury}>{t(RenderStyle.HomeMidCentury as any)}</option>
-                  <option value={RenderStyle.HomeCoastal}>{t(RenderStyle.HomeCoastal as any)}</option>
-                  <option value={RenderStyle.HomeFarmhouse}>{t(RenderStyle.HomeFarmhouse as any)}</option>
-                  <option value={RenderStyle.HomeWabiSabi}>{t(RenderStyle.HomeWabiSabi as any)}</option>
-                  <option value={RenderStyle.HomeMaximalist}>{t(RenderStyle.HomeMaximalist as any)}</option>
-                  <option value={RenderStyle.HomeArtDeco}>{t(RenderStyle.HomeArtDeco as any)}</option>
-                  <option value={RenderStyle.HomeClassic}>{t(RenderStyle.HomeClassic as any)}</option>
-                </optgroup>
-                <optgroup label="Interior: Office">
-                  <option value={RenderStyle.OfficeOpenPlan}>{t(RenderStyle.OfficeOpenPlan as any)}</option>
-                  <option value={RenderStyle.OfficeExecutive}>{t(RenderStyle.OfficeExecutive as any)}</option>
-                  <option value={RenderStyle.OfficeCreative}>{t(RenderStyle.OfficeCreative as any)}</option>
-                  <option value={RenderStyle.OfficeTech}>{t(RenderStyle.OfficeTech as any)}</option>
-                  <option value={RenderStyle.OfficeBiophilic}>{t(RenderStyle.OfficeBiophilic as any)}</option>
-                </optgroup>
-                <optgroup label="Interior: Retail">
-                  <option value={RenderStyle.RetailBoutique}>{t(RenderStyle.RetailBoutique as any)}</option>
-                  <option value={RenderStyle.RetailShowroom}>{t(RenderStyle.RetailShowroom as any)}</option>
-                  <option value={RenderStyle.RetailMall}>{t(RenderStyle.RetailMall as any)}</option>
-                  <option value={RenderStyle.RetailMinimal}>{t(RenderStyle.RetailMinimal as any)}</option>
-                </optgroup>
-                <optgroup label="Interior: Hospitality">
-                  <option value={RenderStyle.HospHotelLobby}>{t(RenderStyle.HospHotelLobby as any)}</option>
-                  <option value={RenderStyle.HospRestaurant}>{t(RenderStyle.HospRestaurant as any)}</option>
-                  <option value={RenderStyle.HospCafe}>{t(RenderStyle.HospCafe as any)}</option>
-                  <option value={RenderStyle.HospBar}>{t(RenderStyle.HospBar as any)}</option>
-                </optgroup>
-                <optgroup label="Interior: Sales Office">
-                  <option value={RenderStyle.SalesRealEstate}>{t(RenderStyle.SalesRealEstate as any)}</option>
-                  <option value={RenderStyle.SalesReception}>{t(RenderStyle.SalesReception as any)}</option>
-                  <option value={RenderStyle.SalesGallery}>{t(RenderStyle.SalesGallery as any)}</option>
-                </optgroup>
-                <optgroup label="Exterior">
-                  <option value={RenderStyle.Biophilic}>{t(RenderStyle.Biophilic as any)}</option>
-                  <option value={RenderStyle.GlassFacade}>{t(RenderStyle.GlassFacade as any)}</option>
-                  <option value={RenderStyle.Sustainable}>{t(RenderStyle.Sustainable as any)}</option>
-                  <option value={RenderStyle.Cottage}>{t(RenderStyle.Cottage as any)}</option>
-                  <option value={RenderStyle.Alpine}>{t(RenderStyle.Alpine as any)}</option>
-                  <option value={RenderStyle.DesertModern}>{t(RenderStyle.DesertModern as any)}</option>
-                </optgroup>
-                <optgroup label="Techniques">
-                  <option value={RenderStyle.Sketch}>{t(RenderStyle.Sketch as any)}</option>
-                  <option value={RenderStyle.Watercolor}>{t(RenderStyle.Watercolor as any)}</option>
-                  <option value={RenderStyle.Blueprint}>{t(RenderStyle.Blueprint as any)}</option>
-                </optgroup>
+                {availableStyles.map(s => (
+                  <option key={s} value={s}>{t(s as any)}</option>
+                ))}
               </select>
             </div>
 
@@ -1114,22 +1079,24 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
                   { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
 
-                ].map(opt => {
-                  const isSelected = atmosphere.includes(opt.val);
-                  return (
-                    <button
-                      key={opt.val}
-                      onClick={() => toggleAtmosphere(opt.val)}
-                      className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected
-                        ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900`
-                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
-                        }`}
-                    >
-                      {opt.icon}
-                      <span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span>
-                    </button>
-                  );
-                })}
+                ]
+                  .filter(opt => availableAtmospheres.includes(opt.val))
+                  .map(opt => {
+                    const isSelected = atmosphere.includes(opt.val);
+                    return (
+                      <button
+                        key={opt.val}
+                        onClick={() => toggleAtmosphere(opt.val)}
+                        className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected
+                          ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900`
+                          : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                          }`}
+                      >
+                        {opt.icon}
+                        <span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span>
+                      </button>
+                    );
+                  })}
               </div>
             </div>
 
