@@ -5,6 +5,7 @@ export interface ReferenceImage {
     user_id: string;
     name: string;
     image_url: string;
+    category?: 'exterior' | 'interior' | 'general';
     display_order: number;
     created_at: string;
     updated_at: string;
@@ -30,7 +31,8 @@ export const fetchUserReferenceImages = async (userId: string): Promise<Referenc
 export const uploadReferenceImage = async (
     userId: string,
     file: File,
-    name: string
+    name: string,
+    category: 'exterior' | 'interior' | 'general' = 'general'
 ): Promise<ReferenceImage> => {
     // Validate file
     if (!file.type.startsWith('image/')) {
@@ -73,6 +75,7 @@ export const uploadReferenceImage = async (
             user_id: userId,
             name,
             image_url: publicUrl,
+            category,
             display_order: nextOrder
         })
         .select()
