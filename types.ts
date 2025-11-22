@@ -3,34 +3,32 @@ export enum RenderStyle {
   None = 'Photorealistic',
 
   // Office Building
-  OfficeGlass = 'Office: Modern Glass Curtain Wall',
-  OfficeTimber = 'Office: Sustainable Timber Grid',
-  OfficeHighTech = 'Office: High-Tech Kinetic Facade',
-  OfficeBiophilic = 'Office: Biophilic Green Tower',
-  OfficeBrutalist = 'Office: Brutalist Concrete (Modernized)',
+  OfficeGlass = 'Office: Glass Curtain Wall',
+  OfficeACM = 'Office: Alucobond / ACM Panels (Hi-Tech)',
+  OfficeNeoclassic = 'Office: Neoclassical (Stone & Columns)',
+  OfficeConcrete = 'Office: Modern Concrete & Glass',
+  OfficeBrick = 'Office: Industrial Brick & Metal',
 
   // Mixed Use Building
-  MixedRetailRes = 'Mixed Use: Retail Podium + Residential Tower',
-  MixedIndustrial = 'Mixed Use: Industrial Loft Conversion',
-  MixedBrickGlass = 'Mixed Use: Contemporary Brick & Glass',
-  MixedTerraced = 'Mixed Use: Urban Terraced Garden',
-  MixedOrganic = 'Mixed Use: Futuristic Organic Form',
+  MixedGlassSteel = 'Mixed Use: Glass & Steel Tower',
+  MixedBrickLoft = 'Mixed Use: Brick Loft & Metal',
+  MixedNeoclassic = 'Mixed Use: Neoclassical Facade',
+  MixedModern = 'Mixed Use: Modern Composite Panels',
+  MixedFuturistic = 'Mixed Use: Futuristic Metal & Glass',
 
   // Apartment Complex
-  AptLuxury = 'Apartment: Luxury Balcony Facade',
-  AptScandi = 'Apartment: Scandinavian Minimalist',
-  AptMediterranean = 'Apartment: Mediterranean Stucco & Tile',
-  AptSocial = 'Apartment: Modern Social Housing (Colorful)',
-  AptClassic = 'Apartment: Classic Brownstone / Brick',
+  AptModern = 'Apartment: Modern Glass & Concrete',
+  AptNeoclassic = 'Apartment: Neoclassical Stone',
+  AptBrick = 'Apartment: Classic Brick Facade',
+  AptMinimal = 'Apartment: Minimalist White Stucco',
+  AptHiTech = 'Apartment: Hi-Tech Metal Facade',
 
   // Home
-  HomeMinimalist = 'Home: Modern Minimalist Villa',
-  HomeFarmhouse = 'Home: Contemporary Farmhouse',
-  HomeMidCentury = 'Home: Mid-Century Modern',
-  HomeCoastal = 'Home: Coastal / Hamptons Style',
-  HomeJapandi = 'Home: Japandi (Japanese-Scandi)',
-  HomeIndustrial = 'Home: Industrial Chic Home',
-  HomeCraftsman = 'Home: Traditional Craftsman'
+  HomeModern = 'Home: Modern Concrete & Glass',
+  HomeNeoclassic = 'Home: Neoclassical Villa',
+  HomeHiTech = 'Home: Hi-Tech Steel & Glass',
+  HomeMinimal = 'Home: Minimalist Stucco',
+  HomeClassic = 'Home: Classic Brick & Stone'
 }
 
 export enum Atmosphere {
