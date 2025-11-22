@@ -126,8 +126,22 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Reference Images: Use custom or fallback to defaults
   const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
-  const styleLibrary = customReferenceImages.length > 0
-    ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
+
+  const filteredCustomRefs = customReferenceImages.filter(ref => {
+    const category = ref.category || 'general';
+    // Map general images to exterior if that's the convention, or keep strict?
+    // User asked for "based on the reference image category".
+    // Let's assume strict matching for now, but maybe allow 'general' to appear in 'general' mode.
+    // If the user uploads as 'general' (default), they might expect to see it somewhere.
+    // In ProfilePage we mapped general -> exterior. Let's do the same here for consistency if mode is exterior?
+    // Or just strict match. Let's try strict match first: category === editorMode.
+    // Exception: if category is 'general' and mode is 'exterior', maybe show it?
+    if (category === 'general' && editorMode === 'exterior') return true;
+    return category === editorMode;
+  });
+
+  const styleLibrary = filteredCustomRefs.length > 0
+    ? filteredCustomRefs.map(ref => ({ name: ref.name, url: ref.image_url }))
     : STYLE_LIBRARY;
 
   // Drawing
@@ -1169,19 +1183,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             <div className="relative">
               {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
 
-              {/* Keep Building Button (Exterior Only) */}
-              {editorMode === 'exterior' && (
-                <button
-                  onClick={() => setKeepBuilding(!keepBuilding)}
-                  className={`w-full mb-3 py-2 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding
-                    ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                    }`}
-                >
-                  <Lock size={14} />
-                  Keep Building Shape & Details
-                </button>
-              )}
+
 
               {/* Generate Button */}
               <button
