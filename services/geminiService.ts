@@ -256,25 +256,12 @@ export const editImage = async (sourceImage: string | null, settings: Generation
   try {
     const fullPrompt = await constructFullPrompt(settings);
 
+    // Initialize parts with the main prompt
     const parts: any[] = [
       { text: `Generate a high-quality architectural render. ${fullPrompt}` }
     ];
 
-    // Add Style Reference Image FIRST
-    if (settings.styleReferenceImage) {
-      const { mimeType, data } = await toInlineData(settings.styleReferenceImage);
-      if (data) {
-        parts.push({
-          inlineData: {
-            mimeType: mimeType,
-            data: data
-          }
-        });
-        parts[0].text += " The first image is a STYLE REFERENCE ONLY. Copy its colors, lighting, and materials, but IGNORE its structure and geometry. Do not let the style image influence the building shape.";
-      }
-    }
-
-    // Add Source Image (Structure Reference) SECOND
+    // 1. Add Source Image (Structure Reference) - FIRST as requested
     if (sourceImage) {
       const { mimeType, data } = await toInlineData(sourceImage);
       if (data) {
@@ -284,9 +271,27 @@ export const editImage = async (sourceImage: string | null, settings: Generation
             data: data
           }
         });
+        // Explicit instruction immediately following the source image
+        parts.push({
+          text: "IMAGE 1 (Above): PRIMARY STRUCTURAL REFERENCE. Use this image's exact geometry, lines, and perspective. Do not alter the building shape."
+        });
+      }
+    }
 
-        const refIndex = settings.styleReferenceImage ? "second" : "first";
-        parts[0].text += ` The ${refIndex} image is the PRIMARY SOURCE for structure, geometry, and composition. You MUST follow its lines and perspective exactly.`;
+    // 2. Add Style Reference Image - SECOND as requested
+    if (settings.styleReferenceImage) {
+      const { mimeType, data } = await toInlineData(settings.styleReferenceImage);
+      if (data) {
+        parts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: data
+          }
+        });
+        // Explicit instruction immediately following the style image
+        parts.push({
+          text: "IMAGE 2 (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry. Do not let this image change the building structure from Image 1."
+        });
       }
     }
 
@@ -314,7 +319,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-pro-image-preview',
-        contents: parts,
+        contents: [{ role: 'user', parts: parts }], // Standardized contents structure
         config: config
       });
 
@@ -345,17 +350,17 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         console.log(`Original aspect ratio enforced: ${calculatedRatio} (${dimensions.width}x${dimensions.height})`);
       } catch (error) {
         console.warn('Failed to calculate aspect ratio, falling back to text instruction', error);
-        parts[0].text += " Strictly maintain the exact aspect ratio and composition of the source image (first image).";
+        parts.push({ text: "Strictly maintain the exact aspect ratio and composition of the source image (first image)." });
       }
 
       if (settings.styleReferenceImage) {
-        parts[0].text += " Use the style reference for colors and mood only, NOT for aspect ratio or composition.";
+        parts.push({ text: "Use the style reference for colors and mood only, NOT for aspect ratio or composition." });
       }
     }
 
     const response = await ai.models.generateContent({
       model: settings.model || 'gemini-2.5-flash-image',
-      contents: { parts },
+      contents: [{ role: 'user', parts: parts }],
       config: config
     });
 
