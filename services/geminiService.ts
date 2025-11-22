@@ -270,7 +270,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
             data: data
           }
         });
-        parts[0].text += " Use the first image as the main structural reference/sketch.";
+        parts[0].text += " The first image is the PRIMARY SOURCE for structure, geometry, and composition. You MUST follow its lines and perspective exactly.";
       }
     }
 
@@ -285,7 +285,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           }
         });
         const refIndex = sourceImage ? "second" : "first";
-        parts[0].text += ` Use the ${refIndex} image as a strict Style Reference for colors, lighting, and material mood.`;
+        parts[0].text += ` The ${refIndex} image is a STYLE REFERENCE ONLY. Copy its colors, lighting, and materials, but IGNORE its structure and geometry. Do not let the style image influence the building shape.`;
       }
     }
 
