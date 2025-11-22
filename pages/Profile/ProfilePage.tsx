@@ -174,6 +174,43 @@ const ProfilePage: React.FC = () => {
 
     // ... (rest of functions)
 
+    const handleUpdateReference = async (id: string) => {
+        if (!editName.trim()) return;
+        try {
+            await updateReferenceImage(id, editName);
+            setReferenceImages(referenceImages.map(ref =>
+                ref.id === id ? { ...ref, name: editName } : ref
+            ));
+            setEditingId(null);
+            setEditName('');
+        } catch (error) {
+            console.error('Error updating reference:', error);
+        }
+    };
+
+    const handleDeleteReference = async (id: string) => {
+        if (!confirm('Are you sure you want to delete this reference image?')) return;
+        try {
+            await deleteReferenceImage(id);
+            setReferenceImages(referenceImages.filter(ref => ref.id !== id));
+        } catch (error) {
+            console.error('Error deleting reference:', error);
+        }
+    };
+
+    // Filter images based on selected category
+    const filteredImages = referenceImages.filter(ref => {
+        const category = ref.category || 'general';
+        // If category is 'general', show it in 'exterior' (default behavior requested previously) 
+        // or should we show it in both? 
+        // The user's prompt said "toggle... allowing selection between 'Interior' and 'Exterior'".
+        // And the upload defaults to 'general' if not specified, but the UI sets it to 'exterior' or 'interior'.
+        // Existing images might be 'general'.
+        // Let's map 'general' to 'exterior' for display purposes if that's the default tab.
+        if (category === 'general') return uploadCategory === 'exterior';
+        return category === uploadCategory;
+    });
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-8">
             {/* ... (Header and Quota sections) */}
@@ -221,15 +258,15 @@ const ProfilePage: React.FC = () => {
 
                 {loadingReferences ? (
                     <div className="text-center py-12 text-slate-500">Loading references...</div>
-                ) : referenceImages.length === 0 ? (
+                ) : filteredImages.length === 0 ? (
                     <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed">
                         <ImageIcon size={48} className="mx-auto mb-4 text-slate-700" />
-                        <p className="text-slate-400 mb-4">No custom reference images yet.</p>
+                        <p className="text-slate-400 mb-4">No {uploadCategory} reference images yet.</p>
                         <p className="text-sm text-slate-500">Upload your own reference images to use in Linear Mode</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                        {referenceImages.map(ref => (
+                        {filteredImages.map(ref => (
                             <div key={ref.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-indigo-500/50 transition-all group relative">
                                 <div className="aspect-square overflow-hidden">
                                     <img
