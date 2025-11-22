@@ -139,6 +139,37 @@ export const handler: Handler = async (event) => {
                 requestBody.negative_prompt = params.negativePrompt;
             }
 
+            // Camera Controls
+            if (params.cameraControl) {
+                const { type, config } = params.cameraControl;
+
+                // Construct camera_control object
+                const cameraControlObj: any = {
+                    type: type,
+                    config: {}
+                };
+
+                // Only populate config if type is 'simple'
+                if (type === 'simple' && config) {
+                    // Ensure only one parameter is non-zero (though UI enforces this, we pass all)
+                    // Actually API says "Choose one out of the following six parameters... only one parameter should be non-zero"
+                    // We just pass what we have, assuming UI did its job.
+                    // But we should probably filter out zeros if the API is strict? 
+                    // "Required Field must be filled out" - implies we send the object.
+                    // Let's send the config object as is.
+                    cameraControlObj.config = {
+                        horizontal: config.horizontal || 0,
+                        vertical: config.vertical || 0,
+                        pan: config.pan || 0,
+                        tilt: config.tilt || 0,
+                        roll: config.roll || 0,
+                        zoom: config.zoom || 0
+                    };
+                }
+
+                requestBody.camera_control = cameraControlObj;
+            }
+
             console.log('[Kling API] Sending request to:', `${KLING_API_BASE}/videos/image2video`);
             // Log payload but truncate image data
             const logPayload = { ...requestBody };

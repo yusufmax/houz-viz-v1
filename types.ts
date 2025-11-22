@@ -200,13 +200,27 @@ export enum KlingModel {
   V2_1 = 'kling-v2-1'
 }
 
+export type CameraMovementType = 'simple' | 'down_back' | 'forward_up' | 'right_turn_forward' | 'left_turn_forward';
+
+export interface CameraControlSettings {
+  type: CameraMovementType;
+  config: {
+    horizontal: number;
+    vertical: number;
+    pan: number;
+    tilt: number;
+    roll: number;
+    zoom: number;
+  };
+}
+
 export interface VideoGenerationSettings {
   model: KlingModel;
   duration: 5 | 10;
   aspectRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
   prompt: string;
   cfgScale?: number;
-  cameraMovement?: string;
+  cameraControl?: CameraControlSettings;
   mode?: 'std' | 'pro';
 }
 
