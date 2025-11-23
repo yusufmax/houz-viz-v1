@@ -61,7 +61,7 @@ export class RealtimeService {
                 },
                 systemInstruction: {
                     parts: [
-                        { text: "You are a professional transcriber. Your job is to stream the text of what the user says. Do not answer questions. Do not ignore the user. Output the text exactly." }
+                        { text: "You are a voice-to-text transcriber. Your ONLY job is to output the exact text of what the user speaks. Do NOT converse. Do NOT answer questions. Do NOT say 'Sorry'. Do NOT ignore input. If the user speaks, output the text immediately." }
                     ]
                 }
             }
