@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { AspectRatio } from '../types';
 import { useLanguage } from '../LanguageContext';
+import { convertPdfToImage } from '../services/pdfService';
 
 interface DrawEditorProps {
   initialImage: string | null;
@@ -180,37 +181,58 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     ctx.fill();
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && ctx && canvasRef.current) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          // Place in center
-          const x = (canvasRef.current!.width - img.width) / 2;
-          const y = (canvasRef.current!.height - img.height) / 2;
-          const scale = Math.min(canvasRef.current!.width / img.width, canvasRef.current!.height / img.height, 1);
-          const w = img.width * scale;
-          const h = img.height * scale;
-          ctx.drawImage(img, (canvasRef.current!.width - w) / 2, (canvasRef.current!.height - h) / 2, w, h);
-          saveToHistory();
-          setTool('brush'); // Reset tool
-        };
-        img.src = event.target?.result as string;
+    if (!file || !ctx || !canvasRef.current) return;
+
+    try {
+      let imageSrc = '';
+      if (file.type === 'application/pdf') {
+        imageSrc = await convertPdfToImage(file);
+      } else {
+        imageSrc = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      const img = new Image();
+      img.onload = () => {
+        // Place in center
+        const x = (canvasRef.current!.width - img.width) / 2;
+        const y = (canvasRef.current!.height - img.height) / 2;
+        const scale = Math.min(canvasRef.current!.width / img.width, canvasRef.current!.height / img.height, 1);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.drawImage(img, (canvasRef.current!.width - w) / 2, (canvasRef.current!.height - h) / 2, w, h);
+        saveToHistory();
+        setTool('brush'); // Reset tool
       };
-      reader.readAsDataURL(file);
+      img.src = imageSrc;
+    } catch (error) {
+      console.error("Failed to load image/pdf", error);
+      alert("Failed to load file.");
     }
   };
 
-  const handleReferenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleReferenceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReferenceImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        if (file.type === 'application/pdf') {
+          const imageSrc = await convertPdfToImage(file);
+          setReferenceImage(imageSrc);
+        } else {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setReferenceImage(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch (error) {
+        console.error("Failed to load reference PDF", error);
+      }
     }
   };
 
@@ -251,7 +273,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
               </button>
               <label className={`p-2 rounded cursor-pointer ${tool === 'image' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`} title={t('placeImage')}>
                 <ImageIcon size={20} />
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleImageUpload} />
               </label>
             </div>
 
@@ -382,7 +404,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
               ) : (
                 <label className="flex items-center justify-center w-full h-full cursor-pointer bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-slate-400 hover:text-white transition-all hover:border-indigo-500/50 group" title="Add Reference Image">
                   <Upload size={18} className="group-hover:scale-110 transition-transform" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleReferenceImageUpload} />
+                  <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReferenceImageUpload} />
                 </label>
               )}
             </div>

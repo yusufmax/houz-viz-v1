@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Upload, Image as ImageIcon, X, FileText } from 'lucide-react';
+import { convertPdfToImage } from '../services/pdfService';
 
 interface ImageUploadProps {
   onImageSelected: (base64: string | null) => void;
@@ -10,6 +11,7 @@ interface ImageUploadProps {
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImage, label = "Upload Image", compact = false }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -18,53 +20,60 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
     }
   };
 
-  const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const img = new Image();
-      img.onload = () => {
-        // Create canvas for compression
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+  const processFile = async (file: File) => {
+    setIsProcessing(true);
+    try {
+      if (file.type === 'application/pdf') {
+        // Handle PDF
+        const imageBase64 = await convertPdfToImage(file);
+        onImageSelected(imageBase64);
+      } else {
+        // Handle Image
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const img = new Image();
+          img.onload = () => {
+            // Create canvas for compression
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
 
-        // Calculate new dimensions (max 1920px on longest side)
-        const maxSize = 1920;
-        let width = img.width;
-        let height = img.height;
+            // Calculate new dimensions (max 1920px on longest side)
+            const maxSize = 1920;
+            let width = img.width;
+            let height = img.height;
 
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
-          }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
+            if (width > height) {
+              if (width > maxSize) {
+                height = (height * maxSize) / width;
+                width = maxSize;
+              }
+            } else {
+              if (height > maxSize) {
+                width = (width * maxSize) / height;
+                height = maxSize;
+              }
+            }
 
-        // Set canvas size and draw compressed image
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
+            // Set canvas size and draw compressed image
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to base64 with compression (0.85 quality for JPEG)
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-
-        // Calculate compression ratio
-        const originalSize = (reader.result as string).length;
-        const compressedSize = compressedBase64.length;
-        const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(1);
-
-        console.log(`Image compressed: ${ratio}% smaller (${(originalSize / 1024).toFixed(0)}KB → ${(compressedSize / 1024).toFixed(0)}KB)`);
-
-        onImageSelected(compressedBase64);
-      };
-      img.src = reader.result as string;
-    };
-    reader.readAsDataURL(file);
+            // Convert to base64 with compression (0.85 quality for JPEG)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+            onImageSelected(compressedBase64);
+            setIsProcessing(false);
+          };
+          img.src = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch (error) {
+      console.error("Error processing file:", error);
+      alert("Failed to process file. Please try again.");
+      setIsProcessing(false);
+    }
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -111,14 +120,24 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
     >
       <input
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf"
         onChange={handleFileChange}
         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        disabled={isProcessing}
       />
       <div className="flex flex-col items-center justify-center pt-5 pb-6 text-slate-400">
-        {compact ? <Upload size={24} className="mb-2" /> : <ImageIcon size={48} className="mb-4 opacity-50" />}
-        <p className={`text-sm font-medium ${compact ? 'text-xs' : ''}`}>{label}</p>
-        {!compact && <p className="text-xs text-slate-500 mt-2">SVG, PNG, JPG</p>}
+        {isProcessing ? (
+          <div className="animate-pulse flex flex-col items-center">
+            <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+            <span className="text-xs">Processing...</span>
+          </div>
+        ) : (
+          <>
+            {compact ? <Upload size={24} className="mb-2" /> : <ImageIcon size={48} className="mb-4 opacity-50" />}
+            <p className={`text-sm font-medium ${compact ? 'text-xs' : ''}`}>{label}</p>
+            {!compact && <p className="text-xs text-slate-500 mt-2">Images or PDF</p>}
+          </>
+        )}
       </div>
     </div>
   );
