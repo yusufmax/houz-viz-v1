@@ -14,9 +14,11 @@ import BatchResults from './BatchResults';
 import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota } from '../types';
 import {
   generateImage, editImage, generateImageBatch,
-  enhancePrompt, transcribeAudio
+  enhancePrompt
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
+import { RealtimeService } from '../services/realtimeService';
+import { AudioManager } from '../services/audioManager';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
 import { quotaService } from '../services/quotaService';
@@ -110,9 +112,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const realtimeServiceRef = useRef<RealtimeService | null>(null);
+  const audioManagerRef = useRef<AudioManager | null>(null);
   const [isUpscaling, setIsUpscaling] = useState(false);
 
   // Video Generation
@@ -448,55 +449,50 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const handleVoiceInput = async () => {
     if (isRecording) {
       // Stop Recording
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
+      if (audioManagerRef.current) {
+        audioManagerRef.current.stopRecording();
       }
+      if (realtimeServiceRef.current) {
+        realtimeServiceRef.current.disconnect();
+      }
+      setIsRecording(false);
     } else {
       // Start Recording
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+          alert("Gemini API Key is missing.");
+          return;
+        }
 
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
+        // Initialize services
+        realtimeServiceRef.current = new RealtimeService(apiKey);
+        audioManagerRef.current = new AudioManager((base64PCM) => {
+          if (realtimeServiceRef.current) {
+            realtimeServiceRef.current.sendAudioChunk(base64PCM);
           }
-        };
+        });
 
-        mediaRecorder.onstop = async () => {
-          setIsTranscribing(true);
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); // or audio/mp4 depending on browser support
+        // Connect to Gemini
+        realtimeServiceRef.current.connect(
+          (text) => {
+            setPrompt(prev => prev + text);
+          },
+          (error) => {
+            console.error("Realtime Service Error:", error);
+            setIsRecording(false);
+            alert("Connection to Gemini failed.");
+          }
+        );
 
-          // Convert Blob to Base64
-          const reader = new FileReader();
-          reader.readAsDataURL(audioBlob);
-          reader.onloadend = async () => {
-            const base64String = (reader.result as string).split(',')[1];
-            try {
-              // Use webm if supported, otherwise fallback might be needed but usually webm works
-              const text = await transcribeAudio(base64String, audioBlob.type);
-              if (text) {
-                setPrompt(prev => prev ? `${prev} ${text}` : text);
-              }
-            } catch (error) {
-              console.error("Transcription failed", error);
-              alert("Failed to transcribe audio.");
-            } finally {
-              setIsTranscribing(false);
-              // Stop all tracks to release microphone
-              stream.getTracks().forEach(track => track.stop());
-            }
-          };
-        };
-
-        mediaRecorder.start();
+        // Start Audio
+        await audioManagerRef.current.startRecording();
         setIsRecording(true);
+
       } catch (error) {
-        console.error("Error accessing microphone:", error);
-        alert("Could not access microphone. Please check permissions.");
+        console.error("Error starting voice input:", error);
+        alert("Could not start voice input. Please check permissions.");
+        setIsRecording(false);
       }
     }
   };
@@ -1061,18 +1057,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 />
                 <button
                   onClick={handleVoiceInput}
-                  disabled={isTranscribing}
                   className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording
-                    ? 'bg-red-500/20 text-red-500 animate-pulse'
-                    : isTranscribing
-                      ? 'bg-indigo-500/20 text-indigo-400'
+                      ? 'bg-red-500/20 text-red-500 animate-pulse'
                       : 'text-slate-400 hover:text-white hover:bg-slate-700'
                     }`}
                   title={isRecording ? "Stop Recording" : "Voice Input"}
                 >
-                  {isTranscribing ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : isRecording ? (
+                  {isRecording ? (
                     <MicOff size={16} />
                   ) : (
                     <Mic size={16} />
