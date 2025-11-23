@@ -20,9 +20,14 @@ export class RealtimeService {
                 this.sendSetupMessage();
             };
 
-            this.ws.onmessage = (event) => {
+            this.ws.onmessage = async (event) => {
                 try {
-                    const response = JSON.parse(event.data);
+                    let responseData = event.data;
+                    if (responseData instanceof Blob) {
+                        responseData = await responseData.text();
+                    }
+
+                    const response = JSON.parse(responseData);
                     this.handleResponse(response);
                 } catch (e) {
                     console.error("Error parsing WebSocket message:", e);
