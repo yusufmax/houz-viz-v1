@@ -12,7 +12,10 @@ import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota } from '../types';
-import { generateImage, editImage, enhancePrompt, upscaleImage } from '../services/geminiService';
+import {
+  generateImage, editImage, generateImageBatch,
+  enhancePrompt, transcribeAudio
+} from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
@@ -106,6 +109,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [isUpscaling, setIsUpscaling] = useState(false);
 
   // Video Generation
@@ -435,6 +442,62 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       console.error("Failed to enhance prompt", error);
     } finally {
       setIsEnhancing(false);
+    }
+  };
+
+  const handleVoiceInput = async () => {
+    if (isRecording) {
+      // Stop Recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+    } else {
+      // Start Recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          setIsTranscribing(true);
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' }); // or audio/mp4 depending on browser support
+
+          // Convert Blob to Base64
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64String = (reader.result as string).split(',')[1];
+            try {
+              // Use webm if supported, otherwise fallback might be needed but usually webm works
+              const text = await transcribeAudio(base64String, audioBlob.type);
+              if (text) {
+                setPrompt(prev => prev ? `${prev} ${text}` : text);
+              }
+            } catch (error) {
+              console.error("Transcription failed", error);
+              alert("Failed to transcribe audio.");
+            } finally {
+              setIsTranscribing(false);
+              // Stop all tracks to release microphone
+              stream.getTracks().forEach(track => track.stop());
+            }
+          };
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (error) {
+        console.error("Error accessing microphone:", error);
+        alert("Could not access microphone. Please check permissions.");
+      }
     }
   };
 
@@ -989,12 +1052,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
                 </button>
               </div>
-              <textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder={t('instructionsPlaceholder')}
-                className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
-              />
+              <div className="relative">
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder={t('instructionsPlaceholder')}
+                  className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
+                />
+                <button
+                  onClick={handleVoiceInput}
+                  disabled={isTranscribing}
+                  className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording
+                      ? 'bg-red-500/20 text-red-500 animate-pulse'
+                      : isTranscribing
+                        ? 'bg-indigo-500/20 text-indigo-400'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                    }`}
+                  title={isRecording ? "Stop Recording" : "Voice Input"}
+                >
+                  {isTranscribing ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : isRecording ? (
+                    <MicOff size={16} />
+                  ) : (
+                    <Mic size={16} />
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Model Selection */}

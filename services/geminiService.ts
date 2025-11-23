@@ -420,3 +420,27 @@ export const upscaleImage = async (image: string): Promise<string> => {
   return await editImage(image, settings);
 };
 
+/**
+ * Transcribes audio to text using Gemini 1.5 Flash
+ */
+export const transcribeAudio = async (audioBase64: string, mimeType: string): Promise<string> => {
+  try {
+    const result = await ai.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: "Transcribe the following audio exactly as spoken. Do not add any other text." },
+            { inlineData: { mimeType, data: audioBase64 } }
+          ]
+        }
+      ]
+    });
+
+    return result.response.text().trim();
+  } catch (error) {
+    console.error("Transcription failed:", error);
+    throw new Error("Failed to transcribe audio");
+  }
+};
