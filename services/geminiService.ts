@@ -438,6 +438,13 @@ export const transcribeAudio = async (audioBase64: string, mimeType: string): Pr
       ]
     });
 
+    console.log("Transcription result:", result);
+
+    if (!result || !result.response) {
+      console.error("Invalid response structure:", result);
+      throw new Error("Invalid response from Gemini");
+    }
+
     return result.response.text().trim();
   } catch (error) {
     console.error("Transcription failed:", error);
