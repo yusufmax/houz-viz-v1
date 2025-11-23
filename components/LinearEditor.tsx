@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2,
-  Zap, Cloud, Camera, LayoutTemplate, Loader2,
+  Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
   Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
@@ -1063,10 +1063,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   onClick={handleVoiceInput}
                   disabled={isTranscribing}
                   className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording
-                      ? 'bg-red-500/20 text-red-500 animate-pulse'
-                      : isTranscribing
-                        ? 'bg-indigo-500/20 text-indigo-400'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-red-500/20 text-red-500 animate-pulse'
+                    : isTranscribing
+                      ? 'bg-indigo-500/20 text-indigo-400'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-700'
                     }`}
                   title={isRecording ? "Stop Recording" : "Voice Input"}
                 >
