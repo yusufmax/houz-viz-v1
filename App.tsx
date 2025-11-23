@@ -69,7 +69,9 @@ const Home: React.FC = () => {
   }, [user]);
 
   const toggleLang = () => {
-    setLang(lang === 'en' ? 'ru' : 'en');
+    if (lang === 'en') setLang('ru');
+    else if (lang === 'ru') setLang('uz');
+    else setLang('en');
   };
 
   return (
