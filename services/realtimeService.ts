@@ -57,7 +57,8 @@ export class RealtimeService {
             setup: {
                 model: `models/${this.model}`,
                 generationConfig: {
-                    responseModalities: ["TEXT"], // We only want text back
+                    responseModalities: ["TEXT"],
+                    temperature: 0.0, // We only want text back
                 },
                 systemInstruction: {
                     parts: [
