@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { AspectRatio } from '../types';
 import { useLanguage } from '../LanguageContext';
-import { convertPdfToImage } from '../services/pdfService';
+import { useLanguage } from '../LanguageContext';
+import PdfPageSelector from './PdfPageSelector';
 
 interface DrawEditorProps {
   initialImage: string | null;
@@ -24,8 +25,8 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);
   const [tool, setTool] = useState<Tool>('brush');
-  const [color, setColor] = useState('#ffffff');
-  const [brushSize, setBrushSize] = useState(4);
+  const [brushSize, setBrushSize] = useState(5);
+  const [brushColor, setBrushColor] = useState('#000000');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
@@ -36,6 +37,10 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
 
   // History for Undo
   const [history, setHistory] = useState<string[]>([]);
+  const [historyStep, setHistoryStep] = useState(-1);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfMode, setPdfMode] = useState<'place' | 'reference' | null>(null);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -133,7 +138,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     const pos = getPos(e);
 
     if (tool === 'brush') {
-      ctx.strokeStyle = color;
+      ctx.strokeStyle = brushColor;
       ctx.lineWidth = brushSize;
       ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
@@ -146,12 +151,12 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     const endPos = getPos(e);
 
     if (tool === 'arrow') {
-      drawArrow(ctx, startPos.x, startPos.y, endPos.x, endPos.y, brushSize, color);
+      drawArrow(ctx, startPos.x, startPos.y, endPos.x, endPos.y, brushSize, brushColor);
     } else if (tool === 'text') {
       const text = prompt("Enter annotation text:", "New Feature");
       if (text) {
         ctx.font = `${brushSize * 5}px sans-serif`;
-        ctx.fillStyle = color;
+        ctx.fillStyle = brushColor;
         ctx.fillText(text, endPos.x, endPos.y);
       }
     }
@@ -185,55 +190,74 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     const file = e.target.files?.[0];
     if (!file || !ctx || !canvasRef.current) return;
 
-    try {
-      let imageSrc = '';
-      if (file.type === 'application/pdf') {
-        imageSrc = await convertPdfToImage(file);
-      } else {
-        imageSrc = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = (event) => resolve(event.target?.result as string);
-          reader.readAsDataURL(file);
-        });
-      }
+    if (file.type === 'application/pdf') {
+      setPdfFile(file);
+      setPdfMode('place');
+      return;
+    }
 
-      const img = new Image();
-      img.onload = () => {
-        // Place in center
-        const x = (canvasRef.current!.width - img.width) / 2;
-        const y = (canvasRef.current!.height - img.height) / 2;
-        const scale = Math.min(canvasRef.current!.width / img.width, canvasRef.current!.height / img.height, 1);
-        const w = img.width * scale;
-        const h = img.height * scale;
-        ctx.drawImage(img, (canvasRef.current!.width - w) / 2, (canvasRef.current!.height - h) / 2, w, h);
-        saveToHistory();
-        setTool('brush'); // Reset tool
-      };
-      img.src = imageSrc;
+    try {
+      const imageSrc = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      placeImageOnCanvas(imageSrc);
     } catch (error) {
-      console.error("Failed to load image/pdf", error);
+      console.error("Failed to load image", error);
       alert("Failed to load file.");
     }
+  };
+
+  const placeImageOnCanvas = (imageSrc: string) => {
+    if (!ctx || !canvasRef.current) return;
+
+    const img = new Image();
+    img.onload = () => {
+      // Place in center
+      const x = (canvasRef.current!.width - img.width) / 2;
+      const y = (canvasRef.current!.height - img.height) / 2;
+      const scale = Math.min(canvasRef.current!.width / img.width, canvasRef.current!.height / img.height, 1);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (canvasRef.current!.width - w) / 2, (canvasRef.current!.height - h) / 2, w, h);
+      saveToHistory();
+      setTool('brush'); // Reset tool
+    };
+    img.src = imageSrc;
   };
 
   const handleReferenceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      try {
-        if (file.type === 'application/pdf') {
-          const imageSrc = await convertPdfToImage(file);
-          setReferenceImage(imageSrc);
-        } else {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setReferenceImage(reader.result as string);
-          };
-          reader.readAsDataURL(file);
-        }
-      } catch (error) {
-        console.error("Failed to load reference PDF", error);
+      if (file.type === 'application/pdf') {
+        setPdfFile(file);
+        setPdfMode('reference');
+        return;
       }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReferenceImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handlePdfSelect = (base64: string) => {
+    if (pdfMode === 'place') {
+      placeImageOnCanvas(base64);
+    } else if (pdfMode === 'reference') {
+      setReferenceImage(base64);
+    }
+    setPdfFile(null);
+    setPdfMode(null);
+  };
+
+  const handlePdfCancel = () => {
+    setPdfFile(null);
+    setPdfMode(null);
   };
 
   const handleSave = () => {
@@ -253,6 +277,14 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur flex flex-col items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden relative">
+
+        {pdfFile && (
+          <PdfPageSelector
+            file={pdfFile}
+            onSelect={handlePdfSelect}
+            onCancel={handlePdfCancel}
+          />
+        )}
 
         {/* Toolbar */}
         <div className="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 shrink-0 z-20">
