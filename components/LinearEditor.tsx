@@ -569,6 +569,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   useEffect(() => {
     if (user) {
+      console.log("User found:", user.id);
+      console.log("HistoryService:", historyService);
       loadQuota();
       loadHistory();
       if (projectId) {
