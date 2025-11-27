@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { AspectRatio } from '../types';
 import { useLanguage } from '../LanguageContext';
-import { useLanguage } from '../LanguageContext';
 import PdfPageSelector from './PdfPageSelector';
 
 interface DrawEditorProps {
@@ -315,8 +314,8 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                 {['#ffffff', '#000000', '#ef4444', '#22c55e', '#3b82f6', '#eab308'].map(c => (
                   <button
                     key={c}
-                    onClick={() => setColor(c)}
-                    className={`w-4 h-4 rounded-full border-2 ${color === c ? 'border-white scale-110' : 'border-transparent'}`}
+                    onClick={() => setBrushColor(c)}
+                    className={`w-4 h-4 rounded-full border-2 ${brushColor === c ? 'border-white scale-110' : 'border-transparent'}`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
