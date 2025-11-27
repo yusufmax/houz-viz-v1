@@ -1,6 +1,11 @@
 
 export enum RenderStyle {
-  None = 'Photorealistic',
+  None = 'None',
+  Photorealistic = 'Photorealistic',
+  PanArabic = 'Pan Arabic',
+  Asian = 'Asian / Zen',
+  Scandic = 'Scandinavian',
+  Tropical = 'Tropical',
 
   // Office Building
   OfficeGlass = 'Office: Glass Curtain Wall',

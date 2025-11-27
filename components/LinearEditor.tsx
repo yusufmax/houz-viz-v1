@@ -66,6 +66,7 @@ type EditorMode = 'exterior' | 'interior' | 'general';
 const STYLE_CATEGORIES: Record<EditorMode, RenderStyle[]> = {
   general: [
     RenderStyle.Photorealistic, RenderStyle.cinematic,
+    RenderStyle.PanArabic, RenderStyle.Asian, RenderStyle.Scandic, RenderStyle.Tropical,
     RenderStyle.Sketch, RenderStyle.Watercolor, RenderStyle.Blueprint, RenderStyle.PencilDrawing, RenderStyle.Chalk, RenderStyle.Cyberpunk
   ],
   exterior: [
@@ -85,21 +86,15 @@ const STYLE_CATEGORIES: Record<EditorMode, RenderStyle[]> = {
   ]
 };
 
-const ATMOSPHERE_CATEGORIES: Record<EditorMode, Atmosphere[]> = {
-  general: [
-    Atmosphere.None, Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Overcast, Atmosphere.Dawn, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Cyber,
-    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
-  ],
-  exterior: [
-    Atmosphere.None, Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Overcast, Atmosphere.Dawn, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Cyber,
-    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
-  ],
-  interior: [
-    Atmosphere.None, Atmosphere.WarmTungsten, Atmosphere.NaturalLight, Atmosphere.Studio, Atmosphere.Candlelight,
-    Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, // Some exterior lighting affects interiors
-    Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
-  ]
-};
+const ALL_ATMOSPHERES: Atmosphere[] = [
+  Atmosphere.None,
+  Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night,
+  Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Overcast,
+  Atmosphere.Dawn, Atmosphere.Stormy, Atmosphere.Misty,
+  Atmosphere.Cyber,
+  Atmosphere.WarmTungsten, Atmosphere.NaturalLight, Atmosphere.Studio, Atmosphere.Candlelight,
+  Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
+];
 
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
@@ -793,15 +788,25 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     setDrawingTarget(null);
   };
 
-  const handleDrawRender = (newImage: string, editPrompt?: string, refImage?: string | null, ratio?: AspectRatio) => {
+  const handleDrawRender = (newImage: string, editPrompt?: string, refImage?: string | null, ratio?: AspectRatio, selectedModel?: string) => {
     setSourceImage(newImage);
     if (drawingTarget === 'result') {
       setResultImage(null);
     }
+
+    // Update state for UI consistency
     if (editPrompt) setPrompt(editPrompt);
     if (refImage) setStyleReferenceImage(refImage);
     if (ratio) setAspectRatio(ratio);
-    executeGeneration(newImage);
+    if (selectedModel) setModel(selectedModel);
+
+    // Execute generation with overrides to avoid race conditions
+    executeGeneration(newImage, {
+      prompt: editPrompt || prompt,
+      styleReferenceImage: refImage || styleReferenceImage,
+      aspectRatio: ratio || aspectRatio,
+      model: selectedModel || model
+    });
   };
 
   const convertUrlToBase64 = async (url: string) => {
@@ -818,7 +823,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Filtered Options based on Mode
   const availableStyles = STYLE_CATEGORIES[editorMode];
-  const availableAtmospheres = ATMOSPHERE_CATEGORIES[editorMode];
+
 
 
   return (
@@ -839,6 +844,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           onSave={handleDrawSave}
           onRender={handleDrawRender}
           onClose={() => setDrawingTarget(null)}
+          selectedModel={model}
+          onModelChange={setModel}
         />
       )}
 
@@ -1001,14 +1008,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 key={mode}
                 onClick={() => {
                   setEditorMode(mode);
-                  // Reset style/atmosphere if current selection is not in new mode
+                  // Reset style if current selection is not in new mode
                   if (style !== RenderStyle.None && !STYLE_CATEGORIES[mode].includes(style)) {
                     setStyle(RenderStyle.None);
                   }
-                  const validAtmospheres = atmosphere.filter(a => ATMOSPHERE_CATEGORIES[mode].includes(a));
-                  if (validAtmospheres.length !== atmosphere.length) {
-                    setAtmosphere(validAtmospheres);
-                  }
+                  // Atmosphere is now global, no need to filter
                 }}
                 className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode
                   ? 'bg-indigo-600 text-white shadow-sm'
@@ -1058,8 +1062,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <button
                   onClick={handleVoiceInput}
                   className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording
-                      ? 'bg-red-500/20 text-red-500 animate-pulse'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-red-500/20 text-red-500 animate-pulse'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-700'
                     }`}
                   title={isRecording ? "Stop Recording" : "Voice Input"}
                 >
@@ -1091,260 +1095,240 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             {model === 'gemini-3-pro-image-preview' && (
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                  <Maximize2 size={14} /> Resolution
+                  <Palette size={14} /> {t('styleRef')}
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['1K', '2K', '4K'].map((res) => (
-                    <button
-                      key={res}
-                      onClick={() => setResolution(res)}
-                      className={`px-2 py-2 text-xs rounded border transition-all ${resolution === res
-                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
-                        }`}
-                    >
-                      {res}
-                    </button>
-                  ))}
-                </div>
+                <ImageUpload
+                  selectedImage={styleReferenceImage}
+                  onImageSelected={setStyleReferenceImage}
+                  label={t('uploadStyleRef')}
+                  compact
+                />
               </div>
             )}
 
-            {/* Style Reference & Library */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Palette size={14} /> {t('styleRef')}
-              </label>
-              <ImageUpload
-                selectedImage={styleReferenceImage}
-                onImageSelected={setStyleReferenceImage}
-                label={t('uploadStyleRef')}
-                compact
-              />
-              {/* Style Library Grid */}
-              <div className="grid grid-cols-5 gap-1 mt-2">
-                {styleLibrary.map((style, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => convertUrlToBase64(style.url)}
-                    className="relative aspect-square rounded overflow-hidden border border-slate-700 hover:border-indigo-500 group"
-                    title={style.name}
-                  >
-                    <img src={style.url} alt={style.name} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] text-center text-white p-1 transition-opacity">
-                      {style.name}
-                    </div>
-                  </button>
-                ))}
-              </div>
+            {/* Style Library Grid */}
+            <div className="grid grid-cols-5 gap-1 mt-2">
+              {styleLibrary.map((style, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => convertUrlToBase64(style.url)}
+                  className="relative aspect-square rounded overflow-hidden border border-slate-700 hover:border-indigo-500 group"
+                  title={style.name}
+                >
+                  <img src={style.url} alt={style.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] text-center text-white p-1 transition-opacity">
+                    {style.name}
+                  </div>
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Style Preset */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Zap size={14} /> {t('stylePreset')}
-              </label>
-              <select
-                value={style}
-                onChange={(e) => setStyle(e.target.value as RenderStyle)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
-              >
-                <option value={RenderStyle.None}>{t('None')}</option>
+          {/* Style Preset */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+              <Zap size={14} /> {t('stylePreset')}
+            </label>
+            <select
+              value={style}
+              onChange={(e) => setStyle(e.target.value as RenderStyle)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+            >
+              <option value={RenderStyle.None}>{t('None')}</option>
 
-                <optgroup label="Office Building">
-                  <option value={RenderStyle.OfficeGlass}>Glass Curtain Wall</option>
-                  <option value={RenderStyle.OfficeACM}>Alucobond / ACM Panels (Hi-Tech)</option>
-                  <option value={RenderStyle.OfficeNeoclassic}>Neoclassical (Stone & Columns)</option>
-                  <option value={RenderStyle.OfficeConcrete}>Modern Concrete & Glass</option>
-                  <option value={RenderStyle.OfficeBrick}>Industrial Brick & Metal</option>
-                </optgroup>
+              <optgroup label="Office Building">
+                <option value={RenderStyle.OfficeGlass}>Glass Curtain Wall</option>
+                <option value={RenderStyle.OfficeACM}>Alucobond / ACM Panels (Hi-Tech)</option>
+                <option value={RenderStyle.OfficeNeoclassic}>Neoclassical (Stone & Columns)</option>
+                <option value={RenderStyle.OfficeConcrete}>Modern Concrete & Glass</option>
+                <option value={RenderStyle.OfficeBrick}>Industrial Brick & Metal</option>
+              </optgroup>
 
-                <optgroup label="Mixed Use Building">
-                  <option value={RenderStyle.MixedGlassSteel}>Glass & Steel Tower</option>
-                  <option value={RenderStyle.MixedBrickLoft}>Brick Loft & Metal</option>
-                  <option value={RenderStyle.MixedNeoclassic}>Neoclassical Facade</option>
-                  <option value={RenderStyle.MixedModern}>Modern Composite Panels</option>
-                  <option value={RenderStyle.MixedFuturistic}>Futuristic Metal & Glass</option>
-                </optgroup>
+              <optgroup label="Mixed Use Building">
+                <option value={RenderStyle.MixedGlassSteel}>Glass & Steel Tower</option>
+                <option value={RenderStyle.MixedBrickLoft}>Brick Loft & Metal</option>
+                <option value={RenderStyle.MixedNeoclassic}>Neoclassical Facade</option>
+                <option value={RenderStyle.MixedModern}>Modern Composite Panels</option>
+                <option value={RenderStyle.MixedFuturistic}>Futuristic Metal & Glass</option>
+              </optgroup>
 
-                <optgroup label="Apartment Complex">
-                  <option value={RenderStyle.AptModern}>Modern Glass & Concrete</option>
-                  <option value={RenderStyle.AptNeoclassic}>Neoclassical Stone</option>
-                  <option value={RenderStyle.AptBrick}>Classic Brick Facade</option>
-                  <option value={RenderStyle.AptMinimal}>Minimalist White Stucco</option>
-                  <option value={RenderStyle.AptHiTech}>Hi-Tech Metal Facade</option>
-                </optgroup>
+              <optgroup label="Apartment Complex">
+                <option value={RenderStyle.AptModern}>Modern Glass & Concrete</option>
+                <option value={RenderStyle.AptNeoclassic}>Neoclassical Stone</option>
+                <option value={RenderStyle.AptBrick}>Classic Brick Facade</option>
+                <option value={RenderStyle.AptMinimal}>Minimalist White Stucco</option>
+                <option value={RenderStyle.AptHiTech}>Hi-Tech Metal Facade</option>
+              </optgroup>
 
-                <optgroup label="Home">
-                  <option value={RenderStyle.HomeModern}>Modern Concrete & Glass</option>
-                  <option value={RenderStyle.HomeNeoclassic}>Neoclassical Villa</option>
-                  <option value={RenderStyle.HomeHiTech}>Hi-Tech Steel & Glass</option>
-                  <option value={RenderStyle.HomeMinimal}>Minimalist Stucco</option>
-                  <option value={RenderStyle.HomeClassic}>Classic Brick & Stone</option>
-                </optgroup>
-              </select>
+              <optgroup label="Home">
+                <option value={RenderStyle.HomeModern}>Modern Concrete & Glass</option>
+                <option value={RenderStyle.HomeNeoclassic}>Neoclassical Villa</option>
+                <option value={RenderStyle.HomeHiTech}>Hi-Tech Steel & Glass</option>
+                <option value={RenderStyle.HomeMinimal}>Minimalist Stucco</option>
+                <option value={RenderStyle.HomeClassic}>Classic Brick & Stone</option>
+              </optgroup>
+            </select>
+          </div>
+
+          {/* Atmosphere Preview Grid */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+              <Cloud size={14} /> {t('atmosphere')}
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
+                { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
+                { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
+                { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
+                { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
+                { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
+                { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
+                { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
+                { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
+                // Interior
+                { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
+                { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
+                { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
+                { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
+                // Seasons
+                { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
+                { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
+                { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
+                { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+
+              ]
+                .map(opt => {
+                  const isSelected = atmosphere.includes(opt.val);
+                  return (
+                    <button
+                      key={opt.val}
+                      onClick={() => toggleAtmosphere(opt.val)}
+                      className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected
+                        ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900`
+                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
+                        }`}
+                    >
+                      {opt.icon}
+                      <span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span>
+                    </button>
+                  );
+                })}
             </div>
+          </div>
 
-            {/* Atmosphere Preview Grid */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Cloud size={14} /> {t('atmosphere')}
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
-                  { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
-                  { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
-                  { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
-                  { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
-                  { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
-                  { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
-                  { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
-                  { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
-                  // Interior
-                  { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
-                  { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
-                  { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
-                  { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
-                  // Seasons
-                  { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
-                  { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
-                  { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
-                  { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+          {/* Camera Angle */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+              <Camera size={14} /> {t('camera')}
+            </label>
+            <select
+              value={camera}
+              onChange={(e) => setCamera(e.target.value as CameraAngle)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+            >
+              {Object.values(CameraAngle).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
 
-                ]
-                  .filter(opt => availableAtmospheres.includes(opt.val))
-                  .map(opt => {
-                    const isSelected = atmosphere.includes(opt.val);
-                    return (
-                      <button
-                        key={opt.val}
-                        onClick={() => toggleAtmosphere(opt.val)}
-                        className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected
-                          ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900`
-                          : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
-                          }`}
-                      >
-                        {opt.icon}
-                        <span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span>
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-
-            {/* Camera Angle */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Camera size={14} /> {t('camera')}
-              </label>
-              <select
-                value={camera}
-                onChange={(e) => setCamera(e.target.value as CameraAngle)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
-              >
-                {Object.values(CameraAngle).map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Scene Elements */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase">{t('sceneElements')}</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Users size={14} /> {t('people')}
-                </button>
-                <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Car size={14} /> {t('cars')}
-                </button>
-                <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Trees size={14} /> {t('greenery')}
-                </button>
-                <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Cloud size={14} /> {t('clouds')}
-                </button>
-                <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Building2 size={14} /> {t('city')}
-                </button>
-                <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Wind size={14} /> {t('motionBlur')}
-                </button>
-                <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Zap size={14} /> {t('enhanceFacade')}
-                </button>
-              </div>
-            </div>
-
-            {/* Aspect Ratio */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <LayoutTemplate size={14} /> {t('aspectRatio')}
-              </label>
-              <div className="grid grid-cols-3 gap-1">
-                {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                  <button
-                    key={ratio}
-                    onClick={() => setAspectRatio(ratio as AspectRatio)}
-                    className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio
-                      ? 'bg-indigo-600 border-indigo-500 text-white'
-                      : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
-                      }`}
-                  >
-                    {ratio}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="relative">
-              {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-
-
-
-              {/* Generate Button */}
-              <button
-                onClick={() => batchMode ? processBatch() : handleGenerate()}
-                disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt)))
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
-                  }`}
-              >
-                {batchMode ? (
-                  isBatchProcessing ? (
-                    <>
-                      <Loader2 size={24} className="animate-spin" />
-                      Processing {batchProgress.current}/{batchProgress.total}...
-                    </>
-                  ) : (
-                    <>
-                      <Layers size={24} />
-                      Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}
-                    </>
-                  )
-                ) : (
-                  isGenerating ? (
-                    <>
-                      <Loader2 size={24} className="animate-spin" />
-                      {t('generating')}
-                    </>
-                  ) : (
-                    <>
-                      <Zap size={24} fill="currentColor" />
-                      {t('generate')}
-                    </>
-                  )
-                )}
+          {/* Scene Elements */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase">{t('sceneElements')}</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Users size={14} /> {t('people')}
               </button>
-
-              {/* Video Generation Section */}
-              {/* Video Generation Section Removed - Moved to Video Tab */}
+              <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Car size={14} /> {t('cars')}
+              </button>
+              <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Trees size={14} /> {t('greenery')}
+              </button>
+              <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Cloud size={14} /> {t('clouds')}
+              </button>
+              <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Building2 size={14} /> {t('city')}
+              </button>
+              <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Wind size={14} /> {t('motionBlur')}
+              </button>
+              <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                <Zap size={14} /> {t('enhanceFacade')}
+              </button>
             </div>
+          </div>
+
+          {/* Aspect Ratio */}
+          <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+              <LayoutTemplate size={14} /> {t('aspectRatio')}
+            </label>
+            <div className="grid grid-cols-3 gap-1">
+              {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
+                <button
+                  key={ratio}
+                  onClick={() => setAspectRatio(ratio as AspectRatio)}
+                  className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio
+                    ? 'bg-indigo-600 border-indigo-500 text-white'
+                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
+                    }`}
+                >
+                  {ratio}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative">
+            {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+
+
+
+            {/* Generate Button */}
+            <button
+              onClick={() => batchMode ? processBatch() : handleGenerate()}
+              disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+              className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt)))
+                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
+                }`}
+            >
+              {batchMode ? (
+                isBatchProcessing ? (
+                  <>
+                    <Loader2 size={24} className="animate-spin" />
+                    Processing {batchProgress.current}/{batchProgress.total}...
+                  </>
+                ) : (
+                  <>
+                    <Layers size={24} />
+                    Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}
+                  </>
+                )
+              ) : (
+                isGenerating ? (
+                  <>
+                    <Loader2 size={24} className="animate-spin" />
+                    {t('generating')}
+                  </>
+                ) : (
+                  <>
+                    <Zap size={24} fill="currentColor" />
+                    {t('generate')}
+                  </>
+                )
+              )}
+            </button>
+
+            {/* Video Generation Section */}
+            {/* Video Generation Section Removed - Moved to Video Tab */}
           </div>
         </div>
       </div>
+
 
       {/* COLUMN 3: RESULT */}
       <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-auto lg:h-full min-h-0 shrink-0 lg:shrink">

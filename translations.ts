@@ -483,6 +483,10 @@ export const translations = {
     // --- RENDER STYLES ---
     "None": "Yo'q",
     "Photorealistic": "Fotorealistik",
+    "Pan Arabic": "Pan Arab",
+    "Asian / Zen": "Osiyo / Zen",
+    "Scandinavian": "Skandinaviya",
+    "Tropical": "Tropik",
     "Cinematic & Dramatic": "Kinematografik",
     "Minimalist": "Minimalizm",
     "Brutalism": "Brutalizm",
