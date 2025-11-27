@@ -204,10 +204,23 @@ export interface Project {
   id: string;
   name: string;
   lastModified: number;
-  nodes: Node[];
-  connections: Connection[];
-  pan: { x: number, y: number };
-  zoom: number;
+  type?: 'canvas' | 'linear'; // Distinguish project types
+  nodes?: Node[]; // Optional for linear projects
+  connections?: Connection[]; // Optional for linear projects
+  pan?: { x: number, y: number }; // Optional for linear projects
+  zoom?: number; // Optional for linear projects
+  linearState?: {
+    prompt: string;
+    style: RenderStyle;
+    atmosphere: Atmosphere[];
+    camera: CameraAngle;
+    aspectRatio: AspectRatio;
+    sceneElements: SceneElements;
+    model: string;
+    sourceImage: string | null;
+    styleReferenceImage: string | null;
+    resultImage: string | null;
+  };
 }
 
 export interface HistoryItem {

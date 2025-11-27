@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  Settings, Image as ImageIcon, Download, Maximize2,
+  Settings, Image as ImageIcon, Download, Maximize2, Save,
   Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
   Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film
 } from 'lucide-react';
@@ -23,6 +23,8 @@ import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
 import { quotaService } from '../services/quotaService';
 import { videoQuotaService } from '../services/videoQuotaService';
+import { historyService } from '../services/historyService';
+import { useSearchParams } from 'react-router-dom';
 import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 
@@ -100,6 +102,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const { setToolExecutor } = useAgentic();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const projectId = searchParams.get('projectId');
+  const [currentProjectName, setCurrentProjectName] = useState<string | null>(null);
+
   const [editorMode, setEditorMode] = useState<EditorMode>('exterior'); // Default to exterior
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
@@ -333,7 +339,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   }, [resultImage]);
 
 
-  const saveToHistory = (url: string, usedPrompt: string) => {
+  const saveToHistory = async (url: string, usedPrompt: string) => {
+    if (!user) return;
     const newItem: HistoryItem = {
       id: Date.now().toString(),
       url,
@@ -342,30 +349,90 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       style
     };
 
-    // Adaptive Storage Saving
-    const trySave = (items: HistoryItem[]) => {
-      try {
-        const str = JSON.stringify(items);
-        localStorage.setItem('arch_genius_history', str);
-        setHistory(items);
-      } catch (e) {
-        if (items.length > 1) {
-          // Remove the last item (oldest) and try again
-          trySave(items.slice(0, items.length - 1));
-        } else {
-          console.error("Storage full, could not save history.");
-          setHistory(items);
-        }
-      }
-    };
-
-    trySave([newItem, ...history].slice(0, 10));
+    try {
+      await historyService.addToHistory(user.id, newItem, projectId || undefined);
+      // Reload history to get the updated list (including server-generated ID if any)
+      loadHistory();
+    } catch (e) {
+      console.error("Failed to save history", e);
+    }
   };
 
-  const clearHistory = () => {
-    if (confirm("Clear all generation history? Make sure to Export first!")) {
+  const handleSaveProject = async () => {
+    if (!user) {
+      alert("Please sign in to save projects.");
+      return;
+    }
+
+    let name = currentProjectName;
+    if (!name) {
+      name = prompt("Enter project name:", "My Design");
+      if (!name) return;
+    }
+
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+
+      const projectData = {
+        type: 'linear',
+        linearState: {
+          prompt,
+          style,
+          atmosphere,
+          camera,
+          aspectRatio,
+          sceneElements,
+          model,
+          sourceImage,
+          styleReferenceImage,
+          resultImage
+        }
+      };
+
+      if (projectId) {
+        // Update
+        const { error } = await supabase
+          .from('projects')
+          .update({
+            name,
+            data: projectData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', projectId);
+
+        if (error) throw error;
+        alert("Project saved!");
+      } else {
+        // Create
+        const { data, error } = await supabase
+          .from('projects')
+          .insert({
+            name,
+            user_id: user.id,
+            data: projectData,
+            description: 'Created in Linear Editor'
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        if (data) {
+          setSearchParams({ projectId: data.id });
+          setCurrentProjectName(name);
+          alert("Project created!");
+        }
+      }
+    } catch (e) {
+      console.error("Failed to save project", e);
+      alert("Failed to save project.");
+    }
+  };
+
+  const clearHistory = async () => {
+    if (!user) return;
+    if (confirm("Clear all generation history?")) {
+      await historyService.clearHistory(user.id);
       setHistory([]);
-      localStorage.removeItem('arch_genius_history');
     }
   };
 
@@ -503,8 +570,57 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   useEffect(() => {
     if (user) {
       loadQuota();
+      loadHistory();
+      if (projectId) {
+        loadProject();
+      }
     }
-  }, [user]);
+  }, [user, projectId]);
+
+  const loadHistory = async () => {
+    if (!user) return;
+    try {
+      const items = await historyService.getHistory(user.id, projectId || undefined);
+      setHistory(items);
+    } catch (e) {
+      console.error("Failed to load history", e);
+    }
+  };
+
+  const loadProject = async () => {
+    if (!projectId) return;
+    try {
+      const { supabase } = await import('../lib/supabaseClient');
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', projectId)
+        .single();
+
+      if (error) throw error;
+
+      if (data && data.data && data.data.linearState) {
+        const state = data.data.linearState;
+        setPrompt(state.prompt);
+        setStyle(state.style);
+        setAtmosphere(state.atmosphere);
+        setCamera(state.camera);
+        setAspectRatio(state.aspectRatio);
+        setSceneElements(state.sceneElements);
+        setModel(state.model);
+        setSourceImage(state.sourceImage);
+        setStyleReferenceImage(state.styleReferenceImage);
+        setResultImage(state.resultImage);
+        setCurrentProjectName(data.name);
+
+        // If project has history snapshot, maybe merge? 
+        // For now, we rely on global history filtered by project_id if we implement that fully.
+        // But since we just loaded history based on projectId above, we are good.
+      }
+    } catch (e) {
+      console.error("Failed to load project", e);
+    }
+  };
 
   const executeGeneration = async (overrideSource?: string, settingsOverride?: Partial<GenerationSettings>) => {
     if (!user) {
@@ -1012,6 +1128,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <Settings size={18} />
               <h2>{t('controls')}</h2>
             </div>
+            <button
+              onClick={handleSaveProject}
+              className="flex items-center gap-1.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white px-2 py-1.5 rounded-lg border border-emerald-600/30 transition-all"
+              title={currentProjectName ? `Save "${currentProjectName}"` : "Save Project"}
+            >
+              <Save size={14} />
+              <span className="max-w-[100px] truncate">
+                {currentProjectName || "Save Project"}
+              </span>
+            </button>
           </div>
 
           {/* Mode Toggle */}
