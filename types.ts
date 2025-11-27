@@ -33,7 +33,70 @@ export enum RenderStyle {
   HomeNeoclassic = 'Home: Neoclassical Villa',
   HomeHiTech = 'Home: Hi-Tech Steel & Glass',
   HomeMinimal = 'Home: Minimalist Stucco',
-  HomeClassic = 'Home: Classic Brick & Stone'
+  HomeClassic = 'Home: Classic Brick & Stone',
+
+  // General / Artistic
+  cinematic = 'Cinematic',
+  Sketch = 'Sketch / Drawing',
+  Watercolor = 'Watercolor',
+  Blueprint = 'Blueprint',
+  PencilDrawing = 'Pencil Drawing',
+  Chalk = 'Chalk Sketch',
+  Cyberpunk = 'Cyberpunk',
+
+  // Exterior Additional
+  Modernist = 'Modernist',
+  Minimalist = 'Minimalist',
+  Brutalism = 'Brutalism',
+  Bauhaus = 'Bauhaus',
+  Colonial = 'Colonial',
+  Rustic = 'Rustic',
+  Parametric = 'Parametric',
+  IndustrialLoft = 'Industrial Loft',
+  Biophilic = 'Biophilic',
+  GlassFacade = 'Glass Facade',
+  Sustainable = 'Sustainable',
+  Cottage = 'Cottage',
+  Alpine = 'Alpine',
+  DesertModern = 'Desert Modern',
+
+  // Interior - Home
+  HomeScandi = 'Interior: Scandinavian',
+  HomeJapandi = 'Interior: Japandi',
+  HomeBoho = 'Interior: Boho',
+  HomeIndustrial = 'Interior: Industrial',
+  HomeLuxury = 'Interior: Luxury',
+  HomeMidCentury = 'Interior: Mid-Century Modern',
+  HomeCoastal = 'Interior: Coastal',
+  HomeFarmhouse = 'Interior: Farmhouse',
+  HomeWabiSabi = 'Interior: Wabi-Sabi',
+  HomeMaximalist = 'Interior: Maximalist',
+  HomeArtDeco = 'Interior: Art Deco',
+  // HomeClassic is already defined above
+
+  // Interior - Office
+  OfficeOpenPlan = 'Office: Open Plan',
+  OfficeExecutive = 'Office: Executive Suite',
+  OfficeCreative = 'Office: Creative Studio',
+  OfficeTech = 'Office: Tech Startup',
+  OfficeBiophilic = 'Office: Biophilic',
+
+  // Interior - Retail
+  RetailBoutique = 'Retail: Boutique',
+  RetailShowroom = 'Retail: Showroom',
+  RetailMall = 'Retail: Mall',
+  RetailMinimal = 'Retail: Minimalist Store',
+
+  // Interior - Hospitality
+  HospHotelLobby = 'Hospitality: Hotel Lobby',
+  HospRestaurant = 'Hospitality: Restaurant',
+  HospCafe = 'Hospitality: Cafe',
+  HospBar = 'Hospitality: Bar',
+
+  // Sales / Real Estate
+  SalesRealEstate = 'Real Estate: Staging',
+  SalesReception = 'Real Estate: Reception',
+  SalesGallery = 'Real Estate: Gallery'
 }
 
 export enum Atmosphere {

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2,
   Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
@@ -13,7 +13,7 @@ import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota } from '../types';
 import {
-  generateImage, editImage, generateImageBatch,
+  generateImage, editImage,
   enhancePrompt
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
@@ -824,6 +824,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // Filtered Options based on Mode
   const availableStyles = STYLE_CATEGORIES[editorMode];
 
+  const groupedStyles = useMemo<Record<string, RenderStyle[]>>(() => {
+    const groups: Record<string, RenderStyle[]> = {};
+    availableStyles.forEach(s => {
+      const val = s as string;
+      const parts = val.split(': ');
+      const groupName = parts.length > 1 ? parts[0] : 'General';
+      if (!groups[groupName]) groups[groupName] = [];
+      groups[groupName].push(s);
+    });
+    return groups;
+  }, [availableStyles]);
+
 
 
   return (
@@ -1135,38 +1147,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
             >
               <option value={RenderStyle.None}>{t('None')}</option>
-
-              <optgroup label="Office Building">
-                <option value={RenderStyle.OfficeGlass}>Glass Curtain Wall</option>
-                <option value={RenderStyle.OfficeACM}>Alucobond / ACM Panels (Hi-Tech)</option>
-                <option value={RenderStyle.OfficeNeoclassic}>Neoclassical (Stone & Columns)</option>
-                <option value={RenderStyle.OfficeConcrete}>Modern Concrete & Glass</option>
-                <option value={RenderStyle.OfficeBrick}>Industrial Brick & Metal</option>
-              </optgroup>
-
-              <optgroup label="Mixed Use Building">
-                <option value={RenderStyle.MixedGlassSteel}>Glass & Steel Tower</option>
-                <option value={RenderStyle.MixedBrickLoft}>Brick Loft & Metal</option>
-                <option value={RenderStyle.MixedNeoclassic}>Neoclassical Facade</option>
-                <option value={RenderStyle.MixedModern}>Modern Composite Panels</option>
-                <option value={RenderStyle.MixedFuturistic}>Futuristic Metal & Glass</option>
-              </optgroup>
-
-              <optgroup label="Apartment Complex">
-                <option value={RenderStyle.AptModern}>Modern Glass & Concrete</option>
-                <option value={RenderStyle.AptNeoclassic}>Neoclassical Stone</option>
-                <option value={RenderStyle.AptBrick}>Classic Brick Facade</option>
-                <option value={RenderStyle.AptMinimal}>Minimalist White Stucco</option>
-                <option value={RenderStyle.AptHiTech}>Hi-Tech Metal Facade</option>
-              </optgroup>
-
-              <optgroup label="Home">
-                <option value={RenderStyle.HomeModern}>Modern Concrete & Glass</option>
-                <option value={RenderStyle.HomeNeoclassic}>Neoclassical Villa</option>
-                <option value={RenderStyle.HomeHiTech}>Hi-Tech Steel & Glass</option>
-                <option value={RenderStyle.HomeMinimal}>Minimalist Stucco</option>
-                <option value={RenderStyle.HomeClassic}>Classic Brick & Stone</option>
-              </optgroup>
+              {Object.entries(groupedStyles).map(([group, styles]) => (
+                <optgroup key={group} label={group}>
+                  {styles.map(s => (
+                    <option key={s} value={s}>
+                      {s.includes(': ') ? s.split(': ')[1] : s}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
 
