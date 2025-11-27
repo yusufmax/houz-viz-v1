@@ -158,6 +158,7 @@ export interface GenerationSettings {
   styleReferenceImage?: string | null;
   model?: string;
   resolution?: string;
+  keepBuilding?: boolean;
 }
 
 // Infinity Node Types

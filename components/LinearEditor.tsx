@@ -536,6 +536,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage,
       model,
       resolution,
+      keepBuilding,
       ...settingsOverride
     };
 

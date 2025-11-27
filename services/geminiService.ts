@@ -143,6 +143,10 @@ const constructFullPrompt = async (settings: GenerationSettings): Promise<string
 
   if (settings.camera !== CameraAngle.Default) parts.push(`Camera Angle: ${settings.camera}`);
 
+  if (settings.keepBuilding) {
+    parts.push("STRICTLY MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
+  }
+
   parts.push("High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering.");
 
   return parts.filter(Boolean).join('. ');
