@@ -27,6 +27,7 @@ import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
 import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
+import { supabase } from '../lib/supabaseClient';
 
 const STYLE_LIBRARY = [
   // Living Complex / House
@@ -372,7 +373,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
 
     try {
-      const { supabase } = await import('../lib/supabaseClient');
+      console.log("Saving project...", { name, projectId, user: user.id });
 
       const projectData = {
         type: 'linear',
@@ -393,6 +394,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       if (projectId) {
         // Update
+        console.log("Updating existing project:", projectId);
         const { error } = await supabase
           .from('projects')
           .update({
@@ -402,10 +404,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           })
           .eq('id', projectId);
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
         alert("Project saved!");
       } else {
         // Create
+        console.log("Creating new project");
         const { data, error } = await supabase
           .from('projects')
           .insert({
@@ -417,8 +423,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error("Supabase insert error:", error);
+          throw error;
+        }
         if (data) {
+          console.log("Project created successfully:", data);
           setSearchParams({ projectId: data.id });
           setCurrentProjectName(name);
           alert("Project created!");
@@ -426,7 +436,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       }
     } catch (e) {
       console.error("Failed to save project", e);
-      alert("Failed to save project.");
+      alert("Failed to save project. Check console for details.");
     }
   };
 
