@@ -159,6 +159,7 @@ export interface GenerationSettings {
   model?: string;
   resolution?: string;
   keepBuilding?: boolean;
+  lockCamera?: boolean;
 }
 
 // Infinity Node Types
@@ -220,6 +221,7 @@ export interface Project {
     sourceImage: string | null;
     styleReferenceImage: string | null;
     resultImage: string | null;
+    lockCamera?: boolean;
   };
 }
 

@@ -26,17 +26,43 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
     setSliderPosition(percentage);
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleTouchEnd = () => setIsDragging(false);
+
+  const handleTouchMove = (e: React.TouchEvent | TouchEvent) => {
+    if (!isDragging || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const touchX = e instanceof TouchEvent ? e.touches[0].clientX : e.touches[0].clientX;
+    const x = touchX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    setSliderPosition(percentage);
+  };
+
   useEffect(() => {
     if (isDragging) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleTouchEnd);
+      window.addEventListener('touchcancel', handleTouchEnd);
     } else {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     }
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [isDragging]);
 
@@ -45,16 +71,17 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
       ref={containerRef}
       className="relative w-full h-full select-none overflow-hidden rounded-lg cursor-col-resize group bg-slate-900 touch-pan-y"
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       {/* After Image (Background) */}
-      <img src={afterImage} alt="After" className="absolute inset-0 w-full h-full object-contain" />
+      <img src={afterImage} alt="After" className="absolute inset-0 w-full h-full object-contain" draggable={false} />
 
       {/* Before Image (Foreground clipped) */}
       <div
         className="absolute inset-0 w-full h-full overflow-hidden border-r-2 border-white/50"
         style={{ width: `${sliderPosition}%` }}
       >
-        <img src={beforeImage} alt="Before" className="absolute inset-0 w-full h-full max-w-none object-contain" style={{ width: containerRef.current?.offsetWidth }} />
+        <img src={beforeImage} alt="Before" className="absolute inset-0 w-full h-full max-w-none object-contain" style={{ width: containerRef.current?.offsetWidth }} draggable={false} />
       </div>
 
       {/* Slider Handle */}
