@@ -1529,7 +1529,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
-          <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col">
+          <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col min-h-0">
             {batchMode ? (
               batchResults.length > 0 || isBatchProcessing ? (
                 <BatchResults
