@@ -1474,7 +1474,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
 
       {/* COLUMN 3: RESULT */}
-      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
+      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-auto lg:h-full min-h-0 shrink-0 lg:shrink max-h-[600px] lg:max-h-none">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
