@@ -373,7 +373,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const handleLoadHistory = (item: HistoryItem) => {
     console.log("Loading history item:", item);
-    if (!confirm("This will overwrite your current settings. Continue?")) return;
+    // Confirmation removed per user request
 
     setResultImage(item.url);
     setPrompt(item.prompt || "");

@@ -133,17 +133,20 @@ const Home: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Credits Indicator */}
           {quota && (
-            <div className="hidden md:flex items-center gap-2 text-xs bg-slate-800/80 border border-slate-700 px-3 py-1.5 rounded-lg">
-              <Zap className={`${quota.limit - quota.used <= 5
-                ? 'text-red-400'
-                : quota.limit - quota.used <= 10
-                  ? 'text-yellow-400'
-                  : 'text-indigo-400'
-                }`} size={14} />
-              <span className="font-medium text-white">{quota.limit - quota.used}</span>
-              <span className="text-slate-400">/</span>
-              <span className="text-slate-400">{quota.limit}</span>
-              <span className="text-slate-500">credits</span>
+            <div className="hidden md:flex flex-col gap-1 w-32">
+              <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400">
+                <span>Credits</span>
+                <span className={quota.limit - quota.used <= 10 ? 'text-yellow-400' : 'text-indigo-400'}>
+                  {quota.limit - quota.used} / {quota.limit}
+                </span>
+              </div>
+              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 10 ? 'bg-yellow-500' : 'bg-indigo-500'
+                    }`}
+                  style={{ width: `${Math.min(100, Math.max(0, ((quota.limit - quota.used) / quota.limit) * 100))}%` }}
+                />
+              </div>
             </div>
           )}
 
