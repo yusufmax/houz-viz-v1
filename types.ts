@@ -201,6 +201,7 @@ export interface Profile {
   generation_quota: number;
   generations_used: number;
   is_admin_visible?: boolean;
+  is_admin?: boolean;
 }
 export interface Project {
   id: string;

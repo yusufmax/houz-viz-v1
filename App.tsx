@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film } from 'lucide-react';
+import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film, Settings } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
 import VideoEditor from './components/VideoEditor';
@@ -23,6 +23,7 @@ import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
+import { adminService } from './services/adminService';
 
 const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -33,6 +34,7 @@ const Home: React.FC = () => {
   const { lang, setLang, t } = useLanguage();
   const { user } = useAuth();
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const handleAgentAction = (event: CustomEvent) => {
@@ -63,6 +65,13 @@ const Home: React.FC = () => {
       }
     };
     loadQuota();
+
+    const checkAdmin = async () => {
+      if (!user) return;
+      const isAdm = await adminService.checkIsAdmin(user.id);
+      setIsAdmin(isAdm);
+    };
+    checkAdmin();
 
     // Refresh quota every 10 seconds
     const interval = setInterval(loadQuota, 10000);
@@ -149,6 +158,12 @@ const Home: React.FC = () => {
           <Link to="/profile" className="text-slate-400 hover:text-white transition-colors" title="Profile">
             <User size={20} />
           </Link>
+
+          {isAdmin && (
+            <Link to="/admin" className="text-slate-400 hover:text-white transition-colors" title="Admin Panel">
+              <Settings size={20} />
+            </Link>
+          )}
 
           <button
             onClick={() => setShowInstructions(!showInstructions)}

@@ -3,16 +3,29 @@ import React, { useEffect, useState } from 'react';
 import { adminService, AdminUser } from '../../services/adminService';
 import { useAuth } from '../../contexts/AuthProvider';
 import { Loader2, Users, Save, X, Edit2, ShieldAlert } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AdminPage: React.FC = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editQuota, setEditQuota] = useState<number>(0);
 
     useEffect(() => {
-        loadUsers();
+        const init = async () => {
+            if (!user) return;
+
+            const isAdmin = await adminService.checkIsAdmin(user.id);
+            if (!isAdmin) {
+                navigate('/');
+                return;
+            }
+
+            loadUsers();
+        };
+        init();
     }, [user]);
 
     const loadUsers = async () => {
@@ -70,7 +83,7 @@ const AdminPage: React.FC = () => {
                     </div>
                     <div className="bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 flex items-center gap-2 text-sm text-slate-400">
                         <Users size={16} />
-                        <span>{users.length} Users Visible</span>
+                        <span>{users.length} Users</span>
                     </div>
                 </header>
 

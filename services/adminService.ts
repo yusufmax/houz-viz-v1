@@ -52,5 +52,23 @@ export const adminService = {
             console.error('Error toggling visibility:', error);
             throw error;
         }
+    },
+
+    /**
+     * Check if a user is an admin
+     */
+    async checkIsAdmin(userId: string): Promise<boolean> {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', userId)
+            .single();
+
+        if (error) {
+            console.error('Error checking admin status:', error);
+            return false;
+        }
+
+        return data?.is_admin || false;
     }
 };
