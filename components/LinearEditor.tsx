@@ -1038,7 +1038,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <p className="text-[9px] text-slate-600 mt-1">{new Date(item.timestamp).toLocaleTimeString()}</p>
               </div>
               <button
-                onClick={() => { setSourceImage(item.url); setShowHistory(false); }}
+                onClick={() => handleLoadHistory(item)}
                 className="absolute top-2 right-2 bg-indigo-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 {t('load')}
@@ -1282,20 +1282,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <option value="4K">4K - 5 Credits</option>
                   </select>
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                    <Palette size={14} /> {t('styleRef')}
-                  </label>
-                  <ImageUpload
-                    selectedImage={styleReferenceImage}
-                    onImageSelected={setStyleReferenceImage}
-                    label={t('uploadStyleRef')}
-                    compact
-                  />
-                </div>
               </div>
             )}
+
+            {/* Style Reference (All Models) */}
+            <div className="space-y-2 mt-4">
+              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                <Palette size={14} /> {t('styleRef')}
+              </label>
+              <ImageUpload
+                selectedImage={styleReferenceImage}
+                onImageSelected={setStyleReferenceImage}
+                label={t('uploadStyleRef')}
+                compact
+              />
+            </div>
 
             {/* Style Library Grid */}
             <div className="grid grid-cols-5 gap-1 mt-2">

@@ -233,6 +233,7 @@ export interface HistoryItem {
   prompt: string;
   timestamp: number;
   style: RenderStyle;
+  metadata?: any;
 }
 
 // Video Generation Types

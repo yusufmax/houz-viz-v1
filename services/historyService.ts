@@ -27,7 +27,8 @@ export const historyService = {
             url: item.image_url,
             prompt: item.prompt,
             style: item.style as RenderStyle,
-            timestamp: new Date(item.created_at).getTime()
+            timestamp: new Date(item.created_at).getTime(),
+            metadata: item.metadata // Return full metadata
         }));
     },
 
@@ -40,7 +41,8 @@ export const historyService = {
                 prompt: item.prompt,
                 style: item.style,
                 project_id: projectId,
-                created_at: new Date(item.timestamp).toISOString()
+                created_at: new Date(item.timestamp).toISOString(),
+                metadata: item.metadata // Save full metadata
             });
 
         if (error) {
