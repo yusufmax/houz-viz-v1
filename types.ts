@@ -161,6 +161,14 @@ export interface GenerationSettings {
   keepBuilding?: boolean;
   lockCamera?: boolean;
   lockInterior?: boolean;
+  interior?: InteriorSettings;
+}
+
+export interface InteriorSettings {
+  flooring: { type: string; image?: string | null };
+  furniture: { style: string; image?: string | null };
+  primaryColor: { value: string; image?: string | null };
+  wallColor: { value: string; image?: string | null };
 }
 
 // Infinity Node Types

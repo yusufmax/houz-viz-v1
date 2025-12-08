@@ -11,7 +11,8 @@ import DrawEditor from './DrawEditor';
 import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota } from '../types';
+import InteriorCustomization from './InteriorCustomization';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings } from '../types';
 import {
   generateImage, editImage,
   enhancePrompt
@@ -171,6 +172,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
   const [lockInterior, setLockInterior] = useState(false);
+
+  // Interior Settings State
+  const [interiorSettings, setInteriorSettings] = useState<InteriorSettings>({
+    flooring: { type: '', image: null },
+    furniture: { style: '', image: null },
+    primaryColor: { value: '', image: null },
+    wallColor: { value: '', image: null }
+  });
 
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
@@ -361,7 +370,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           resolution,
           styleReferenceImage,
           sourceImage: sourceImage || undefined,
-          lockCamera
+          lockCamera,
+          lockInterior,
+          interior: editorMode === 'interior' ? interiorSettings : undefined,
+          prompt: usedPrompt // Save the prompt used for this generation
         }
       };
 
@@ -381,17 +393,25 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     if (item.metadata) {
       console.log("Restoring metadata:", item.metadata);
-      const m = item.metadata;
-      if (m.style) setStyle(m.style as RenderStyle);
-      if (m.atmosphere) setAtmosphere(m.atmosphere);
-      if (m.camera) setCamera(m.camera as CameraAngle);
-      if (m.aspectRatio) setAspectRatio(m.aspectRatio as AspectRatio);
-      if (m.sceneElements) setSceneElements(m.sceneElements);
-      if (m.model) setModel(m.model);
-      if (m.resolution) setResolution(m.resolution);
-      if (m.styleReferenceImage) setStyleReferenceImage(m.styleReferenceImage);
-      if (m.sourceImage) setSourceImage(m.sourceImage);
-      if (m.lockCamera !== undefined) setLockCamera(m.lockCamera);
+      // Restore full state from metadata
+      setPrompt(item.metadata.prompt || item.prompt);
+      setStyle(item.metadata.style as RenderStyle);
+      setAtmosphere(item.metadata.atmosphere as Atmosphere[]);
+      setCamera(item.metadata.camera as CameraAngle);
+      setAspectRatio(item.metadata.aspectRatio as AspectRatio);
+      setSceneElements(item.metadata.sceneElements || { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false });
+      setModel(item.metadata.model || 'gemini-2.5-flash-image');
+      setResolution(item.metadata.resolution || '4K');
+      setLockCamera(item.metadata.lockCamera || false);
+      setLockInterior(item.metadata.lockInterior || false);
+
+      if (item.metadata.styleReferenceImage) setStyleReferenceImage(item.metadata.styleReferenceImage);
+      if (item.metadata.sourceImage) setSourceImage(item.metadata.sourceImage);
+      if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
+
+      // Assuming these are not part of HistoryItem metadata directly, but if they were, they'd be set here.
+      // setGeneratedImage(item.imageUrl);
+      // setOriginalImage(item.originalImageUrl || null);
     } else {
       console.log("No metadata, legacy fallback");
       if (item.style) setStyle(item.style as RenderStyle);
@@ -427,7 +447,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           sourceImage,
           styleReferenceImage,
           resultImage,
-          lockCamera
+          lockCamera,
+          lockInterior,
+          interiorSettings: editorMode === 'interior' ? interiorSettings : undefined,
+          editorMode // Save the current editor mode
         }
       };
 
@@ -483,7 +506,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     if (!user) return;
     if (confirm("Clear all generation history?")) {
       await historyService.clearHistory(user.id);
-      return 0; // fallback
+      setHistory([]); // Clear local state immediately
     }
   };
 
@@ -676,6 +699,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         setResultImage(state.resultImage);
         if (state.lockCamera !== undefined) setLockCamera(state.lockCamera);
         if (state.lockInterior !== undefined) setLockInterior(state.lockInterior);
+        if (state.interiorSettings) setInteriorSettings(state.interiorSettings);
+        if (state.editorMode) setEditorMode(state.editorMode);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 
@@ -719,9 +744,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage,
       model,
       resolution,
-      keepBuilding,
+      keepBuilding: editorMode === 'exterior' ? keepBuilding : false, // Only apply keepBuilding in exterior mode
       lockCamera,
-      lockInterior: settingsOverride?.lockInterior ?? lockInterior,
+      lockInterior: editorMode === 'interior' ? lockInterior : false,
+      interior: editorMode === 'interior' ? interiorSettings : undefined,
       ...settingsOverride
     };
 
@@ -795,8 +821,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage,
       model,
       resolution,
+      keepBuilding: editorMode === 'exterior' ? keepBuilding : false,
       lockCamera,
-      lockInterior
+      lockInterior: editorMode === 'interior' ? lockInterior : false,
+      interior: editorMode === 'interior' ? interiorSettings : undefined
     };
 
     for (let i = 0; i < batchImages.length; i++) {
