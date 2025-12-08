@@ -152,7 +152,7 @@ const constructFullPrompt = async (settings: GenerationSettings): Promise<string
   }
 
   if (settings.lockInterior) {
-    parts.push("STRICTLY PRESERVE THE EXACT INTERIOR LAYOUT, FURNITURE PLACEMENT, AND STRUCTURAL DETAILS. Do not move, add, or remove major furniture. Keep spatial arrangement identical. Only update style, materials, and lighting.");
+    parts.push("DONT CHANGE CAMERA ANGLE OR ANY DETAILS,ONLY FOLLOW THE PROMPT STRICTLY");
   }
 
   parts.push("High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering.");
