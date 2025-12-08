@@ -170,6 +170,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [resolution, setResolution] = useState<string>('4K');
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
+  const [lockInterior, setLockInterior] = useState(false);
 
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
@@ -674,6 +675,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         setStyleReferenceImage(state.styleReferenceImage);
         setResultImage(state.resultImage);
         if (state.lockCamera !== undefined) setLockCamera(state.lockCamera);
+        if (state.lockInterior !== undefined) setLockInterior(state.lockInterior);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 
@@ -719,6 +721,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       resolution,
       keepBuilding,
       lockCamera,
+      lockInterior: settingsOverride?.lockInterior ?? lockInterior,
       ...settingsOverride
     };
 
@@ -792,7 +795,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage,
       model,
       resolution,
-      lockCamera
+      lockCamera,
+      lockInterior
     };
 
     for (let i = 0; i < batchImages.length; i++) {
@@ -1449,6 +1453,19 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               {lockCamera ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}
               {lockCamera ? "Camera Locked" : "Lock Camera"}
             </button>
+
+            {editorMode === 'interior' && (
+              <button
+                onClick={() => setLockInterior(!lockInterior)}
+                className={`mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockInterior
+                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
+                  }`}
+              >
+                {lockInterior ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}
+                {lockInterior ? "Interior Locked" : "Lock Interior"}
+              </button>
+            )}
           </div>
 
           {/* Scene Elements */}

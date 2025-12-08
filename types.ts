@@ -160,6 +160,7 @@ export interface GenerationSettings {
   resolution?: string;
   keepBuilding?: boolean;
   lockCamera?: boolean;
+  lockInterior?: boolean;
 }
 
 // Infinity Node Types
