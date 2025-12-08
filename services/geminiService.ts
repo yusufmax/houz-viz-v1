@@ -141,10 +141,10 @@ const constructFullPrompt = async (settings: GenerationSettings): Promise<string
     parts.push(`Atmosphere/Lighting: ${validAtmospheres.join(', ')}`);
   }
 
-  if (settings.camera !== CameraAngle.Default) parts.push(`Camera Angle: ${settings.camera}`);
-
   if (settings.lockCamera) {
-    parts.push("dont change camera angle or perspective");
+    parts.push("STRICTLY MAINTAIN THE EXACT CAMERA ANGLE AND PERSPECTIVE OF THE SOURCE IMAGE. Do not zoom in or out. Do not rotate.");
+  } else if (settings.camera !== CameraAngle.Default) {
+    parts.push(`Camera Angle: ${settings.camera}`);
   }
 
   if (settings.keepBuilding) {

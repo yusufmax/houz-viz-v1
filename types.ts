@@ -200,6 +200,7 @@ export interface Profile {
   updated_at: string;
   generation_quota: number;
   generations_used: number;
+  is_admin_visible?: boolean;
 }
 export interface Project {
   id: string;

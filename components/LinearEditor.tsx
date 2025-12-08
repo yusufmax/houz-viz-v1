@@ -1358,7 +1358,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             <select
               value={camera}
               onChange={(e) => setCamera(e.target.value as CameraAngle)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+              disabled={lockCamera}
+              className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300 ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {Object.values(CameraAngle).map((c) => (
                 <option key={c} value={c}>{c}</option>
@@ -1474,7 +1475,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
 
       {/* COLUMN 3: RESULT */}
-      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-auto lg:h-full min-h-0 shrink-0 lg:shrink max-h-[600px] lg:max-h-none">
+      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
