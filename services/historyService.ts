@@ -8,7 +8,7 @@ export const historyService = {
             .from('generation_history')
             .select('*')
             .eq('user_id', userId)
-            .order('timestamp', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(50);
 
         if (projectId) {
