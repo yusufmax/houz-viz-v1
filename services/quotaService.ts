@@ -40,7 +40,7 @@ export const quotaService = {
     /**
      * Increment usage count
      */
-    async incrementUsage(userId: string) {
+    async incrementUsage(userId: string, amount: number = 1) {
         // We use an RPC or just a direct update. 
         // Direct update is safer with a read-modify-write if we don't have an increment RPC,
         // but for simplicity and since we have RLS, we might need a specific policy or RPC.
@@ -55,7 +55,7 @@ export const quotaService = {
 
         if (fetchError) throw fetchError;
 
-        const newUsed = (current?.generations_used ?? 0) + 1;
+        const newUsed = (current?.generations_used ?? 0) + amount;
 
         const { error } = await supabase
             .from('profiles')

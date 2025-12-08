@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
-  Settings, Image as ImageIcon, Download, Maximize2, Save,
+  Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
   Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film
 } from 'lucide-react';
@@ -444,8 +444,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     if (!user) return;
     if (confirm("Clear all generation history?")) {
       await historyService.clearHistory(user.id);
-      setHistory([]);
+      return 0; // fallback
     }
+  };
+
+  const calculateCost = () => {
+    if (model === 'gemini-2.5-flash-image') return 1;
+    if (model === 'gemini-3-pro-image-preview') {
+      if (resolution === '1K' || resolution === 'Original') return 2;
+      if (resolution === '2K') return 4;
+      if (resolution === '4K') return 5;
+    }
+    return 1;
   };
 
   const exportHistory = () => {
@@ -643,20 +653,22 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       return;
     }
 
-    // Check Quota
-    const canGenerate = await quotaService.checkQuota(user.id);
-    if (!canGenerate) {
-      alert("🚫 Quota Exceeded! You have used all your generation credits. Please contact support or wait for a reset.");
+    if (!prompt) {
+      alert(t('enterPrompt'));
       return;
     }
 
-    const src = overrideSource || sourceImage;
-    if (!prompt && !src && !styleReferenceImage && !settingsOverride?.prompt) {
-      alert("Please provide at least a text prompt, an image, or a style reference.");
+    const cost = calculateCost();
+    const currentQuota = await quotaService.getUserQuota(user.id);
+    if (!currentQuota || currentQuota.remaining < cost) {
+      alert(`Not enough credits. This generation costs ${cost} credits.`);
       return;
     }
 
     setIsGenerating(true);
+    setResultImage(null);
+    setBatchProgress({ current: 0, total: 1 });
+
     const settings: GenerationSettings = {
       prompt: prompt || "High quality architecture render",
       style,
@@ -673,6 +685,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     };
 
     try {
+      await quotaService.incrementUsage(user.id, cost); // Deduct based on cost
+
+      const src = overrideSource || sourceImage;
+      if (!prompt && !src && !styleReferenceImage && !settingsOverride?.prompt) {
+        alert("Please provide at least a text prompt, an image, or a style reference.");
+        setIsGenerating(false);
+        return;
+      }
+
       let resultUrl = '';
       if (src || styleReferenceImage) {
         resultUrl = await editImage(src, settings);
@@ -680,10 +701,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         resultUrl = await generateImage(settings);
       }
 
-      // Increment Quota on Success
-      await quotaService.incrementUsage(user.id);
       loadQuota(); // Refresh UI
-
       setResultImage(resultUrl);
       saveToHistory(resultUrl, settings.prompt);
     } catch (error) {
@@ -1249,16 +1267,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             {/* Resolution Selection (Gemini 3 Pro Only) */}
             {model === 'gemini-3-pro-image-preview' && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                  <Palette size={14} /> {t('styleRef')}
-                </label>
-                <ImageUpload
-                  selectedImage={styleReferenceImage}
-                  onImageSelected={setStyleReferenceImage}
-                  label={t('uploadStyleRef')}
-                  compact
-                />
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                    <Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)
+                  </label>
+                  <select
+                    value={resolution}
+                    onChange={(e) => setResolution(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+                  >
+                    <option value="1K">1K (Square/Landscape) - 2 Credits</option>
+                    <option value="2K">2K - 4 Credits</option>
+                    <option value="4K">4K - 5 Credits</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                    <Palette size={14} /> {t('styleRef')}
+                  </label>
+                  <ImageUpload
+                    selectedImage={styleReferenceImage}
+                    onImageSelected={setStyleReferenceImage}
+                    label={t('uploadStyleRef')}
+                    compact
+                  />
+                </div>
               </div>
             )}
 
