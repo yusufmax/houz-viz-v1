@@ -8,6 +8,7 @@ import ImageUpload from './ImageUpload';
 const VideoEditor: React.FC = () => {
     const { user } = useAuth();
     const [sourceImage, setSourceImage] = useState<string | null>(null);
+    const [endImage, setEndImage] = useState<string | null>(null);
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
     const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
     const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
@@ -109,7 +110,8 @@ const VideoEditor: React.FC = () => {
                     aspectRatio: videoSettings.aspectRatio,
                     prompt: videoSettings.prompt,
                     cfgScale: videoSettings.cfgScale || 0.5,
-                    mode: videoSettings.mode
+                    mode: videoSettings.mode,
+                    end_image: endImage ? await resizeImage(endImage) : undefined
                 })
             });
 
@@ -177,18 +179,36 @@ const VideoEditor: React.FC = () => {
             {/* Left Column: Settings & Input */}
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
 
-                {/* Source Image Upload */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6">
-                    <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                        <ImageIcon size={20} className="text-indigo-400" />
-                        Source Image
-                    </h2>
-                    <div className="aspect-video">
-                        <ImageUpload
-                            selectedImage={sourceImage}
-                            onImageSelected={setSourceImage}
-                            label="Upload Image for Video"
-                        />
+                {/* Source & End Images */}
+                <div className="grid grid-cols-2 gap-4">
+                    {/* Source Image */}
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                            <ImageIcon size={16} className="text-indigo-400" />
+                            Start Frame
+                        </h2>
+                        <div className="aspect-video">
+                            <ImageUpload
+                                selectedImage={sourceImage}
+                                onImageSelected={setSourceImage}
+                                label="Start Frame"
+                            />
+                        </div>
+                    </div>
+
+                    {/* End Image */}
+                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                            <ImageIcon size={16} className="text-pink-400" />
+                            End Frame (Opt)
+                        </h2>
+                        <div className="aspect-video">
+                            <ImageUpload
+                                selectedImage={endImage}
+                                onImageSelected={setEndImage}
+                                label="End Frame"
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -315,10 +335,33 @@ const VideoEditor: React.FC = () => {
                                 rows={4}
                                 maxLength={2500}
                             />
-                            <div className="text-right text-xs text-slate-500 mt-1">
-                                {videoSettings.prompt.length} / 2500
-                            </div>
                         </div>
+
+                        {/* Quick Prompts */}
+                        <div className="flex flex-wrap gap-2 mt-3">
+                            {[
+                                { label: 'Zoom In', value: 'Slow smooth zoom in' },
+                                { label: 'Zoom Out', value: 'Slow smooth zoom out' },
+                                { label: 'Pan Left', value: 'Slow smooth pan left' },
+                                { label: 'Pan Right', value: 'Slow smooth pan right' },
+                                { label: 'Timelapse', value: 'Realistic day to midnight timelapse' },
+                                { label: 'Drone Shot', value: 'Realistic drone shot establishing view' },
+                                { label: 'Cinematic', value: 'Cinematic lighting, 8k, highly detailed' },
+                                { label: 'Slow Motion', value: 'Slow motion movement' }
+                            ].map((item) => (
+                                <button
+                                    key={item.label}
+                                    onClick={() => setVideoSettings(prev => ({
+                                        ...prev,
+                                        prompt: prev.prompt ? `${prev.prompt}, ${item.value}` : item.value
+                                    }))}
+                                    className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-full text-slate-300 transition-colors"
+                                >
+                                    + {item.label}
+                                </button>
+                            ))}
+                        </div>
+
 
                         {/* Generate Button */}
                         <button
@@ -389,7 +432,7 @@ const VideoEditor: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

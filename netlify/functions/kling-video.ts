@@ -86,6 +86,7 @@ export const handler: Handler = async (event) => {
             }
 
             let base64Image = params.image;
+            let base64EndImage = params.end_image || null;
 
             // Check if image is a URL
             if (params.image.startsWith('http://') || params.image.startsWith('https://')) {
@@ -109,11 +110,32 @@ export const handler: Handler = async (event) => {
                     .replace(/\s/g, '');
             }
 
+            // Process End Image if present
+            if (base64EndImage) {
+                if (base64EndImage.startsWith('http://') || base64EndImage.startsWith('https://')) {
+                    try {
+                        const endImageResponse = await fetch(base64EndImage);
+                        if (!endImageResponse.ok) throw new Error('Failed to fetch end image');
+                        const endBuffer = await endImageResponse.arrayBuffer();
+                        base64EndImage = Buffer.from(endBuffer).toString('base64');
+                    } catch (err: any) {
+                        console.error('[Kling API] Error fetching end image:', err);
+                        // Fail gracefully or throw? Let's throw for now to warn user
+                        throw new Error(`Failed to process end image: ${err.message}`);
+                    }
+                } else {
+                    base64EndImage = base64EndImage
+                        .replace(/^data:image\/\w+;base64,/, '')
+                        .replace(/\s/g, '');
+                }
+            }
+
             console.log('[Kling API] Image format check:', {
                 isUrl: params.image.startsWith('http'),
                 originalLength: params.image.length,
                 cleanedLength: base64Image.length,
-                prefix: base64Image.substring(0, 50) + '...'
+                prefix: base64Image.substring(0, 50) + '...',
+                hasEndImage: !!base64EndImage
             });
 
             const requestBody: any = {
@@ -122,6 +144,11 @@ export const handler: Handler = async (event) => {
                 image: base64Image, // Base64 without prefix
                 prompt: params.prompt || ''
             };
+
+            // Add image_tail if present
+            if (base64EndImage) {
+                requestBody.image_tail = base64EndImage;
+            }
 
             // Add optional parameters based on model support
             // cfg_scale only supported by kling-v1 models
@@ -145,6 +172,7 @@ export const handler: Handler = async (event) => {
             // Log payload but truncate image data
             const logPayload = { ...requestBody };
             logPayload.image = logPayload.image ? `${logPayload.image.substring(0, 20)}...[TRUNCATED]` : null;
+            if (logPayload.image_tail) logPayload.image_tail = `${logPayload.image_tail.substring(0, 20)}...[TRUNCATED]`;
             console.log('[Kling API] Request payload:', JSON.stringify(logPayload));
 
             const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
