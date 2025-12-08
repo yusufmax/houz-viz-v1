@@ -343,21 +343,59 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const saveToHistory = async (url: string, usedPrompt: string) => {
     if (!user) return;
-    const newItem: HistoryItem = {
-      id: Date.now().toString(),
-      url,
-      prompt: usedPrompt,
-      timestamp: Date.now(),
-      style
-    };
-
     try {
+      const newItem: HistoryItem = {
+        id: crypto.randomUUID(),
+        url,
+        prompt: usedPrompt,
+        timestamp: Date.now(),
+        style,
+        metadata: {
+          style,
+          atmosphere,
+          camera,
+          aspectRatio,
+          sceneElements,
+          model,
+          resolution,
+          styleReferenceImage,
+          sourceImage: sourceImage || undefined,
+          lockCamera
+        }
+      };
+
       await historyService.addToHistory(user.id, newItem, projectId || undefined);
-      // Reload history to get the updated list (including server-generated ID if any)
       loadHistory();
     } catch (e) {
       console.error("Failed to save history", e);
     }
+  };
+
+  const handleLoadHistory = (item: HistoryItem) => {
+    console.log("Loading history item:", item);
+    if (!confirm("This will overwrite your current settings. Continue?")) return;
+
+    setResultImage(item.url);
+    setPrompt(item.prompt || "");
+
+    if (item.metadata) {
+      console.log("Restoring metadata:", item.metadata);
+      const m = item.metadata;
+      if (m.style) setStyle(m.style as RenderStyle);
+      if (m.atmosphere) setAtmosphere(m.atmosphere);
+      if (m.camera) setCamera(m.camera as CameraAngle);
+      if (m.aspectRatio) setAspectRatio(m.aspectRatio as AspectRatio);
+      if (m.sceneElements) setSceneElements(m.sceneElements);
+      if (m.model) setModel(m.model);
+      if (m.resolution) setResolution(m.resolution);
+      if (m.styleReferenceImage) setStyleReferenceImage(m.styleReferenceImage);
+      if (m.sourceImage) setSourceImage(m.sourceImage);
+      if (m.lockCamera !== undefined) setLockCamera(m.lockCamera);
+    } else {
+      console.log("No metadata, legacy fallback");
+      if (item.style) setStyle(item.style as RenderStyle);
+    }
+    setShowHistory(false);
   };
 
   const handleSaveProject = async () => {
