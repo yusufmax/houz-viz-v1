@@ -1456,6 +1456,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
+          {/* Interior Customization Panel */}
+          {editorMode === 'interior' && (
+            <InteriorCustomization
+              settings={interiorSettings}
+              onChange={setInteriorSettings}
+            />
+          )}
+
           {/* Camera Angle */}
           <div className="space-y-2">
             <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
