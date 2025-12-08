@@ -142,9 +142,9 @@ const Home: React.FC = () => {
               </div>
               <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 10 ? 'bg-yellow-500' : 'bg-indigo-500'
+                  className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 10 ? 'bg-red-500' : 'bg-indigo-500'
                     }`}
-                  style={{ width: `${Math.min(100, Math.max(0, ((quota.limit - quota.used) / quota.limit) * 100))}%` }}
+                  style={{ width: `${Math.min(100, Math.max(0, (quota.used / quota.limit) * 100))}%` }}
                 />
               </div>
             </div>

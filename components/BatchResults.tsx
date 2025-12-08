@@ -36,7 +36,7 @@ const BatchResults: React.FC<BatchResultsProps> = ({ results, onClose }) => {
     const failCount = results.filter(r => !r.output).length;
 
     return (
-        <div className="w-full h-full flex flex-col bg-slate-900/50 min-h-0">
+        <div className="absolute inset-0 flex flex-col bg-slate-900/50">
             {/* Header */}
             <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-900/80 backdrop-blur shrink-0">
                 <div>
