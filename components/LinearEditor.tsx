@@ -1511,24 +1511,32 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
                 <Users size={14} /> {t('people')}
               </button>
-              <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Car size={14} /> {t('cars')}
-              </button>
+              {editorMode !== 'interior' && (
+                <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                  <Car size={14} /> {t('cars')}
+                </button>
+              )}
               <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Trees size={14} /> {t('greenery')}
+                <Trees size={14} /> {editorMode === 'interior' ? "Indoor Plants" : t('greenery')}
               </button>
-              <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Cloud size={14} /> {t('clouds')}
-              </button>
-              <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Building2 size={14} /> {t('city')}
-              </button>
-              <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Wind size={14} /> {t('motionBlur')}
-              </button>
-              <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Zap size={14} /> {t('enhanceFacade')}
-              </button>
+              {editorMode !== 'interior' && (
+                <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                  <Cloud size={14} /> {t('clouds')}
+                </button>
+              )}
+              {editorMode !== 'interior' && (
+                <>
+                  <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                    <Building2 size={14} /> {t('city')}
+                  </button>
+                  <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                    <Wind size={14} /> {t('motionBlur')}
+                  </button>
+                  <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
+                    <Zap size={14} /> {t('enhanceFacade')}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 
