@@ -57,7 +57,7 @@ const InteriorCustomization: React.FC<InteriorCustomizationProps> = ({ settings,
                             </select>
                         </div>
                         {/* Flooring Image Upload - Small wrapper */}
-                        <div className="h-20 w-full">
+                        <div className="w-full">
                             <ImageUpload
                                 selectedImage={settings.flooring.image || null}
                                 onImageSelected={(img) => updateSetting('flooring', 'image', img)}
@@ -86,7 +86,7 @@ const InteriorCustomization: React.FC<InteriorCustomizationProps> = ({ settings,
                             <option value="Classic Traditional">Classic</option>
                             <option value="Art Deco">Art Deco</option>
                         </select>
-                        <div className="h-20 w-full">
+                        <div className="w-full">
                             <ImageUpload
                                 selectedImage={settings.furniture.image || null}
                                 onImageSelected={(img) => updateSetting('furniture', 'image', img)}
@@ -112,7 +112,7 @@ const InteriorCustomization: React.FC<InteriorCustomizationProps> = ({ settings,
                                 />
                                 <span className="text-[10px] text-slate-500 uppercase">{settings.primaryColor.value || 'None'}</span>
                             </div>
-                            <div className="h-16 w-full mt-2">
+                            <div className="w-full mt-2">
                                 <ImageUpload
                                     selectedImage={settings.primaryColor.image || null}
                                     onImageSelected={(img) => updateSetting('primaryColor', 'image', img)}
@@ -136,7 +136,7 @@ const InteriorCustomization: React.FC<InteriorCustomizationProps> = ({ settings,
                                 />
                                 <span className="text-[10px] text-slate-500 uppercase">{settings.wallColor.value || 'None'}</span>
                             </div>
-                            <div className="h-16 w-full mt-2">
+                            <div className="w-full mt-2">
                                 <ImageUpload
                                     selectedImage={settings.wallColor.image || null}
                                     onImageSelected={(img) => updateSetting('wallColor', 'image', img)}
