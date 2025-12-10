@@ -18,19 +18,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
-            setUser(session?.user ?? null)
-            setLoading(false)
+        let mounted = true;
+
+        // Create a timeout promise
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Auth timeout')), 5000)
         })
+
+        // Race between actual auth check and timeout
+        Promise.race([
+            supabase.auth.getSession(),
+            timeoutPromise
+        ])
+            .then((result: any) => {
+                if (!mounted) return
+                // Check if result is from getSession (has data property)
+                if (result && result.data) {
+                    const { session } = result.data
+                    setSession(session)
+                    setUser(session?.user ?? null)
+                }
+            })
+            .catch((error) => {
+                console.warn("Auth check failed or timed out:", error)
+                // Even on error, we must stop loading to show the app (likely Login page)
+            })
+            .finally(() => {
+                if (mounted) setLoading(false)
+            })
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-            setUser(session?.user ?? null)
-            setLoading(false)
+            if (mounted) {
+                setSession(session)
+                setUser(session?.user ?? null)
+                setLoading(false)
+            }
         })
 
-        return () => subscription.unsubscribe()
+        return () => {
+            mounted = false
+            subscription.unsubscribe()
+        }
     }, [])
 
     const signInWithGoogle = async () => {
