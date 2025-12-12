@@ -76,7 +76,7 @@ const Home: React.FC = () => {
     // Refresh quota every 10 seconds
     const interval = setInterval(loadQuota, 10000);
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user?.id]);
 
   const toggleLang = () => {
     if (lang === 'en') setLang('ru');

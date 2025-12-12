@@ -3,7 +3,7 @@ import { useAuth } from '../../contexts/AuthProvider'
 import { Hexagon } from 'lucide-react'
 
 const LoginPage: React.FC = () => {
-    const { signInWithGoogle } = useAuth()
+    const { signInWithGoogle, error, signOut } = useAuth()
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
@@ -15,6 +15,29 @@ const LoginPage: React.FC = () => {
                     <h1 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
                     <p className="text-slate-400 mt-2">Sign in to continue to HOUZ.AI</p>
                 </div>
+
+                {error && (
+                    <div className="mb-6 p-4 bg-red-500/10 border border-red-500/50 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
+                        <div className="min-w-[4px] h-full bg-red-500 rounded-full" />
+                        <div>
+                            <h3 className="text-sm font-semibold text-red-400">Connection Failed</h3>
+                            <p className="text-xs text-red-300/80 mt-0.5">
+                                {error.message === 'Auth timeout'
+                                    ? 'The server is taking too long to respond. Please check your connection.'
+                                    : error.message}
+                            </p>
+                            <button
+                                onClick={() => {
+                                    signOut();
+                                    window.location.reload();
+                                }}
+                                className="text-[10px] bg-red-500/20 hover:bg-red-500/30 text-red-200 px-2 py-1 rounded mt-2 transition-colors uppercase font-bold tracking-wider"
+                            >
+                                Reset Session
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <button
                     onClick={signInWithGoogle}

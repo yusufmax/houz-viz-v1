@@ -661,7 +661,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         loadProject();
       }
     }
-  }, [user, projectId]);
+  }, [user?.id, projectId]);
 
   const loadHistory = async () => {
     if (!user) return;

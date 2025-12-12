@@ -6,6 +6,7 @@ interface AuthContextType {
     session: Session | null
     user: User | null
     loading: boolean
+    error: Error | null
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
 }
@@ -16,6 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null)
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
 
     useEffect(() => {
         let mounted = true;
@@ -39,8 +41,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     setUser(session?.user ?? null)
                 }
             })
-            .catch((error) => {
-                console.warn("Auth check failed or timed out:", error)
+            .catch((err) => {
+                console.warn("Auth check failed or timed out:", err)
+                if (mounted) setError(err instanceof Error ? err : new Error(String(err)))
                 // Even on error, we must stop loading to show the app (likely Login page)
             })
             .finally(() => {
@@ -82,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ session, user, loading, error, signInWithGoogle, signOut }}>
             {children}
         </AuthContext.Provider>
     )
