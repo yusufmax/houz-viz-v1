@@ -380,8 +380,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       const userDisplayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
       await historyService.addToHistory(user.id, newItem, projectId || undefined, userDisplayName);
       loadHistory();
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to save history", e);
+      // Silent fail usually desired for auto-save, but user reported issues so we alert for now
+      alert("Failed to save history: " + (e.message || JSON.stringify(e)));
     }
   };
 
@@ -497,9 +499,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           alert("Project created!");
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to save project", e);
-      alert("Failed to save project. Check console for details.");
+      alert("Failed to save project: " + (e.message || JSON.stringify(e)));
     }
   };
 
@@ -1400,7 +1402,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <option value={RenderStyle.None}>{t('None')}</option>
               {Object.entries(groupedStyles).map(([group, styles]) => (
                 <optgroup key={group} label={group}>
-                  {styles.map(s => (
+                  {(styles as RenderStyle[]).map(s => (
                     <option key={s} value={s}>
                       {s.includes(': ') ? s.split(': ')[1] : s}
                     </option>
