@@ -11,6 +11,7 @@ interface Project {
     description: string;
     updated_at: string;
     user_id: string;
+    data: any; // Include data to check project type
 }
 
 import {
@@ -55,10 +56,9 @@ const ProfilePage: React.FC = () => {
 
     const fetchProjects = async () => {
         try {
-            // Only fetch metadata, not the full 'data' field which contains all images
             const { data, error } = await supabase
                 .from('projects')
-                .select('id, name, description, updated_at, user_id')
+                .select('id, name, description, updated_at, user_id, data') // Fetch data to check type
                 .order('updated_at', { ascending: false });
 
             if (error) throw error;
@@ -83,8 +83,11 @@ const ProfilePage: React.FC = () => {
     };
 
     const openProject = (project: Project) => {
-        // Navigate to Infinity Mode with projectId
-        navigate(`/?mode=infinity&projectId=${project.id}`);
+        if (project.data?.type === 'linear') {
+            navigate(`/?mode=linear&projectId=${project.id}`);
+        } else {
+            navigate(`/?mode=infinity&projectId=${project.id}`);
+        }
     };
 
     const fetchReferences = async () => {

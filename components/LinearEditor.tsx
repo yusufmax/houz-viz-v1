@@ -377,7 +377,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         }
       };
 
-      await historyService.addToHistory(user.id, newItem, projectId || undefined);
+      const userDisplayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+      await historyService.addToHistory(user.id, newItem, projectId || undefined, userDisplayName);
       loadHistory();
     } catch (e) {
       console.error("Failed to save history", e);

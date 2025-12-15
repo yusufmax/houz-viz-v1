@@ -233,6 +233,9 @@ export interface Project {
     styleReferenceImage: string | null;
     resultImage: string | null;
     lockCamera?: boolean;
+    lockInterior?: boolean;
+    interiorSettings?: any;
+    editorMode?: 'exterior' | 'interior' | 'general';
   };
 }
 
