@@ -684,7 +684,8 @@ const InfinityCanvas: React.FC = () => {
         if (type === 'processor') {
             const baseSettings: GenerationSettings = {
                 style: RenderStyle.None, atmosphere: [], camera: CameraAngle.Default, aspectRatio: '16:9', prompt: '',
-                sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false }
+                sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false },
+                keepBuilding: false, lockCamera: false, lockInterior: false
             };
             if (subtype === 'arch') {
                 data = { label: t('nodeProcessor'), subtype, settings: { ...baseSettings, style: RenderStyle.Modernist, sceneElements: { ...baseSettings.sceneElements, vegetation: true, clouds: true, enhanceFacade: true } } };
@@ -1391,6 +1392,42 @@ const InfinityCanvas: React.FC = () => {
                                                             )
                                                         })}
                                                     </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Lock Controls (New from Linear Mode) */}
+                                            <div className="space-y-1 pt-1 border-t border-slate-800/50">
+                                                <label className="text-[9px] text-slate-500 font-bold uppercase">{t('locks') || 'Locks'}</label>
+                                                <div className="flex flex-col gap-1">
+                                                    {[
+                                                        { key: 'keepBuilding', label: 'Lock Shape' },
+                                                        { key: 'lockCamera', label: 'Lock Camera' },
+                                                        { key: 'lockInterior', label: 'Lock Interior' }
+                                                    ].map((item) => (
+                                                        <label key={item.key} className="flex items-center gap-2 cursor-pointer group hover:bg-slate-800/50 p-1 rounded">
+                                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center transition-colors ${(node.data.settings as any)[item.key]
+                                                                ? 'bg-indigo-600 border-indigo-600'
+                                                                : 'border-slate-600 group-hover:border-indigo-500'
+                                                                }`}>
+                                                                {(node.data.settings as any)[item.key] && <Zap size={8} className="text-white" />}
+                                                            </div>
+                                                            <input
+                                                                type="checkbox"
+                                                                className="hidden"
+                                                                checked={!!(node.data.settings as any)[item.key]}
+                                                                onChange={(e) => {
+                                                                    setNodes(prev => prev.map(n =>
+                                                                        n.id === node.id
+                                                                            ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, [item.key]: e.target.checked } } }
+                                                                            : n
+                                                                    ));
+                                                                }}
+                                                            />
+                                                            <span className={`text-[10px] ${(node.data.settings as any)[item.key] ? 'text-indigo-300' : 'text-slate-400'}`}>
+                                                                {item.label}
+                                                            </span>
+                                                        </label>
+                                                    ))}
                                                 </div>
                                             </div>
 

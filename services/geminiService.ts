@@ -135,6 +135,10 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
     textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
   }
 
+  if (settings.lockCamera) {
+    textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
+  }
+
   // Style & Atmosphere
   textParts.push(`Style: ${settings.style}`);
   if (settings.atmosphere && settings.atmosphere.length > 0) {
