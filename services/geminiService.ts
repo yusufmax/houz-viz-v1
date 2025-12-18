@@ -275,7 +275,16 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
     if (settings.aspectRatio && settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
     } else {
-      config.imageConfig = { aspectRatio: "16:9" };
+      let finalRatio = '16:9';
+      if (settings.styleReferenceImage) {
+        try {
+          const dims = await getImageDimensions(settings.styleReferenceImage);
+          finalRatio = calculateAspectRatio(dims.width, dims.height);
+        } catch (e) {
+          finalRatio = '16:9';
+        }
+      }
+      config.imageConfig = { aspectRatio: finalRatio };
     }
 
     console.log("Gemini Flash Config:", JSON.stringify(config, null, 2));
@@ -363,17 +372,23 @@ export const editImage = async (sourceImage: string | null, settings: Generation
 
     // Gemini 3 Pro Logic
     if (settings.model === 'gemini-3-pro-image-preview') {
+      let finalRatio = settings.aspectRatio || '16:9';
+      if (finalRatio === 'Original' && sourceImage) {
+        try {
+          const dims = await getImageDimensions(sourceImage);
+          finalRatio = calculateAspectRatio(dims.width, dims.height) as any;
+        } catch (e) {
+          finalRatio = '16:9';
+        }
+      }
+
       const config = {
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
-          aspectRatio: settings.aspectRatio !== 'Original' ? settings.aspectRatio : '16:9',
+          aspectRatio: finalRatio !== 'Original' ? finalRatio : '16:9',
           imageSize: '4K'
         }
       };
-
-      if (settings.aspectRatio === 'Original') {
-        config.imageConfig.aspectRatio = "16:9";
-      }
 
       console.log("Gemini 3 Pro Edit Config:", JSON.stringify(config, null, 2));
 
@@ -401,19 +416,17 @@ export const editImage = async (sourceImage: string | null, settings: Generation
 
     if (settings.aspectRatio !== 'Original') {
       config.imageConfig = { aspectRatio: settings.aspectRatio };
-    } else if (sourceImage) {
-      try {
-        // We might need to recalculate aspect ratio if original is requested
-        // But for simplicity, we let the model handle it or default to 16:9 if API enforces it
-        // If we really need dimensions, we'd need to async get them.
-        // For now, let's skip the strictly calculated part to avoid complexity in this fix, 
-        // or use a safe default.
-        // actually, let's just leave imageConfig undefined for ratio if original? 
-        // API usually requires aspect ratio for image gen.
-        config.imageConfig = { aspectRatio: "16:9" }; // Fallback
-      } catch (e) {
-        config.imageConfig = { aspectRatio: "16:9" };
+    } else {
+      let finalRatio = '16:9';
+      if (sourceImage) {
+        try {
+          const dims = await getImageDimensions(sourceImage);
+          finalRatio = calculateAspectRatio(dims.width, dims.height);
+        } catch (e) {
+          finalRatio = '16:9';
+        }
       }
+      config.imageConfig = { aspectRatio: finalRatio };
     }
 
     const response = await ai.models.generateContent({
@@ -485,11 +498,11 @@ export const transcribeAudio = async (audioBase64: string, mimeType: string): Pr
       ]
     });
 
-    if (!result || !result.response) {
+    if (!result || !result.candidates?.[0]) {
       throw new Error("Invalid response from Gemini");
     }
 
-    return result.response.text().trim();
+    return result.text.trim();
   } catch (error) {
     console.error("Transcription failed:", error);
     throw new Error("Failed to transcribe audio");
