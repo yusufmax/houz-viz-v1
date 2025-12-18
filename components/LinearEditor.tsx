@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film, X
+  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, ChevronDown, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film, X
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -166,6 +166,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // History
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [showStyles, setShowStyles] = useState(true);
 
   // Reference Images: Use custom or fallback to defaults
   const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
@@ -1171,522 +1172,298 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         </button>
       )}
 
-      {/* COLUMN 1: SOURCE */}
-      <div className="w-full lg:w-1/4 flex flex-col gap-4 min-h-[300px] ml-0 transition-all relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
-          {showInstructions && <GuideTooltip text={t('guideSource')} className="top-2 right-2 left-auto" side="bottom" />}
-
-          <div className="flex items-center justify-between mb-4 text-indigo-400 font-semibold">
-            <div className="flex items-center gap-2">
-              <ImageIcon size={18} />
-              <h2>{t('source')}</h2>
+      {/* COLUMN 1: INPUT & CONTROLS (50%) */}
+      <div className="w-full lg:w-1/2 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
+        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
+          {/* SOURCE SECTION */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
+              <div className="flex items-center gap-2">
+                <ImageIcon size={18} />
+                <h2>{t('source')}</h2>
+              </div>
+              <div className="flex gap-1">
+                {sourceImage && (
+                  <button
+                    onClick={() => setPreviewImage(sourceImage)}
+                    className="p-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    title={t('fullScreen')}
+                  >
+                    <Eye size={12} />
+                  </button>
+                )}
+                {sourceImage && (
+                  <button
+                    onClick={() => setDrawingTarget('source')}
+                    className="flex items-center gap-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition-colors"
+                  >
+                    <Pencil size={12} /> {t('drawEdit')}
+                  </button>
+                )}
+              </div>
             </div>
-            <div className="flex gap-1">
-              {sourceImage && (
-                <button
-                  onClick={() => setPreviewImage(sourceImage)}
-                  className="p-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                  title={t('fullScreen')}
-                >
-                  <Eye size={12} />
-                </button>
+
+            {/* Batch Mode Toggle */}
+            <div>
+              <button
+                onClick={() => {
+                  setBatchMode(!batchMode);
+                  if (batchMode) {
+                    setBatchImages([]);
+                    setBatchResults([]);
+                  }
+                }}
+                className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+              >
+                <Layers size={16} />
+                {batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}
+              </button>
+              {batchMode && (
+                <p className="text-xs text-slate-400 mt-2 text-center">
+                  Upload up to 10 images to process with same settings
+                </p>
               )}
-              {sourceImage && (
-                <button
-                  onClick={() => setDrawingTarget('source')}
-                  className="flex items-center gap-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition-colors"
-                >
-                  <Pencil size={12} /> {t('drawEdit')}
-                </button>
-              )}
             </div>
-          </div>
 
-          {/* Batch Mode Toggle */}
-          <div className="mb-4">
-            <button
-              onClick={() => {
-                setBatchMode(!batchMode);
-                if (batchMode) {
-                  setBatchImages([]);
-                  setBatchResults([]);
-                }
-              }}
-              className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
-                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-            >
-              <Layers size={16} />
-              {batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}
-            </button>
-            {batchMode && (
-              <p className="text-xs text-slate-400 mt-2 text-center">
-                Upload up to 10 images to process with same settings
-              </p>
-            )}
-          </div>
-
-          {/* Conditional: Batch or Single Upload */}
-          {batchMode ? (
-            <div className="space-y-4">
-              <BatchImageUpload
-                onImagesSelected={setBatchImages}
-                maxImages={10}
-              />
-            </div>
-          ) : (
-            <>
-              <div className="flex-1 min-h-[200px]">
+            {batchMode ? (
+              <BatchImageUpload onImagesSelected={setBatchImages} maxImages={10} />
+            ) : (
+              <div className="min-h-[250px] relative">
+                {showInstructions && <GuideTooltip text={t('guideSource')} className="top-2 right-2 z-10" side="bottom" />}
                 <ImageUpload
                   selectedImage={sourceImage}
                   onImageSelected={setSourceImage}
                   label={t('dropSketch')}
                 />
-              </div>
-
-              {!sourceImage && (
-                <button
-                  onClick={() => setDrawingTarget('source')}
-                  className="mt-4 w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-400 text-sm hover:text-indigo-400 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Pencil size={14} /> {t('startBlank')}
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* COLUMN 2: CONTROLS */}
-      <div className="w-full lg:w-1/4 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 h-auto lg:h-full lg:overflow-y-auto custom-scrollbar relative">
-          {showInstructions && <GuideTooltip text={t('guideStyles')} className="top-4 right-4" side="right" />}
-
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 text-indigo-400 font-semibold">
-              <Settings size={18} />
-              <h2>{t('controls')}</h2>
-            </div>
-            <button
-              onClick={handleSaveProject}
-              className="flex items-center gap-1.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white px-2 py-1.5 rounded-lg border border-emerald-600/30 transition-all"
-              title={currentProjectName ? `Save "${currentProjectName}"` : "Save Project"}
-            >
-              <Save size={14} />
-              <span className="max-w-[100px] truncate">
-                {currentProjectName || "Save Project"}
-              </span>
-            </button>
-          </div>
-
-          {/* Mode Toggle */}
-          <div className="bg-slate-900 p-1 rounded-lg flex mb-6 border border-slate-700">
-            {(['exterior', 'interior', 'general'] as EditorMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => {
-                  setEditorMode(mode);
-                  // Reset style if current selection is not in new mode
-                  if (style !== RenderStyle.None && !STYLE_CATEGORIES[mode].includes(style)) {
-                    setStyle(RenderStyle.None);
-                  }
-                  // Atmosphere is now global, no need to filter
-                }}
-                className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
-                  }`}
-              >
-                {mode}
-              </button>
-            ))}
-          </div>
-
-          {/* Keep Building Button (Exterior Only) - Moved to top */}
-          {editorMode === 'exterior' && (
-            <button
-              onClick={() => setKeepBuilding(!keepBuilding)}
-              className={`w-full mb-6 py-3 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding
-                ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/20'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
-                }`}
-            >
-              <Lock size={16} />
-              {keepBuilding ? 'Building Shape Locked' : 'Lock Building Shape & Details'}
-            </button>
-          )}
-
-          <div className="space-y-6">
-            {/* Instructions */}
-            <div className="space-y-2 relative">
-              {showInstructions && <GuideTooltip text={t('guidePrompt')} className="-top-12 left-0" side="top" />}
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-medium text-slate-400 uppercase">{t('instructionsLabel')}</label>
-                <button
-                  onClick={handleEnhancePrompt}
-                  disabled={isEnhancing || !prompt}
-                  className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 disabled:opacity-50"
-                >
-                  <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
-                </button>
-              </div>
-              <div className="relative">
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={t('instructionsPlaceholder')}
-                  className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none"
-                />
-                <button
-                  onClick={handleVoiceInput}
-                  className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording
-                    ? 'bg-red-500/20 text-red-500 animate-pulse'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-700'
-                    }`}
-                  title={isRecording ? "Stop Recording" : "Voice Input"}
-                >
-                  {isRecording ? (
-                    <MicOff size={16} />
-                  ) : (
-                    <Mic size={16} />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Model Selection */}
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Zap size={14} /> Model
-              </label>
-              <select
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
-              >
-                <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
-                <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
-              </select>
-            </div>
-
-            {/* Resolution Selection (Gemini 3 Pro Only) */}
-            {model === 'gemini-3-pro-image-preview' && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                    <Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)
-                  </label>
-                  <select
-                    value={resolution}
-                    onChange={(e) => setResolution(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
+                {!sourceImage && (
+                  <button
+                    onClick={() => setDrawingTarget('source')}
+                    className="mt-4 w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-400 text-sm hover:text-indigo-400 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2"
                   >
+                    <Pencil size={14} /> {t('startBlank')}
+                  </button>
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* CONTROLS SECTION */}
+          <section className="space-y-6 pt-4 border-t border-slate-700/50">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 text-indigo-400 font-semibold">
+                <Settings size={18} />
+                <h2>{t('controls')}</h2>
+              </div>
+              <button
+                onClick={handleSaveProject}
+                className="flex items-center gap-1.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white px-2 py-1.5 rounded-lg border border-emerald-600/30 transition-all"
+                title={currentProjectName ? `Save "${currentProjectName}"` : "Save Project"}
+              >
+                <Save size={14} />
+                <span className="max-w-[100px] truncate">{currentProjectName || "Save Project"}</span>
+              </button>
+            </div>
+
+            <div className="bg-slate-900 p-1 rounded-lg flex mb-6 border border-slate-700">
+              {(['exterior', 'interior', 'general'] as EditorMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => {
+                    setEditorMode(mode);
+                    if (style !== RenderStyle.None && !STYLE_CATEGORIES[mode].includes(style)) {
+                      setStyle(RenderStyle.None);
+                    }
+                  }}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+
+            {editorMode === 'exterior' && (
+              <button
+                onClick={() => setKeepBuilding(!keepBuilding)}
+                className={`w-full mb-6 py-3 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}
+              >
+                <Lock size={16} />
+                {keepBuilding ? 'Building Shape Locked' : 'Lock Building Shape & Details'}
+              </button>
+            )}
+
+            <div className="space-y-6">
+              <div className="space-y-2 relative">
+                {showInstructions && <GuideTooltip text={t('guidePrompt')} className="-top-12 left-0" side="top" />}
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-medium text-slate-400 uppercase">{t('instructionsLabel')}</label>
+                  <button onClick={handleEnhancePrompt} disabled={isEnhancing || !prompt} className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 disabled:opacity-50">
+                    <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
+                  </button>
+                </div>
+                <div className="relative">
+                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('instructionsPlaceholder')} className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none" />
+                  <button onClick={handleVoiceInput} className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`} title={isRecording ? "Stop Recording" : "Voice Input"}>
+                    {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Zap size={14} /> Model</label>
+                <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
+                  <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
+                  <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
+                </select>
+              </div>
+
+              {model === 'gemini-3-pro-image-preview' && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)</label>
+                  <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                     <option value="1K">1K (Square/Landscape) - 2 Credits</option>
                     <option value="2K">2K - 4 Credits</option>
                     <option value="4K">4K - 5 Credits</option>
                   </select>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Style Reference (All Models) */}
-            <div className="space-y-2 mt-4">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                <Palette size={14} /> {t('styleRef')}
-              </label>
-              <ImageUpload
-                selectedImage={styleReferenceImage}
-                onImageSelected={setStyleReferenceImage}
-                label={t('uploadStyleRef')}
-                compact
-              />
-            </div>
-
-            {/* Style Library Grid */}
-            <div className="grid grid-cols-5 gap-1 mt-2">
-              {styleLibrary.map((style, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => convertUrlToBase64(style.url)}
-                  className="relative aspect-square rounded overflow-hidden border border-slate-700 hover:border-indigo-500 group"
-                  title={style.name}
-                >
-                  <img src={style.url} alt={style.name} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] text-center text-white p-1 transition-opacity">
-                    {style.name}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Style Preset Grid */}
-          <div className="space-y-3">
-            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-              <Zap size={14} /> {t('stylePreset')}
-            </label>
-
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              <div
-                onClick={() => setStyle(RenderStyle.None)}
-                className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None
-                  ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50'
-                  : 'bg-slate-900 border-slate-700 hover:border-slate-500'
-                  }`}
-              >
-                <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400">
-                  <X size={18} />
-                </div>
-                <span className="text-xs font-medium text-slate-300">{t('None')}</span>
-              </div>
-
-              {Object.entries(groupedStyles).map(([group, styles]) => (
-                <div key={group} className="space-y-2">
-                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {(styles as RenderStyle[]).map(s => {
-                      const isSelected = style === s;
-                      const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                      const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
-
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => setStyle(s)}
-                          className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected
-                            ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]'
-                            : 'border-slate-700 hover:border-indigo-500/50'
-                            }`}
-                        >
-                          <img
-                            src={previewUrl}
-                            alt={s}
-                            className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`}
-                          />
-                          <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                            <div className="absolute bottom-0 left-0 right-0 p-1.5">
-                              <p className="text-[9px] font-medium text-white leading-tight truncate">
-                                {t(displayName as any) || displayName}
-                              </p>
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg">
-                              <Zap size={8} className="text-white fill-white" />
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Atmosphere Preview Grid */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-              <Cloud size={14} /> {t('atmosphere')}
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
-                { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
-                { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
-                { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
-                { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
-                { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
-                { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
-                { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
-                { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
-                // Interior
-                { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
-                { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
-                { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
-                { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
-                // Seasons
-                { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
-                { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
-                { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
-                { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
-
-              ]
-                .map(opt => {
-                  const isSelected = atmosphere.includes(opt.val);
-                  return (
-                    <button
-                      key={opt.val}
-                      onClick={() => toggleAtmosphere(opt.val)}
-                      className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected
-                        ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900`
-                        : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'
-                        }`}
-                    >
-                      {opt.icon}
-                      <span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Palette size={14} /> {t('styleRef')}</label>
+                <ImageUpload selectedImage={styleReferenceImage} onImageSelected={setStyleReferenceImage} label={t('uploadStyleRef')} compact />
+                <div className="grid grid-cols-5 gap-1 mt-2">
+                  {styleLibrary.map((s, idx) => (
+                    <button key={idx} onClick={() => convertUrlToBase64(s.url)} className="relative aspect-square rounded overflow-hidden border border-slate-700 hover:border-indigo-500 group" title={s.name}>
+                      <img src={s.url} alt={s.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] text-center text-white p-1 transition-opacity">{s.name}</div>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <button onClick={() => setShowStyles(!showStyles)} className="w-full flex items-center justify-between text-xs font-medium text-slate-400 uppercase group hover:text-slate-200 transition-colors">
+                  <div className="flex items-center gap-2"><Zap size={14} /> {t('stylePreset')}</div>
+                  {showStyles ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                </button>
+                {showStyles && (
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar animate-in slide-in-from-top-2 fade-in duration-200">
+                    <div onClick={() => setStyle(RenderStyle.None)} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
+                      <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400"><X size={18} /></div>
+                      <span className="text-xs font-medium text-slate-300">{t('None')}</span>
+                    </div>
+                    {Object.entries(groupedStyles).map(([group, styles]) => (
+                      <div key={group} className="space-y-2">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {(styles as RenderStyle[]).map(s => {
+                            const isSelected = style === s;
+                            const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                            const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
+                            return (
+                              <button key={s} onClick={() => setStyle(s)} className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]' : 'border-slate-700 hover:border-indigo-500/50'}`}>
+                                <img src={previewUrl} alt={s} className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                  <div className="absolute bottom-0 left-0 right-0 p-1.5"><p className="text-[9px] font-medium text-white leading-tight truncate">{t(displayName as any) || displayName}</p></div>
+                                </div>
+                                {isSelected && <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg"><Zap size={8} className="text-white fill-white" /></div>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Cloud size={14} /> {t('atmosphere')}</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
+                    { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
+                    { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
+                    { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
+                    { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
+                    { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
+                    { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
+                    { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
+                    { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
+                    { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
+                    { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
+                    { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
+                    { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
+                    { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
+                    { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
+                    { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
+                    { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+                  ].map(opt => {
+                    const isSelected = atmosphere.includes(opt.val);
+                    return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
+                  })}
+                </div>
+              </div>
+
+              {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Camera size={14} /> {t('camera')}</label>
+                <select value={camera} onChange={(e) => setCamera(e.target.value as CameraAngle)} disabled={lockCamera} className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300 ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  {Object.values(CameraAngle).map((c) => (<option key={c} value={c}>{c}</option>))}
+                </select>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}>{lockCamera ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}{lockCamera ? "Camera Locked" : "Lock Camera"}</button>
+                  {editorMode === 'interior' && <button onClick={() => setLockInterior(!lockInterior)} className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockInterior ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}>{lockInterior ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}{lockInterior ? "Interior Locked" : "Lock Interior"}</button>}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase">{t('sceneElements')}</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Users size={14} /> {t('people')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Car size={14} /> {t('cars')}</button>}
+                  <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Trees size={14} /> {editorMode === 'interior' ? "Indoor Plants" : t('greenery')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Cloud size={14} /> {t('clouds')}</button>}
+                  {editorMode !== 'interior' && (
+                    <>
+                      <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Building2 size={14} /> {t('city')}</button>
+                      <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Wind size={14} /> {t('motionBlur')}</button>
+                      <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Zap size={14} /> {t('enhanceFacade')}</button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
+                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Interior Customization Panel */}
-          {editorMode === 'interior' && (
-            <InteriorCustomization
-              settings={interiorSettings}
-              onChange={setInteriorSettings}
-            />
-          )}
-
-          {/* Camera Angle */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-              <Camera size={14} /> {t('camera')}
-            </label>
-            <select
-              value={camera}
-              onChange={(e) => setCamera(e.target.value as CameraAngle)}
-              disabled={lockCamera}
-              className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300 ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
-            >
-              {Object.values(CameraAngle).map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <button
-              onClick={() => setLockCamera(!lockCamera)}
-              className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockCamera
-                ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                }`}
-            >
-              {lockCamera ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}
-              {lockCamera ? "Camera Locked" : "Lock Camera"}
-            </button>
-
-            {editorMode === 'interior' && (
+            <div className="relative pt-6">
+              {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
               <button
-                onClick={() => setLockInterior(!lockInterior)}
-                className={`mt-2 w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockInterior
-                  ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'
-                  }`}
+                onClick={() => batchMode ? processBatch() : handleGenerate()}
+                disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
               >
-                {lockInterior ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}
-                {lockInterior ? "Interior Locked" : "Lock Interior"}
+                {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
               </button>
-            )}
-          </div>
-
-          {/* Scene Elements */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 uppercase">{t('sceneElements')}</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Users size={14} /> {t('people')}
-              </button>
-              {editorMode !== 'interior' && (
-                <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Car size={14} /> {t('cars')}
-                </button>
-              )}
-              <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                <Trees size={14} /> {editorMode === 'interior' ? "Indoor Plants" : t('greenery')}
-              </button>
-              {editorMode !== 'interior' && (
-                <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                  <Cloud size={14} /> {t('clouds')}
-                </button>
-              )}
-              {editorMode !== 'interior' && (
-                <>
-                  <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                    <Building2 size={14} /> {t('city')}
-                  </button>
-                  <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                    <Wind size={14} /> {t('motionBlur')}
-                  </button>
-                  <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}>
-                    <Zap size={14} /> {t('enhanceFacade')}
-                  </button>
-                </>
-              )}
             </div>
-          </div>
-
-          {/* Aspect Ratio */}
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-              <LayoutTemplate size={14} /> {t('aspectRatio')}
-            </label>
-            <div className="grid grid-cols-3 gap-1">
-              {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                <button
-                  key={ratio}
-                  onClick={() => setAspectRatio(ratio as AspectRatio)}
-                  className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio
-                    ? 'bg-indigo-600 border-indigo-500 text-white'
-                    : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'
-                    }`}
-                >
-                  {ratio}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative">
-            {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-
-
-
-            {/* Generate Button */}
-            <button
-              onClick={() => batchMode ? processBatch() : handleGenerate()}
-              disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-              className={`w-full py-4 rounded-xl font-bold text-lg shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt)))
-                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/20'
-                }`}
-            >
-              {batchMode ? (
-                isBatchProcessing ? (
-                  <>
-                    <Loader2 size={24} className="animate-spin" />
-                    Processing {batchProgress.current}/{batchProgress.total}...
-                  </>
-                ) : (
-                  <>
-                    <Layers size={24} />
-                    Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}
-                  </>
-                )
-              ) : (
-                isGenerating ? (
-                  <>
-                    <Loader2 size={24} className="animate-spin" />
-                    {t('generating')}
-                  </>
-                ) : (
-                  <>
-                    <Zap size={24} fill="currentColor" />
-                    {t('generate')}
-                  </>
-                )
-              )}
-            </button>
-
-            {/* Video Generation Section */}
-            {/* Video Generation Section Removed - Moved to Video Tab */}
-          </div>
+          </section>
         </div>
       </div>
 
 
-      {/* COLUMN 3: RESULT */}
-      <div className="w-full lg:w-2/4 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
+      {/* COLUMN 2: RESULT (50%) */}
+      <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
         <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
