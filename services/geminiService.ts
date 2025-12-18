@@ -119,109 +119,70 @@ export const constructFullPrompt = async (settings: GenerationSettings): Promise
   const parts: any[] = [];
   const textParts: string[] = [];
 
-  // Base Role & Task
+  // 1. Core Role & Task
   textParts.push(`Role: Expert Architectural AI Visualizer.
 Task: Generate a photorealistic architectural visualization based on the inputs.`);
 
-  // Core Description
+  // 2. Main Subject & Global Settings
   textParts.push(`Subject: ${settings.prompt}`);
-
-  // Mode Specific Instructions
-  if (settings.lockInterior) {
-    textParts.push("STRICT INSTRUCTION: DONT CHANGE CAMERA ANGLE OR ANY DETAILS, ONLY FOLLOW THE PROMPT STRICTLY. MAINTAIN THE EXACT PERSPECTIVE OF THE SOURCE IMAGE.");
-  }
-
-  if (settings.keepBuilding) {
-    textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
-  }
-
-  if (settings.lockCamera) {
-    textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
-  }
-
-  // Style & Atmosphere
   textParts.push(`Style: ${settings.style}`);
+
   if (settings.atmosphere && settings.atmosphere.length > 0) {
     textParts.push(`Atmosphere/Mood: ${settings.atmosphere.join(', ')}`);
   }
 
   textParts.push(`Camera Angle: ${settings.camera}`);
 
-  // Scene Elements
+  // 3. Structural Constraints
+  if (settings.lockInterior) {
+    textParts.push("STRICT INSTRUCTION: DONT CHANGE CAMERA ANGLE OR ANY DETAILS, ONLY FOLLOW THE PROMPT STRICTLY. MAINTAIN THE EXACT PERSPECTIVE OF THE SOURCE IMAGE.");
+  }
+  if (settings.keepBuilding) {
+    textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
+  }
+  if (settings.lockCamera) {
+    textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
+  }
+
+  // 4. Scene Elements
   const elements = [];
   if (settings.sceneElements.people) elements.push("Include realistic people/crowd appropriate for the scene");
   if (settings.sceneElements.cars) elements.push("Include realistic vehicles/cars if consistent with context");
   if (settings.sceneElements.vegetation) elements.push("Add lush photorealistic vegetation/landscaping");
-  // if (settings.sceneElements.lighting) elements.push("Enhanced dramatic lighting"); // Not in type
   if (elements.length > 0) textParts.push(`Scene Elements: ${elements.join(', ')}`);
 
-  // Interior Customization Logic
-  if (settings.interior) {
-    textParts.push("\n--- INTERIOR SPECIFICATIONS ---");
-
-    // Flooring
-    if (settings.interior.flooring.type) {
-      textParts.push(`Flooring Material: ${settings.interior.flooring.type}`);
-    }
-    if (settings.interior.flooring.image) {
-      textParts.push("Use the following image as a specific reference for the FLOORING MATERIAL texture and finish:");
-      parts.push({ text: textParts.join('\n') });
-      textParts.length = 0; // Clear text buffer
-
-      const inlineData = await toInlineData(settings.interior.flooring.image);
-      parts.push({ inlineData });
-    }
-
-    // Furniture
-    if (settings.interior.furniture.style) {
-      textParts.push(`Furniture Style: ${settings.interior.furniture.style}`);
-    }
-    if (settings.interior.furniture.image) {
-      textParts.push("Use the following image as a specific reference for the FURNITURE STYLE and appearance:");
-      if (textParts.length > 0) {
-        parts.push({ text: textParts.join('\n') });
-        textParts.length = 0;
-      }
-
-      const inlineData = await toInlineData(settings.interior.furniture.image);
-      parts.push({ inlineData });
-    }
-
-    // Colors
-    if (settings.interior.primaryColor.value) {
-      textParts.push(`Primary Interior Color Scheme: ${settings.interior.primaryColor.value}`);
-    }
-    if (settings.interior.primaryColor.image) {
-      textParts.push("Reference for Primary Color/Palette:");
-      if (textParts.length > 0) {
-        parts.push({ text: textParts.join('\n') });
-        textParts.length = 0;
-      }
-      const inlineData = await toInlineData(settings.interior.primaryColor.image);
-      parts.push({ inlineData });
-    }
-
-    if (settings.interior.wallColor.value) {
-      textParts.push(`Wall Color/Finish: ${settings.interior.wallColor.value}`);
-    }
-    if (settings.interior.wallColor.image) {
-      textParts.push("Reference for Wall Texture/Finish:");
-      if (textParts.length > 0) {
-        parts.push({ text: textParts.join('\n') });
-        textParts.length = 0;
-      }
-      const inlineData = await toInlineData(settings.interior.wallColor.image);
-      parts.push({ inlineData });
-    }
-  }
-
-  // Final Quality Tokens
-  textParts.push("Output Requirements: High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering.");
-
-  // Push remaining text
+  // Push all general instructions as the first text part
   if (textParts.length > 0) {
     parts.push({ text: textParts.join('\n') });
+    textParts.length = 0;
   }
+
+  // 5. Interior Specifications (Paired with Images)
+  if (settings.interior) {
+    parts.push({ text: "\n--- INTERIOR SPECIFICATIONS ---" });
+
+    // Helper to add specification with image
+    const addSpec = async (label: string, value: string | undefined, image: string | null | undefined, instruction: string) => {
+      let specText = "";
+      if (value) specText += `${label}: ${value}\n`;
+      if (image) {
+        specText += `STRICT REFERENCE: ${instruction}`;
+        parts.push({ text: specText.trim() });
+        const inlineData = await toInlineData(image);
+        parts.push({ inlineData });
+      } else if (specText) {
+        parts.push({ text: specText.trim() });
+      }
+    };
+
+    await addSpec("Flooring Material", settings.interior.flooring.type, settings.interior.flooring.image, "Use the following image as the EXACT reference for the FLOORING texture, material, and finish.");
+    await addSpec("Furniture Style", settings.interior.furniture.style, settings.interior.furniture.image, "Use the following image as the PRIMARY reference for the FURNITURE style, layout, and appearance.");
+    await addSpec("Primary Color Scheme", settings.interior.primaryColor.value, settings.interior.primaryColor.image, "Use the following image as the reference for the PRIMARY COLOR PALETTE and mood.");
+    await addSpec("Wall Color/Finish", settings.interior.wallColor.value, settings.interior.wallColor.image, "Use the following image as the reference for the WALL texture and color finish.");
+  }
+
+  // 6. Final Quality Requirements
+  parts.push({ text: "\nOutput Requirements: High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering." });
 
   return parts;
 };
@@ -291,9 +252,7 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
 
     const response = await ai.models.generateContent({
       model: settings.model || 'gemini-2.5-flash', // Use Flash 2.5 which is better at multi-modal
-      contents: {
-        parts: fullPromptParts
-      },
+      contents: [{ role: 'user', parts: fullPromptParts }],
       config: config
     });
 
@@ -319,10 +278,6 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
   }
 };
 
-/**
- * Edits an image or converts sketch to render (Image+Text-to-Image)
- * Uses Gemini Flash Image model as it supports multimodal input
- */
 /**
  * Edits an image or converts sketch to render (Image+Text-to-Image)
  * Uses Gemini Flash Image model as it supports multimodal input
@@ -430,7 +385,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     }
 
     const response = await ai.models.generateContent({
-      model: settings.model || 'gemini-2.5-flash-image',
+      model: settings.model || 'gemini-2.5-flash',
       contents: [{ role: 'user', parts: parts }],
       config: config
     });
