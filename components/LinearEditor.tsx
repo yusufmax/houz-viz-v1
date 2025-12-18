@@ -1189,7 +1189,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     className="p-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
                     title={t('fullScreen')}
                   >
-                    <Eye size={12} />
+                    <Maximize size={12} />
                   </button>
                 )}
                 {sourceImage && (
@@ -1481,7 +1481,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
                   title={t('fullScreen')}
                 >
-                  <Eye size={14} />
+                  <Maximize size={14} />
                 </button>
               )}
               {resultImage && (

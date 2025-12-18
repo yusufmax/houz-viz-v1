@@ -4,7 +4,7 @@ import {
     Plus, Minus, Move, Image as ImageIcon, Type, Settings, X,
     Download, Upload, Play, Save, Trash2, MousePointer2, Hand,
     ZoomIn, ZoomOut, Undo, Redo, Layers, Grid, Share2,
-    Maximize2, Minimize2, ChevronRight, ChevronDown,
+    Maximize2, Minimize2, Maximize, ChevronRight, ChevronDown,
     Palette, Wand2, Zap, Layout, Box, Circle, Triangle,
     Eraser, Pencil, Eye, Loader2, History, FileDown,
     ChevronUp, History as HistoryIcon, Camera, FolderOpen, Film, GripHorizontal, Building
@@ -1258,7 +1258,7 @@ const InfinityCanvas: React.FC = () => {
                                                         onClick={() => { setPreviewImage(node.data.imageSrc!); setPreviewBeforeImage(node.data.beforeImage); }}
                                                         className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]"
                                                     >
-                                                        <Eye size={10} /> {t('preview')}
+                                                        <Maximize size={10} /> {t('preview')}
                                                     </button>
                                                     <button
                                                         onClick={() => setDrawingNodeId(node.id)}
