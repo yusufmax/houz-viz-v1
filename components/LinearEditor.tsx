@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film
+  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film, X
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -49,6 +49,38 @@ const STYLE_LIBRARY = [
 interface LinearEditorProps {
   showInstructions?: boolean;
 }
+
+const STYLE_PREVIEWS: Partial<Record<RenderStyle, string>> = {
+  // General
+  [RenderStyle.Photorealistic]: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80',
+  [RenderStyle.cinematic]: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?w=200&q=80',
+  [RenderStyle.Sketch]: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=200&q=80',
+  [RenderStyle.Watercolor]: 'https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=200&q=80',
+  [RenderStyle.Blueprint]: 'https://images.unsplash.com/photo-1503387762-592dea58ef23?w=200&q=80',
+  [RenderStyle.PencilDrawing]: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=200&q=80',
+  [RenderStyle.Chalk]: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=200&q=80',
+  [RenderStyle.Cyberpunk]: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&q=80',
+
+  // Exterior
+  [RenderStyle.Modernist]: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&q=80',
+  [RenderStyle.Minimalist]: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=200&q=80',
+  [RenderStyle.Brutalism]: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&q=80',
+  [RenderStyle.Bauhaus]: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=200&q=80',
+  [RenderStyle.Rustic]: 'https://images.unsplash.com/photo-1500315331616-db4f707c24d1?w=200&q=80',
+  [RenderStyle.GlassFacade]: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80',
+  [RenderStyle.Alpine]: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=200&q=80',
+
+  // Interior
+  [RenderStyle.HomeScandi]: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&q=80',
+  [RenderStyle.HomeJapandi]: 'https://images.unsplash.com/photo-1615529328331-f8917597711f?w=200&q=80',
+  [RenderStyle.HomeBoho]: 'https://images.unsplash.com/photo-1615876234886-fd9a39faa97f?w=200&q=80',
+  [RenderStyle.HomeIndustrial]: 'https://images.unsplash.com/photo-1505691938895-1758d7eaa511?w=200&q=80',
+  [RenderStyle.HomeLuxury]: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=200&q=80',
+  [RenderStyle.HomeMidCentury]: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5ea?w=200&q=80',
+  [RenderStyle.OfficeOpenPlan]: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=200&q=80',
+  [RenderStyle.OfficeExecutive]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=80',
+  [RenderStyle.SalesRealEstate]: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200&q=80',
+};
 
 const GuideTooltip = ({ text, className, side = 'left' }: { text: string, className?: string, side?: 'left' | 'right' | 'top' | 'bottom' }) => {
   const { t } = useLanguage();
@@ -1389,27 +1421,68 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
-          {/* Style Preset */}
-          <div className="space-y-2">
+          {/* Style Preset Grid */}
+          <div className="space-y-3">
             <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
               <Zap size={14} /> {t('stylePreset')}
             </label>
-            <select
-              value={style}
-              onChange={(e) => setStyle(e.target.value as RenderStyle)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300"
-            >
-              <option value={RenderStyle.None}>{t('None')}</option>
+
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              <div
+                onClick={() => setStyle(RenderStyle.None)}
+                className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None
+                  ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50'
+                  : 'bg-slate-900 border-slate-700 hover:border-slate-500'
+                  }`}
+              >
+                <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400">
+                  <X size={18} />
+                </div>
+                <span className="text-xs font-medium text-slate-300">{t('None')}</span>
+              </div>
+
               {Object.entries(groupedStyles).map(([group, styles]) => (
-                <optgroup key={group} label={group}>
-                  {(styles as RenderStyle[]).map(s => (
-                    <option key={s} value={s}>
-                      {s.includes(': ') ? s.split(': ')[1] : s}
-                    </option>
-                  ))}
-                </optgroup>
+                <div key={group} className="space-y-2">
+                  <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(styles as RenderStyle[]).map(s => {
+                      const isSelected = style === s;
+                      const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                      const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
+
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => setStyle(s)}
+                          className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected
+                            ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]'
+                            : 'border-slate-700 hover:border-indigo-500/50'
+                            }`}
+                        >
+                          <img
+                            src={previewUrl}
+                            alt={s}
+                            className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`}
+                          />
+                          <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                            <div className="absolute bottom-0 left-0 right-0 p-1.5">
+                              <p className="text-[9px] font-medium text-white leading-tight truncate">
+                                {t(displayName as any) || displayName}
+                              </p>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg">
+                              <Zap size={8} className="text-white fill-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               ))}
-            </select>
+            </div>
           </div>
 
           {/* Atmosphere Preview Grid */}
