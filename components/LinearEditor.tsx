@@ -1402,7 +1402,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
                   ].filter(opt => {
                     if (editorMode !== 'interior') return true;
-                    const interiorAllowed = [
+                    // Only show these for interior mode
+                    return [
                       Atmosphere.None,
                       Atmosphere.Sunny,
                       Atmosphere.Sunset,
@@ -1411,8 +1412,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       Atmosphere.NaturalLight,
                       Atmosphere.Studio,
                       Atmosphere.Candlelight
-                    ];
-                    return interiorAllowed.includes(opt.val);
+                    ].includes(opt.val);
                   }).map(opt => {
                     const isSelected = atmosphere.includes(opt.val);
                     return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
