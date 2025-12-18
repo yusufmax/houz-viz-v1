@@ -1252,19 +1252,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
           {/* CONTROLS SECTION */}
           <section className="space-y-6 pt-4 border-t border-slate-700/50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-indigo-400 font-semibold">
-                <Settings size={18} />
-                <h2>{t('controls')}</h2>
-              </div>
-              <button
-                onClick={handleSaveProject}
-                className="flex items-center gap-1.5 text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white px-2 py-1.5 rounded-lg border border-emerald-600/30 transition-all"
-                title={currentProjectName ? `Save "${currentProjectName}"` : "Save Project"}
-              >
-                <Save size={14} />
-                <span className="max-w-[100px] truncate">{currentProjectName || "Save Project"}</span>
-              </button>
+            <div className="flex items-center gap-2 text-indigo-400 font-semibold mb-4">
+              <Settings size={18} />
+              <h2>{t('controls')}</h2>
             </div>
 
             <div className="bg-slate-900 p-1 rounded-lg flex mb-6 border border-slate-700">
