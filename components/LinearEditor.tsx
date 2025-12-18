@@ -1400,7 +1400,20 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
                     { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
                     { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
-                  ].map(opt => {
+                  ].filter(opt => {
+                    if (editorMode !== 'interior') return true;
+                    const interiorAllowed = [
+                      Atmosphere.None,
+                      Atmosphere.Sunny,
+                      Atmosphere.Sunset,
+                      Atmosphere.Night,
+                      Atmosphere.WarmTungsten,
+                      Atmosphere.NaturalLight,
+                      Atmosphere.Studio,
+                      Atmosphere.Candlelight
+                    ];
+                    return interiorAllowed.includes(opt.val);
+                  }).map(opt => {
                     const isSelected = atmosphere.includes(opt.val);
                     return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
                   })}
