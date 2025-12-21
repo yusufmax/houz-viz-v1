@@ -31,7 +31,8 @@ import {
     GenerationSettings,
     SuperRenderStyle,
     SuperAtmosphere,
-    SuperModeSettings
+    SuperModeSettings,
+    CameraLens
 } from '../types';
 import * as geminiService from '../services/geminiService';
 import * as historyService from '../services/historyService';
@@ -54,7 +55,11 @@ const STYLE_PREVIEWS: Record<SuperRenderStyle, string> = {
     [SuperRenderStyle.Action]: 'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=500&q=80',
     [SuperRenderStyle.Cinematic]: 'https://images.unsplash.com/photo-1491633582673-4916538e1b9b?w=500&q=80',
     [SuperRenderStyle.FlatLay]: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=500&q=80',
-    [SuperRenderStyle.Macro]: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'
+    [SuperRenderStyle.Macro]: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80',
+    [SuperRenderStyle.OnHand]: 'https://images.unsplash.com/photo-1589118949245-7d38baf380d6?w=500&q=80',
+    [SuperRenderStyle.Everyday]: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=500&q=80',
+    [SuperRenderStyle.InAction]: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&q=80',
+    [SuperRenderStyle.SurrealViz]: 'https://images.unsplash.com/photo-1550684847-75bdda21cc95?w=500&q=80'
 };
 
 const SuperEditor: React.FC = () => {
@@ -64,11 +69,11 @@ const SuperEditor: React.FC = () => {
     // Basic State
     const [prompt, setPrompt] = useState('');
     const [style, setStyle] = useState<SuperRenderStyle>(SuperRenderStyle.Minimalist);
-    const [atmosphere, setAtmosphere] = useState<SuperAtmosphere[]>([SuperAtmosphere.StudioSoftbox]);
-    const [camera, setCamera] = useState<CameraAngle>(CameraAngle.Default);
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('Original');
     const [sourceImage, setSourceImage] = useState<string | null>(null);
+    const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
     const [resultImage, setResultImage] = useState<string | null>(null);
+    const [batchResults, setBatchResults] = useState<any[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isUpscaling, setIsUpscaling] = useState(false);
 
@@ -83,7 +88,10 @@ const SuperEditor: React.FC = () => {
         lightingColor: '#ffffff',
         groundMaterial: '',
         environmentProps: '',
-        cameraAngle: 'Hero shot (45 degree)'
+        cameraAngle: 'Hero shot (45 degree)',
+        lens: CameraLens.Portrait,
+        isMoodboard: false,
+        generateMultiAngle: false
     });
 
     // UI State
@@ -133,12 +141,15 @@ const SuperEditor: React.FC = () => {
 
         setIsGenerating(true);
         try {
+            setBatchResults([]);
+
             const settings: GenerationSettings = {
                 prompt: prompt || `High-end product photography of ${superSettings.productCategory || 'product'}`,
                 style: style as any,
-                atmosphere: atmosphere as any,
-                camera,
+                atmosphere: [],
+                camera: CameraAngle.Default,
                 aspectRatio,
+                styleReferenceImage: styleReferenceImage,
                 sceneElements: {
                     people: false,
                     cars: false,
@@ -152,11 +163,36 @@ const SuperEditor: React.FC = () => {
                 superMode: superSettings
             };
 
-            const result = sourceImage
-                ? await geminiService.editImage(sourceImage, settings)
-                : await geminiService.generateImage(settings);
+            let result = '';
 
-            setResultImage(result);
+            if (superSettings.generateMultiAngle) {
+                // Batch Generation for 4 angles
+                const angles = ['Profile', 'Front', 'Perspective', 'Macro'];
+                const batchPromises = angles.map(angle => {
+                    const batchSettings = {
+                        ...settings,
+                        superMode: {
+                            ...superSettings,
+                            cameraAngle: `${angle} shot`,
+                            generateMultiAngle: false
+                        }
+                    };
+                    return sourceImage
+                        ? geminiService.editImage(sourceImage, batchSettings)
+                        : geminiService.generateImage(batchSettings);
+                });
+
+                const results = await Promise.all(batchPromises);
+                setBatchResults(results.map((r, i) => ({ input: sourceImage || '', output: r, index: i })));
+                result = results[0];
+                setResultImage(result);
+            } else {
+                result = sourceImage
+                    ? await geminiService.editImage(sourceImage, settings)
+                    : await geminiService.generateImage(settings);
+
+                setResultImage(result);
+            }
 
             // Save to history
             await historyService.saveToHistory(user.id, result, settings.prompt, style as any);
@@ -168,16 +204,6 @@ const SuperEditor: React.FC = () => {
         } finally {
             setIsGenerating(false);
         }
-    };
-
-    const toggleAtmosphere = (val: SuperAtmosphere) => {
-        setAtmosphere(prev => {
-            if (val === SuperAtmosphere.None) return [SuperAtmosphere.None];
-            const isSelected = prev.includes(val);
-            let newSelection = isSelected ? prev.filter(a => a !== val) : [...prev.filter(a => a !== SuperAtmosphere.None), val];
-            if (newSelection.length > 2) newSelection.shift();
-            return newSelection.length === 0 ? [SuperAtmosphere.None] : newSelection;
-        });
     };
 
     return (
@@ -257,6 +283,21 @@ const SuperEditor: React.FC = () => {
                                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
                                     <Layout size={14} className="text-indigo-400" /> Campaign Prompt
                                 </label>
+                                {sourceImage && (
+                                    <button
+                                        onClick={async () => {
+                                            try {
+                                                const suggestion = await geminiService.analyzeProductImage(sourceImage);
+                                                setPrompt(suggestion);
+                                            } catch (e) {
+                                                console.error(e);
+                                            }
+                                        }}
+                                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                                    >
+                                        <Sparkles size={12} /> AI Suggest
+                                    </button>
+                                )}
                             </div>
                             <textarea
                                 value={prompt}
@@ -265,6 +306,21 @@ const SuperEditor: React.FC = () => {
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 outline-none focus:border-indigo-500 h-24 resize-none transition-all"
                             />
                         </div>
+
+                        {/* Brand Style Reference */}
+                        <section className="space-y-4">
+                            <div className="flex items-center gap-2 text-indigo-400 font-semibold uppercase text-xs">
+                                <ImageIcon size={16} />
+                                <span>Brand Style Reference</span>
+                            </div>
+                            <div className="h-40">
+                                <ImageUpload
+                                    selectedImage={styleReferenceImage}
+                                    onImageSelected={(img) => setStyleReferenceImage(img)}
+                                    label="Upload Brand Style Guidelines"
+                                />
+                            </div>
+                        </section>
 
 
                         {/* Advanced Product Controls */}
@@ -300,61 +356,69 @@ const SuperEditor: React.FC = () => {
             {/* COLUMN 2: RESULT (50%) */}
             <div className="w-full lg:w-1/2 flex flex-col gap-4 p-4 lg:p-6 bg-slate-950">
                 <div className="bg-slate-900/50 backdrop-blur border border-slate-800 rounded-2xl flex-1 flex flex-col relative overflow-hidden">
-                    <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-indigo-400 font-semibold">
-                            <Maximize2 size={18} />
-                            <h2>Final Visualization</h2>
-                        </div>
-                        {resultImage && (
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setPreviewImage(resultImage)}
-                                    className="p-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded transition-colors"
-                                >
-                                    <Maximize size={14} />
-                                </button>
-                                <button
-                                    onClick={async () => {
-                                        const response = await fetch(resultImage);
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const link = document.createElement('a');
-                                        link.href = url;
-                                        link.download = `product-campaign-${Date.now()}.png`;
-                                        link.click();
-                                    }}
-                                    className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
-                                >
-                                    <Download size={14} /> Download
-                                </button>
+                    {batchResults.length > 0 ? (
+                        <BatchResults results={batchResults} onClose={() => setBatchResults([])} />
+                    ) : (
+                        <>
+                            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-indigo-400 font-semibold">
+                                    <Maximize2 size={18} />
+                                    <h2>Final Visualization</h2>
+                                    {superSettings.isMoodboard && <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full animate-pulse">MOODBOARD</span>}
+                                    {superSettings.generateMultiAngle && <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full animate-pulse">BATCH MODE</span>}
+                                </div>
+                                {resultImage && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setPreviewImage(resultImage)}
+                                            className="p-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded transition-colors"
+                                        >
+                                            <Maximize size={14} />
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                const response = await fetch(resultImage);
+                                                const blob = await response.blob();
+                                                const url = window.URL.createObjectURL(blob);
+                                                const link = document.createElement('a');
+                                                link.href = url;
+                                                link.download = `product-campaign-${Date.now()}.png`;
+                                                link.click();
+                                            }}
+                                            className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
+                                        >
+                                            <Download size={14} /> Download
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    <div className="flex-1 overflow-hidden relative group">
-                        {isGenerating ? (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center text-indigo-400 bg-slate-950/80 z-10">
-                                <div className="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                                <p className="text-sm font-mono tracking-widest text-indigo-300">COMPUTING MARKETERS VISION...</p>
+                            <div className="flex-1 overflow-hidden relative group">
+                                {isGenerating ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-indigo-400 bg-slate-950/80 z-10">
+                                        <div className="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                        <p className="text-sm font-mono tracking-widest text-indigo-300">COMPUTING MARKETERS VISION...</p>
+                                    </div>
+                                ) : resultImage ? (
+                                    sourceImage ? (
+                                        <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+                                    ) : (
+                                        <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                                    )
+                                ) : (
+                                    <div className="flex-1 h-full flex flex-col items-center justify-center text-slate-700 text-center animate-pulse">
+                                        <ImageIcon size={64} className="mx-auto mb-4 opacity-10" />
+                                        <p className="text-lg font-medium opacity-20">Creative assets will appear here</p>
+                                        <p className="text-xs opacity-10 mt-2">Upload a product and set the mood to begin</p>
+                                    </div>
+                                )}
                             </div>
-                        ) : resultImage ? (
-                            sourceImage ? (
-                                <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
-                            ) : (
-                                <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                            )
-                        ) : (
-                            <div className="flex-1 h-full flex flex-col items-center justify-center text-slate-700 text-center animate-pulse">
-                                <ImageIcon size={64} className="mx-auto mb-4 opacity-10" />
-                                <p className="text-lg font-medium opacity-20">Creative assets will appear here</p>
-                                <p className="text-xs opacity-10 mt-2">Upload a product and set the mood to begin</p>
-                            </div>
-                        )}
-                    </div>
+                        </>
+                    )}
                 </div>
-            </div>
 
-            {previewImage && <FullScreenPreview imageUrl={previewImage} onClose={() => setPreviewImage('')} />}
+                {previewImage && <FullScreenPreview imageUrl={previewImage} onClose={() => setPreviewImage('')} />}
+            </div>
         </div>
     );
 };

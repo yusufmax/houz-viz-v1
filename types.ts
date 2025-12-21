@@ -107,7 +107,19 @@ export enum SuperRenderStyle {
   Action = 'Product: Action / Dynamic',
   Cinematic = 'Product: Cinematic Lighting',
   FlatLay = 'Product: Flat Lay / Top-down',
-  Macro = 'Product: Macro / Detailed'
+  Macro = 'Product: Macro / Detailed',
+  OnHand = 'Product: On Hand / Holding',
+  Everyday = 'Product: Everyday / Casual',
+  InAction = 'Product: In Action / Usage',
+  SurrealViz = 'Product: Surreal / Artistic'
+}
+
+export enum CameraLens {
+  Standard = '50mm Standard',
+  Portrait = '85mm Prime (Portrait)',
+  Wide = '24mm Wide (Context)',
+  Macro = '100mm Macro (Detail)',
+  Fisheye = 'Fisheye (Artistic)'
 }
 
 export enum Atmosphere {
@@ -198,6 +210,9 @@ export interface SuperModeSettings {
   groundMaterial?: string;
   environmentProps?: string;
   cameraAngle?: string;
+  lens?: CameraLens;
+  isMoodboard?: boolean;
+  generateMultiAngle?: boolean;
 }
 
 export interface InteriorSettings {

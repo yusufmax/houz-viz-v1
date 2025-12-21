@@ -1,6 +1,6 @@
 import React from 'react';
-import { Package, Sun, Image as ImageIcon, Target, ChevronUp, ChevronDown, Cpu, Palette, Layers, Box, Camera } from 'lucide-react';
-import { SuperModeSettings, SuperAtmosphere } from '../types';
+import { Package, Sun, Image as ImageIcon, Target, ChevronUp, ChevronDown, Cpu, Palette, Layers, Box, Camera, Grid, Sparkles, Sliders } from 'lucide-react';
+import { SuperModeSettings, SuperAtmosphere, CameraLens } from '../types';
 
 interface ProductCustomizationProps {
     settings: SuperModeSettings;
@@ -35,8 +35,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                 className="w-full flex items-center justify-between text-xs font-semibold text-slate-400 uppercase hover:text-white transition-colors mb-4"
             >
                 <span className="flex items-center gap-2">
-                    <Package size={14} className="text-indigo-400" />
-                    Advanced Marketing Controls
+                    <Sliders size={14} className="text-indigo-400" />
+                    Advanced Marketing Suite
                 </span>
                 {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
             </button>
@@ -44,22 +44,57 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
             {isOpen && (
                 <div className="space-y-8 animate-in slide-in-from-top-2 duration-200">
 
+                    {/* Automation Tools */}
+                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 space-y-4">
+                        <h3 className="text-[10px] font-bold text-indigo-300 uppercase flex items-center gap-2">
+                            <Sparkles size={12} /> AI Automation Tools
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => updateSetting('generateMultiAngle', !settings.generateMultiAngle)}
+                                className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${settings.generateMultiAngle
+                                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    }`}
+                            >
+                                <Camera size={18} />
+                                <div className="text-center">
+                                    <span className="text-[10px] font-bold block">4 SHOTS</span>
+                                    <span className="text-[8px] opacity-60">Multi-Angle</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => updateSetting('isMoodboard', !settings.isMoodboard)}
+                                className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${settings.isMoodboard
+                                        ? 'bg-purple-600 border-purple-400 text-white shadow-lg'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    }`}
+                            >
+                                <Grid size={18} />
+                                <div className="text-center">
+                                    <span className="text-[10px] font-bold block">MOODBOARD</span>
+                                    <span className="text-[8px] opacity-60">Concept Grid</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Model Selection */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Cpu size={12} className="text-slate-500" /> AI Rendering Model
+                            <Cpu size={12} className="text-slate-500" /> Rendering Intelligence
                         </h3>
                         <div className="grid grid-cols-2 gap-2">
                             {[
-                                { id: 'gemini-2.5-flash', label: 'Flash (Fast)', desc: 'Standard quality' },
-                                { id: 'gemini-3-pro-image-preview', label: 'Pro (HQ)', desc: 'Highest detail' }
+                                { id: 'gemini-2.5-flash', label: 'Flash (Fast)', desc: 'Standard production' },
+                                { id: 'gemini-3-pro-image-preview', label: 'Pro (Ultra)', desc: 'Photorealistic detail' }
                             ].map((model) => (
                                 <button
                                     key={model.id}
                                     onClick={() => updateSetting('model', model.id)}
                                     className={`flex flex-col items-start p-2 rounded-lg border transition-all ${settings.model === model.id || (!settings.model && model.id === 'gemini-2.5-flash')
-                                            ? 'bg-indigo-900/30 border-indigo-500 ring-1 ring-indigo-500'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                        ? 'bg-indigo-900/40 border-indigo-500 ring-1 ring-indigo-500'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                                         }`}
                                 >
                                     <span className={`text-[10px] font-bold uppercase ${settings.model === model.id ? 'text-indigo-200' : 'text-slate-400'}`}>{model.label}</span>
@@ -69,24 +104,62 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                         </div>
                     </div>
 
-                    {/* Product Category */}
+                    {/* Product Category Selector */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Package size={12} className="text-slate-500" /> Product Category
+                            <Package size={12} className="text-slate-500" /> Focus Subject
                         </h3>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {['Watch', 'Sneakers', 'Bottle', 'Bag', 'Gadget', 'Furniture'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => updateSetting('productCategory', cat)}
+                                    className={`px-2 py-1 text-[9px] font-bold rounded-md border uppercase transition-all ${settings.productCategory === cat
+                                            ? 'bg-indigo-600 border-indigo-400 text-white'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                                        }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
                         <input
                             type="text"
                             value={settings.productCategory}
                             onChange={(e) => updateSetting('productCategory', e.target.value)}
-                            placeholder="e.g. Luxury Watch, Sports Shoe, Perfume Bottle"
+                            placeholder="Custom category..."
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500 placeholder:text-slate-600"
                         />
+                    </div>
+
+                    {/* Camera Lens Selection */}
+                    <div className="space-y-3">
+                        <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
+                            <Camera size={12} className="text-slate-500" /> Optical Lens
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            {Object.entries(CameraLens).map(([key, value]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => updateSetting('lens', value)}
+                                    className={`px-3 py-2 text-[10px] font-bold rounded-lg border transition-all text-left flex justify-between items-center ${settings.lens === value
+                                            ? 'bg-indigo-600 border-indigo-400 text-white'
+                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-700'
+                                        }`}
+                                >
+                                    <span>{value.split(' ')[0]}</span>
+                                    <span className="text-[8px] opacity-40 uppercase tracking-tighter">
+                                        {value.includes('(') ? value.split('(')[1].split(')')[0] : ''}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Lighting Presets Grid */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Sun size={12} className="text-slate-500" /> Lighting Presets
+                            <Sun size={12} className="text-slate-500" /> Lighting Mood
                         </h3>
                         <div className="grid grid-cols-4 gap-2">
                             {Object.entries(LIGHTING_PREVIEWS).map(([a, img]) => (
@@ -145,26 +218,26 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <Layers size={10} /> Ground Material
+                                <Layers size={10} /> Branding/Ground
                             </label>
                             <input
                                 type="text"
                                 value={settings.groundMaterial || ''}
                                 onChange={(e) => updateSetting('groundMaterial', e.target.value)}
-                                placeholder="e.g. Polished Marble, Brushed Metal, Oak Wood"
+                                placeholder="Surface texture (e.g. Oak, Concrete)"
                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500 placeholder:text-slate-600"
                             />
                         </div>
 
                         <div className="space-y-2">
                             <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                                <Box size={10} /> Environment Props
+                                <Box size={10} /> Scene Extras
                             </label>
                             <input
                                 type="text"
                                 value={settings.environmentProps || ''}
                                 onChange={(e) => updateSetting('environmentProps', e.target.value)}
-                                placeholder="e.g. Floating leaves, Water splashes, Smoke"
+                                placeholder="Extras (e.g. Smoke, Floating leaves)"
                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500 placeholder:text-slate-600"
                             />
                         </div>
@@ -173,7 +246,7 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                     {/* Camera Angles Selection */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Camera size={12} className="text-slate-500" /> Marketing Angle
+                            <Camera size={12} className="text-slate-500" /> Shot Perspective
                         </h3>
                         <div className="grid grid-cols-2 gap-2">
                             {[
@@ -186,8 +259,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                     key={angle.id}
                                     onClick={() => updateSetting('cameraAngle', angle.id)}
                                     className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${settings.cameraAngle === angle.id
-                                            ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
+                                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
                                         }`}
                                 >
                                     <span className="text-[10px] font-bold uppercase">{angle.label}</span>
@@ -197,7 +270,7 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                         </div>
                     </div>
 
-                    {/* Focus Mode (Legacy keeping for now but could merge) */}
+                    {/* Focus Mode */}
                     <div className="space-y-3">
                         <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
                             <Target size={12} className="text-slate-500" /> AI Hero Focus
@@ -208,8 +281,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                     key={f}
                                     onClick={() => updateSetting('focus', f)}
                                     className={`px-2 py-2 text-[10px] uppercase font-bold rounded border transition-all ${settings.focus === f
-                                            ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
+                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md'
+                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
                                         }`}
                                 >
                                     {f}

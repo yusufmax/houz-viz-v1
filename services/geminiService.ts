@@ -139,7 +139,15 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
     if (sm.groundMaterial) textParts.push(`Surface/Ground Material: ${sm.groundMaterial}`);
     if (sm.environmentProps) textParts.push(`Atmospheric Props: ${sm.environmentProps}`);
     if (sm.cameraAngle) textParts.push(`Camera Perspective: ${sm.cameraAngle}`);
+    if (sm.lens) textParts.push(`Camera Lens characteristics: ${sm.lens}`);
     textParts.push(`AI Hero Focus: ${sm.focus} on the product`);
+
+    if (sm.isMoodboard) {
+      textParts.push("SPECIAL INSTRUCTION: Generate a MOODBOARD style image with multiple related product concepts or lifestyle shots in a grid.");
+    }
+    if (sm.generateMultiAngle) {
+      textParts.push("SPECIAL INSTRUCTION: Generate 4 distinct camera angles of the product (Profile, Front, Macro, Cinematic) while keeping the product design 100% consistent.");
+    }
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
     textParts.push(`Style: ${settings.style}`);
@@ -210,6 +218,31 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
   parts.push({ text: "\nOutput Requirements: High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering." });
 
   return parts;
+};
+
+/**
+ * Analyzes a product image and suggests a marketing prompt.
+ */
+export const analyzeProductImage = async (image: string): Promise<string> => {
+  try {
+    const inlineData = await toInlineData(image);
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: "Analyze this product image. Identify the brand style, materials, and key features. Then, write a high-end, artistic, and descriptive marketing prompt (approx 30-50 words) that would be used to generate a photorealistic advertisement for this specific product. Return ONLY the prompt text, no headers or quotes." },
+            { inlineData }
+          ]
+        }
+      ]
+    });
+    return response.text?.trim() || "High-end product photography";
+  } catch (error) {
+    console.error("Analysis failed:", error);
+    return "Photorealistic product shot with studio lighting";
+  }
 };
 
 /**
