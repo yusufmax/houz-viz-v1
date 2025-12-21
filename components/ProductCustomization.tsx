@@ -79,9 +79,15 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                         </div>
 
                         {settings.generateMultiAngle && (
-                            <div className="space-y-3 pt-2 border-t border-indigo-500/20">
-                                <label className="text-[9px] font-bold text-indigo-300/60 uppercase tracking-widest">Select Sequence (Pick 4)</label>
-                                <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-3 pt-4 border-t border-indigo-500/20">
+                                <div className="flex items-center gap-2 text-indigo-300/80 mb-1">
+                                    <Sparkles size={10} />
+                                    <label className="text-[9px] font-bold uppercase tracking-widest">Multi-Shot Sequence</label>
+                                </div>
+                                <p className="text-[8px] text-indigo-400/60 leading-tight italic bg-indigo-500/5 px-2 py-1.5 rounded-lg border border-indigo-500/10">
+                                    Quick Note: When "4 Shots" is active, the angles selected below will override the single shot perspective.
+                                </p>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
                                     {[
                                         'Hero shot (45 degree)',
                                         'Eye-level catalog shot',
@@ -259,34 +265,36 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                     </div>
 
                     {/* Camera Angles Selection */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Camera size={12} className="text-slate-500" /> Shot Perspective
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2">
-                            {[
-                                { id: 'Hero shot (45 degree)', label: 'Hero Shot', desc: 'Standard Profile' },
-                                { id: 'Eye-level catalog shot', label: 'Eye-level', desc: 'Commercial Catalog' },
-                                { id: 'Side profile view', label: 'Side Profile', desc: 'Form & Silhouette' },
-                                { id: 'Top-down flat lay', label: 'Flat Lay', desc: 'Overhead view' },
-                                { id: 'Low-angle high-profile', label: 'Power Shot', desc: 'Worm-eye view' },
-                                { id: 'Artistic Dutch tilt', label: 'Artistic Tilt', desc: 'Dynamic Angle' },
-                                { id: 'Macro-detail close-up', label: 'Macro Detail', desc: 'Texture Focus' }
-                            ].map((angle) => (
-                                <button
-                                    key={angle.id}
-                                    onClick={() => updateSetting('cameraAngle', angle.id)}
-                                    className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${settings.cameraAngle === angle.id
-                                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
-                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
-                                        }`}
-                                >
-                                    <span className="text-[10px] font-bold uppercase">{angle.label}</span>
-                                    <span className={`text-[8px] mt-1 ${settings.cameraAngle === angle.id ? 'text-indigo-100' : 'text-slate-600'}`}>{angle.desc}</span>
-                                </button>
-                            ))}
+                    {!settings.generateMultiAngle && (
+                        <div className="space-y-3 animate-in fade-in duration-300">
+                            <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
+                                <Camera size={12} className="text-slate-500" /> Shot Perspective
+                            </h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                {[
+                                    { id: 'Hero shot (45 degree)', label: 'Hero Shot', desc: 'Standard Profile' },
+                                    { id: 'Eye-level catalog shot', label: 'Eye-level', desc: 'Commercial Catalog' },
+                                    { id: 'Side profile view', label: 'Side Profile', desc: 'Form & Silhouette' },
+                                    { id: 'Top-down flat lay', label: 'Flat Lay', desc: 'Overhead view' },
+                                    { id: 'Low-angle high-profile', label: 'Power Shot', desc: 'Worm-eye view' },
+                                    { id: 'Artistic Dutch tilt', label: 'Artistic Tilt', desc: 'Dynamic Angle' },
+                                    { id: 'Macro-detail close-up', label: 'Macro Detail', desc: 'Texture Focus' }
+                                ].map((angle) => (
+                                    <button
+                                        key={angle.id}
+                                        onClick={() => updateSetting('cameraAngle', angle.id)}
+                                        className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all ${settings.cameraAngle === angle.id
+                                            ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20 scale-[1.02]'
+                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
+                                            }`}
+                                    >
+                                        <span className="text-[10px] font-bold uppercase">{angle.label}</span>
+                                        <span className={`text-[8px] mt-1 ${settings.cameraAngle === angle.id ? 'text-indigo-100' : 'text-slate-600'}`}>{angle.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Advanced Optics: Lens & Aperture */}
                     <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-5">

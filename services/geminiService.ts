@@ -360,9 +360,15 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           }
         });
         // Explicit instruction immediately following the source image
-        parts.push({
-          text: "IMAGE 1 (Above): PRIMARY STRUCTURAL REFERENCE. Use this image's exact geometry, lines, and perspective. Do not alter the building shape."
-        });
+        if (settings.superMode) {
+          parts.push({
+            text: "IMAGE 1 (Above): PRODUCT REFERENCE. Maintain the exact design, shape, and details of this product. You ARE encouraged to change the camera angle as specified in secondary instructions."
+          });
+        } else {
+          parts.push({
+            text: "IMAGE 1 (Above): PRIMARY STRUCTURAL REFERENCE. Use this image's exact geometry, lines, and perspective. Do not alter the building shape."
+          });
+        }
       }
     }
 
