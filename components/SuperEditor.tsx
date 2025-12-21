@@ -167,13 +167,16 @@ const SuperEditor: React.FC = () => {
 
             if (superSettings.generateMultiAngle) {
                 // Batch Generation for 4 angles
-                const angles = ['Profile', 'Front', 'Perspective', 'Macro'];
+                const angles = superSettings.multiAngleSelection && superSettings.multiAngleSelection.length > 0
+                    ? superSettings.multiAngleSelection
+                    : ['Profile shot', 'Front shot', 'Perspective view', 'Macro detail'];
+
                 const batchPromises = angles.map(angle => {
                     const batchSettings = {
                         ...settings,
                         superMode: {
                             ...superSettings,
-                            cameraAngle: `${angle} shot`,
+                            cameraAngle: angle,
                             generateMultiAngle: false
                         }
                     };

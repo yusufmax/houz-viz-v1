@@ -53,8 +53,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                             <button
                                 onClick={() => updateSetting('generateMultiAngle', !settings.generateMultiAngle)}
                                 className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${settings.generateMultiAngle
-                                        ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
-                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
+                                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                                     }`}
                             >
                                 <Camera size={18} />
@@ -66,8 +66,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                             <button
                                 onClick={() => updateSetting('isMoodboard', !settings.isMoodboard)}
                                 className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all ${settings.isMoodboard
-                                        ? 'bg-purple-600 border-purple-400 text-white shadow-lg'
-                                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    ? 'bg-purple-600 border-purple-400 text-white shadow-lg'
+                                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                                     }`}
                             >
                                 <Grid size={18} />
@@ -77,6 +77,45 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                 </div>
                             </button>
                         </div>
+
+                        {settings.generateMultiAngle && (
+                            <div className="space-y-3 pt-2 border-t border-indigo-500/20">
+                                <label className="text-[9px] font-bold text-indigo-300/60 uppercase tracking-widest">Select Sequence (Pick 4)</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {[
+                                        'Hero shot (45 degree)',
+                                        'Eye-level catalog shot',
+                                        'Side profile view',
+                                        'Top-down flat lay',
+                                        'Low-angle high-profile',
+                                        'Artistic Dutch tilt',
+                                        'Macro-detail close-up'
+                                    ].map((angle) => {
+                                        const isSelected = settings.multiAngleSelection?.includes(angle);
+                                        return (
+                                            <button
+                                                key={angle}
+                                                onClick={() => {
+                                                    const current = settings.multiAngleSelection || [];
+                                                    if (isSelected) {
+                                                        updateSetting('multiAngleSelection', current.filter(a => a !== angle));
+                                                    } else {
+                                                        updateSetting('multiAngleSelection', [...current, angle].slice(-4));
+                                                    }
+                                                }}
+                                                className={`px-2 py-1.5 text-[8px] font-bold rounded border transition-all flex justify-between items-center ${isSelected
+                                                    ? 'bg-indigo-500 border-indigo-400 text-white'
+                                                    : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-indigo-500/30'
+                                                    }`}
+                                            >
+                                                <span className="truncate pr-1">{angle.split(' (')[0]}</span>
+                                                {isSelected && <Sparkles size={8} />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Model Selection */}
@@ -115,8 +154,8 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                     key={cat}
                                     onClick={() => updateSetting('productCategory', cat)}
                                     className={`px-2 py-1 text-[9px] font-bold rounded-md border uppercase transition-all ${settings.productCategory === cat
-                                            ? 'bg-indigo-600 border-indigo-400 text-white'
-                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
+                                        ? 'bg-indigo-600 border-indigo-400 text-white'
+                                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white'
                                         }`}
                                 >
                                     {cat}
@@ -130,30 +169,6 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                             placeholder="Custom category..."
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500 placeholder:text-slate-600"
                         />
-                    </div>
-
-                    {/* Camera Lens Selection */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-medium text-slate-300 flex items-center gap-2">
-                            <Camera size={12} className="text-slate-500" /> Optical Lens
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2">
-                            {Object.entries(CameraLens).map(([key, value]) => (
-                                <button
-                                    key={key}
-                                    onClick={() => updateSetting('lens', value)}
-                                    className={`px-3 py-2 text-[10px] font-bold rounded-lg border transition-all text-left flex justify-between items-center ${settings.lens === value
-                                            ? 'bg-indigo-600 border-indigo-400 text-white'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-700'
-                                        }`}
-                                >
-                                    <span>{value.split(' ')[0]}</span>
-                                    <span className="text-[8px] opacity-40 uppercase tracking-tighter">
-                                        {value.includes('(') ? value.split('(')[1].split(')')[0] : ''}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
                     </div>
 
                     {/* Lighting Presets Grid */}
@@ -251,9 +266,12 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                         <div className="grid grid-cols-2 gap-2">
                             {[
                                 { id: 'Hero shot (45 degree)', label: 'Hero Shot', desc: 'Standard Profile' },
-                                { id: 'Macro-detail close-up', label: 'Macro Detail', desc: 'Texture Focus' },
+                                { id: 'Eye-level catalog shot', label: 'Eye-level', desc: 'Commercial Catalog' },
+                                { id: 'Side profile view', label: 'Side Profile', desc: 'Form & Silhouette' },
                                 { id: 'Top-down flat lay', label: 'Flat Lay', desc: 'Overhead view' },
-                                { id: 'Low-angle high-profile', label: 'Power Shot', desc: 'Worm-eye view' }
+                                { id: 'Low-angle high-profile', label: 'Power Shot', desc: 'Worm-eye view' },
+                                { id: 'Artistic Dutch tilt', label: 'Artistic Tilt', desc: 'Dynamic Angle' },
+                                { id: 'Macro-detail close-up', label: 'Macro Detail', desc: 'Texture Focus' }
                             ].map((angle) => (
                                 <button
                                     key={angle.id}
@@ -267,6 +285,81 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                     <span className={`text-[8px] mt-1 ${settings.cameraAngle === angle.id ? 'text-indigo-100' : 'text-slate-600'}`}>{angle.desc}</span>
                                 </button>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Advanced Optics: Lens & Aperture */}
+                    <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-5">
+                        <h3 className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-2 tracking-wider">
+                            <Box size={12} /> Advanced Optics & Rig
+                        </h3>
+
+                        {/* Lens Selection */}
+                        <div className="space-y-2">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Optical Lens (Focal Length)</label>
+                            <div className="grid grid-cols-2 gap-1.5">
+                                {Object.entries(CameraLens).map(([key, value]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => updateSetting('lens', value)}
+                                        className={`px-2 py-1.5 text-[9px] font-bold rounded border transition-all flex justify-between items-center ${settings.lens === value
+                                            ? 'bg-indigo-600 border-indigo-400 text-white'
+                                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800'
+                                            }`}
+                                    >
+                                        <span>{value.split(' ')[0]}</span>
+                                        <span className="text-[7px] opacity-40 uppercase tracking-tighter">
+                                            {value.includes('(') ? value.split('(')[1].split(')')[0] : ''}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {/* Aperture */}
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Aperture (Depth of Field)</label>
+                                <div className="flex flex-wrap gap-1">
+                                    {['f/1.8', 'f/2.8', 'f/8', 'f/16'].map(ap => (
+                                        <button
+                                            key={ap}
+                                            onClick={() => updateSetting('aperture', ap)}
+                                            className={`flex-1 py-1 text-[8px] font-bold rounded border transition-all ${settings.aperture === ap
+                                                ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                : 'bg-slate-950 border-slate-800 text-slate-500 hover:bg-slate-900'
+                                                }`}
+                                            title={ap === 'f/1.8' ? 'Shallow Bokeh' : ap === 'f/16' ? 'Deep Focus' : ''}
+                                        >
+                                            {ap}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Shutter Speed */}
+                            <div className="space-y-2">
+                                <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Motion (Shutter)</label>
+                                <div className="grid grid-cols-2 gap-1">
+                                    {[
+                                        { id: 'Frozen Motion', label: 'Freeze' },
+                                        { id: 'Motion Blur', label: 'Blur' },
+                                        { id: 'Long Exposure', label: 'Long' },
+                                        { id: 'Natural', label: 'Auto' }
+                                    ].map(ss => (
+                                        <button
+                                            key={ss.id}
+                                            onClick={() => updateSetting('shutterSpeed', ss.id)}
+                                            className={`py-1 text-[8px] font-bold rounded border transition-all ${settings.shutterSpeed === ss.id
+                                                ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                : 'bg-slate-950 border-slate-800 text-slate-500 hover:bg-slate-900'
+                                                }`}
+                                        >
+                                            {ss.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
 

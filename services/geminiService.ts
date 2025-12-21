@@ -140,6 +140,8 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
     if (sm.environmentProps) textParts.push(`Atmospheric Props: ${sm.environmentProps}`);
     if (sm.cameraAngle) textParts.push(`Camera Perspective: ${sm.cameraAngle}`);
     if (sm.lens) textParts.push(`Camera Lens characteristics: ${sm.lens}`);
+    if (sm.aperture) textParts.push(`Aperture setting: ${sm.aperture} (simulate appropriate depth of field depth).`);
+    if (sm.shutterSpeed) textParts.push(`Shutter Speed effect: ${sm.shutterSpeed} (simulate appropriate motion characteristics).`);
     textParts.push(`AI Hero Focus: ${sm.focus} on the product`);
 
     if (sm.isMoodboard) {

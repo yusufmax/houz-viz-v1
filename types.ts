@@ -115,10 +115,12 @@ export enum SuperRenderStyle {
 }
 
 export enum CameraLens {
+  UltraWide = '14mm Ultra-Wide',
+  Wide = '24mm Wide (Context)',
   Standard = '50mm Standard',
   Portrait = '85mm Prime (Portrait)',
-  Wide = '24mm Wide (Context)',
   Macro = '100mm Macro (Detail)',
+  Telephoto = '200mm Telephoto (Compression)',
   Fisheye = 'Fisheye (Artistic)'
 }
 
@@ -209,10 +211,13 @@ export interface SuperModeSettings {
   lightingColor?: string;
   groundMaterial?: string;
   environmentProps?: string;
-  cameraAngle?: string;
+  cameraAngle: string;
   lens?: CameraLens;
   isMoodboard?: boolean;
   generateMultiAngle?: boolean;
+  multiAngleSelection?: string[];
+  aperture?: string;
+  shutterSpeed?: string;
 }
 
 export interface InteriorSettings {
