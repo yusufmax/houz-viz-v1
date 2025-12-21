@@ -192,6 +192,12 @@ export interface SuperModeSettings {
   lighting: SuperAtmosphere;
   background: string;
   focus: 'Object' | 'Context' | 'Detail';
+  model?: string;
+  lightingIntensity?: 'Soft' | 'Balanced' | 'Hard';
+  lightingColor?: string;
+  groundMaterial?: string;
+  environmentProps?: string;
+  cameraAngle?: string;
 }
 
 export interface InteriorSettings {

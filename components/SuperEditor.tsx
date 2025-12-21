@@ -77,7 +77,13 @@ const SuperEditor: React.FC = () => {
         productCategory: '',
         lighting: SuperAtmosphere.StudioSoftbox,
         background: '',
-        focus: 'Object'
+        focus: 'Object',
+        model: 'gemini-2.5-flash',
+        lightingIntensity: 'Balanced',
+        lightingColor: '#ffffff',
+        groundMaterial: '',
+        environmentProps: '',
+        cameraAngle: 'Hero shot (45 degree)'
     });
 
     // UI State
@@ -142,6 +148,7 @@ const SuperEditor: React.FC = () => {
                     motionBlur: false,
                     enhanceFacade: false
                 },
+                model: superSettings.model || 'gemini-2.5-flash',
                 superMode: superSettings
             };
 
@@ -259,26 +266,6 @@ const SuperEditor: React.FC = () => {
                             />
                         </div>
 
-                        {/* Atmosphere & Lighting */}
-                        <div className="space-y-4">
-                            <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                <Sun size={14} className="text-indigo-400" /> Lighting & Mood
-                            </label>
-                            <div className="flex flex-wrap gap-2">
-                                {Object.values(SuperAtmosphere).map((a) => (
-                                    <button
-                                        key={a}
-                                        onClick={() => toggleAtmosphere(a)}
-                                        className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase transition-all border ${atmosphere.includes(a)
-                                                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/30'
-                                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800'
-                                            }`}
-                                    >
-                                        {a}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
 
                         {/* Advanced Product Controls */}
                         <ProductCustomization settings={superSettings} onChange={setSuperSettings} />
@@ -299,8 +286,8 @@ const SuperEditor: React.FC = () => {
                                 onClick={handleGenerate}
                                 disabled={isGenerating}
                                 className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${isGenerating
-                                        ? 'bg-slate-700 text-slate-400'
-                                        : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'
+                                    ? 'bg-slate-700 text-slate-400'
+                                    : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'
                                     }`}
                             >
                                 {isGenerating ? <><Loader2 size={24} className="animate-spin" />Rendering...</> : <><Zap size={24} fill="currentColor" />Generate Campaign</>}

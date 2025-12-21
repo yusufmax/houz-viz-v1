@@ -130,12 +130,16 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
 
   // 2. Main Subject & Global Settings
   if (settings.superMode) {
-    textParts.push(`Product Category: ${settings.superMode.productCategory}`);
-    textParts.push(`Context/Mood: ${settings.prompt}`);
+    const sm = settings.superMode;
+    textParts.push(`Product Category: ${sm.productCategory}`);
+    textParts.push(`Marketing Context: ${settings.prompt}`);
     textParts.push(`Visual Style: ${settings.style}`);
-    textParts.push(`Set Lighting: ${settings.superMode.lighting}`);
-    textParts.push(`Environment/Background: ${settings.superMode.background}`);
-    textParts.push(`Camera Focus: ${settings.superMode.focus} on the product`);
+    textParts.push(`Lighting Setup: ${sm.lighting} with ${sm.lightingIntensity || 'Balanced'} intensity.`);
+    if (sm.lightingColor) textParts.push(`Lighting Tint/Color: ${sm.lightingColor}`);
+    if (sm.groundMaterial) textParts.push(`Surface/Ground Material: ${sm.groundMaterial}`);
+    if (sm.environmentProps) textParts.push(`Atmospheric Props: ${sm.environmentProps}`);
+    if (sm.cameraAngle) textParts.push(`Camera Perspective: ${sm.cameraAngle}`);
+    textParts.push(`AI Hero Focus: ${sm.focus} on the product`);
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
     textParts.push(`Style: ${settings.style}`);
