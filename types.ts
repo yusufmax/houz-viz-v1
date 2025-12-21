@@ -99,6 +99,17 @@ export enum RenderStyle {
   SalesGallery = 'Real Estate: Gallery'
 }
 
+export enum SuperRenderStyle {
+  None = 'None',
+  Minimalist = 'Product: Minimalist Studio',
+  Lifestyle = 'Product: Lifestyle / Street',
+  Luxury = 'Product: Luxury / High-end',
+  Action = 'Product: Action / Dynamic',
+  Cinematic = 'Product: Cinematic Lighting',
+  FlatLay = 'Product: Flat Lay / Top-down',
+  Macro = 'Product: Macro / Detailed'
+}
+
 export enum Atmosphere {
   None = 'None',
   Sunny = 'Sunny Day',
@@ -122,6 +133,17 @@ export enum Atmosphere {
   Summer = 'Summer / Vibrant',
   Autumn = 'Autumn / Fall Colors',
   Winter = 'Winter / Cold'
+}
+
+export enum SuperAtmosphere {
+  None = 'None',
+  StudioSoftbox = 'Softbox / Studio Lighting',
+  DramaticShadows = 'Dramatic / High Contrast',
+  NeonCyber = 'Neon / Cyberpunk Glow',
+  GoldenHour = 'Product: Golden Hour',
+  HardLight = 'Hard Lighting / Crisp',
+  SoftDiffused = 'Soft Diffused / Airy',
+  Vibrant = 'Vibrant / High Saturation'
 }
 
 export enum CameraAngle {
@@ -162,6 +184,14 @@ export interface GenerationSettings {
   lockCamera?: boolean;
   lockInterior?: boolean;
   interior?: InteriorSettings;
+  superMode?: SuperModeSettings;
+}
+
+export interface SuperModeSettings {
+  productCategory: string;
+  lighting: SuperAtmosphere;
+  background: string;
+  focus: 'Object' | 'Context' | 'Detail';
 }
 
 export interface InteriorSettings {

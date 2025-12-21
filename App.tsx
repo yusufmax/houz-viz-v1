@@ -19,6 +19,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, Link, useSearchPar
 import ProfilePage from './pages/Profile/ProfilePage';
 import GeminiPlayground from './pages/Dev/GeminiPlayground';
 import AdminPage from './pages/Admin/AdminPage';
+import SuperEditor from './components/SuperEditor';
 import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
@@ -213,6 +214,7 @@ const AppContent: React.FC = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/playground" element={<GeminiPlayground />} />
+        <Route path="/super" element={<SuperEditor />} />
         <Route path="/" element={<Home />} />
         <Route path="*" element={<div className="p-10 text-center">404 - Page Not Found</div>} />
       </Routes>

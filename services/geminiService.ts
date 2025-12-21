@@ -120,36 +120,57 @@ export const constructFullPrompt = async (settings: GenerationSettings): Promise
   const textParts: string[] = [];
 
   // 1. Core Role & Task
-  textParts.push(`Role: Expert Architectural AI Visualizer.
+  if (settings.superMode) {
+    textParts.push(`Role: Expert Product Photographer & Digital Marketer.
+Task: Generate a high-end, studio-quality product visualization for a marketing campaign.`);
+  } else {
+    textParts.push(`Role: Expert Architectural AI Visualizer.
 Task: Generate a photorealistic architectural visualization based on the inputs.`);
+  }
 
   // 2. Main Subject & Global Settings
-  textParts.push(`Subject: ${settings.prompt}`);
-  textParts.push(`Style: ${settings.style}`);
+  if (settings.superMode) {
+    textParts.push(`Product Category: ${settings.superMode.productCategory}`);
+    textParts.push(`Context/Mood: ${settings.prompt}`);
+    textParts.push(`Visual Style: ${settings.style}`);
+    textParts.push(`Set Lighting: ${settings.superMode.lighting}`);
+    textParts.push(`Environment/Background: ${settings.superMode.background}`);
+    textParts.push(`Camera Focus: ${settings.superMode.focus} on the product`);
+  } else {
+    textParts.push(`Subject: ${settings.prompt}`);
+    textParts.push(`Style: ${settings.style}`);
 
-  if (settings.atmosphere && settings.atmosphere.length > 0) {
-    textParts.push(`Atmosphere/Mood: ${settings.atmosphere.join(', ')}`);
+    if (settings.atmosphere && settings.atmosphere.length > 0) {
+      textParts.push(`Atmosphere/Mood: ${settings.atmosphere.join(', ')}`);
+    }
+
+    textParts.push(`Camera Angle: ${settings.camera}`);
   }
-
-  textParts.push(`Camera Angle: ${settings.camera}`);
 
   // 3. Structural Constraints
-  if (settings.lockInterior) {
-    textParts.push("STRICT INSTRUCTION: DONT CHANGE CAMERA ANGLE OR ANY DETAILS, ONLY FOLLOW THE PROMPT STRICTLY. MAINTAIN THE EXACT PERSPECTIVE OF THE SOURCE IMAGE.");
-  }
-  if (settings.keepBuilding) {
-    textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
-  }
-  if (settings.lockCamera) {
-    textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
+  if (!settings.superMode) {
+    if (settings.lockInterior) {
+      textParts.push("STRICT INSTRUCTION: DONT CHANGE CAMERA ANGLE OR ANY DETAILS, ONLY FOLLOW THE PROMPT STRICTLY. MAINTAIN THE EXACT PERSPECTIVE OF THE SOURCE IMAGE.");
+    }
+    if (settings.keepBuilding) {
+      textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
+    }
+    if (settings.lockCamera) {
+      textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
+    }
+  } else {
+    textParts.push("MARKETING INSTRUCTION: Ensure the product is the hero of the image. Composition should be clean, balanced, and aesthetically pleasing for advertising.");
+    textParts.push("STRICT INSTRUCTION: IF A SOURCE IMAGE IS PROVIDED, MAINTAIN THE EXACT SHAPE AND DETAILS OF THE PRODUCT. Do not change the product's identity.");
   }
 
   // 4. Scene Elements
-  const elements = [];
-  if (settings.sceneElements.people) elements.push("Include realistic people/crowd appropriate for the scene");
-  if (settings.sceneElements.cars) elements.push("Include realistic vehicles/cars if consistent with context");
-  if (settings.sceneElements.vegetation) elements.push("Add lush photorealistic vegetation/landscaping");
-  if (elements.length > 0) textParts.push(`Scene Elements: ${elements.join(', ')}`);
+  if (!settings.superMode) {
+    const elements = [];
+    if (settings.sceneElements.people) elements.push("Include realistic people/crowd appropriate for the scene");
+    if (settings.sceneElements.cars) elements.push("Include realistic vehicles/cars if consistent with context");
+    if (settings.sceneElements.vegetation) elements.push("Add lush photorealistic vegetation/landscaping");
+    if (elements.length > 0) textParts.push(`Scene Elements: ${elements.join(', ')}`);
+  }
 
   // Push all general instructions as the first text part
   if (textParts.length > 0) {
@@ -158,7 +179,7 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
   }
 
   // 5. Interior Specifications (Paired with Images)
-  if (settings.interior) {
+  if (settings.interior && !settings.superMode) {
     parts.push({ text: "\n--- INTERIOR SPECIFICATIONS ---" });
 
     // Helper to add specification with image
