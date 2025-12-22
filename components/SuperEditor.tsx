@@ -35,8 +35,8 @@ import {
     CameraLens
 } from '../types';
 import * as geminiService from '../services/geminiService';
-import * as historyService from '../services/historyService';
-import * as quotaService from '../services/quotaService';
+import { historyService } from '../services/historyService';
+import { quotaService } from '../services/quotaService';
 import ImageUpload from './ImageUpload';
 import ProductCustomization from './ProductCustomization';
 import BeforeAfter from './BeforeAfter';
@@ -198,7 +198,18 @@ const SuperEditor: React.FC = () => {
             }
 
             // Save to history
-            await historyService.saveToHistory(user.id, result, settings.prompt, style as any);
+            await historyService.addToHistory(user.id, {
+                id: Date.now().toString(),
+                url: result,
+                prompt: settings.prompt,
+                style: style as any,
+                timestamp: Date.now(),
+                metadata: {
+                    model: settings.model,
+                    aspectRatio: settings.aspectRatio,
+                    superMode: true
+                }
+            });
             loadHistory();
             loadQuota();
         } catch (e: any) {
@@ -420,7 +431,7 @@ const SuperEditor: React.FC = () => {
                     )}
                 </div>
 
-                {previewImage && <FullScreenPreview imageUrl={previewImage} onClose={() => setPreviewImage('')} />}
+                {previewImage && <FullScreenPreview image={previewImage} onClose={() => setPreviewImage('')} />}
             </div>
         </div>
     );
