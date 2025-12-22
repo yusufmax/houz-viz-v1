@@ -222,8 +222,8 @@ const SuperEditor: React.FC = () => {
                                 <Package className="text-indigo-400" size={24} />
                             </div>
                             <div>
-                                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Super Mode: Marketing AI</h1>
-                                <p className="text-[10px] text-indigo-400 font-mono tracking-widest uppercase">Product Photography & Campaigns</p>
+                                <h1 className="text-xl font-black bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent uppercase tracking-tight">Marketing AI</h1>
+                                <p className="text-[11px] text-indigo-400 font-black tracking-[0.2em] uppercase opacity-80">Campaign Engine</p>
                             </div>
                         </div>
                         {quota && (
@@ -272,7 +272,7 @@ const SuperEditor: React.FC = () => {
                                         >
                                             <img src={img} alt={s} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                             <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2 transition-opacity ${style === s ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                <span className="text-[9px] font-bold text-white uppercase truncate">{s === 'None' ? 'Raw' : s}</span>
+                                                <span className="text-[11px] font-black text-white uppercase truncate tracking-wider">{s === 'None' ? 'Raw Style' : s}</span>
                                             </div>
                                         </button>
                                     ))}
@@ -296,17 +296,17 @@ const SuperEditor: React.FC = () => {
                                                 console.error(e);
                                             }
                                         }}
-                                        className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                                        className="text-[11px] font-black text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-all bg-indigo-500/5 px-2 py-0.5 rounded-full border border-indigo-500/10"
                                     >
-                                        <Sparkles size={12} /> AI Suggest
+                                        <Sparkles size={12} /> Suggester
                                     </button>
                                 )}
                             </div>
                             <textarea
                                 value={prompt}
                                 onChange={(e) => setPrompt(e.target.value)}
-                                placeholder="Describe the mood, storytelling, or specific marketing angle..."
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm text-slate-200 outline-none focus:border-indigo-500 h-24 resize-none transition-all"
+                                placeholder="Describe the scene setup, lighting atmosphere, or specific marketing angle..."
+                                className="w-full bg-slate-950 border border-slate-700/50 rounded-xl p-4 text-sm text-slate-200 outline-none focus:border-indigo-500 h-28 resize-none transition-all placeholder:text-slate-700"
                             />
                         </div>
 
@@ -349,7 +349,7 @@ const SuperEditor: React.FC = () => {
                                     : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'
                                     }`}
                             >
-                                {isGenerating ? <><Loader2 size={24} className="animate-spin" />Rendering...</> : <><Zap size={24} fill="currentColor" />Generate Campaign</>}
+                                {isGenerating ? <><Loader2 size={24} className="animate-spin" />Building Visuals...</> : <><Zap size={24} fill="currentColor" />Generate Campaign</>}
                             </button>
                         </div>
                     </section>
@@ -367,8 +367,8 @@ const SuperEditor: React.FC = () => {
                                 <div className="flex items-center gap-2 text-indigo-400 font-semibold">
                                     <Maximize2 size={18} />
                                     <h2>Final Visualization</h2>
-                                    {superSettings.isMoodboard && <span className="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full animate-pulse">MOODBOARD</span>}
-                                    {superSettings.generateMultiAngle && <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full animate-pulse">BATCH MODE</span>}
+                                    {superSettings.isMoodboard && <span className="text-[11px] font-black bg-purple-600 text-white px-3 py-1 rounded-full animate-pulse tracking-wider">MOODBOARD</span>}
+                                    {superSettings.generateMultiAngle && <span className="text-[11px] font-black bg-indigo-600 text-white px-3 py-1 rounded-full animate-pulse tracking-wider">BATCH GENERATION</span>}
                                 </div>
                                 {resultImage && (
                                     <div className="flex items-center gap-2">
