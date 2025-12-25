@@ -259,7 +259,7 @@ export interface NodeData {
   imageSrc?: string;
   beforeImage?: string; // Source image for Before/After comparison
   settings?: GenerationSettings;
-  subtype?: 'general' | 'arch' | 'product';
+  subtype?: 'general' | 'arch' | 'product' | 'super';
   collapsed?: boolean;
 }
 

@@ -25,8 +25,10 @@ import {
     ShoppingBag,
     Scissors,
     Footprints,
-    Plus
+    Plus,
+    GitBranch
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
 import {
@@ -81,6 +83,7 @@ const PRESET_MODELS = [
 const SuperEditor: React.FC = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
+    const navigate = useNavigate();
 
     // Basic State
     const [prompt, setPrompt] = useState('');
@@ -205,6 +208,21 @@ const SuperEditor: React.FC = () => {
         }
     };
 
+    const handleOpenInInfinity = () => {
+        const payload = {
+            type: 'super',
+            settings: {
+                ...superSettings,
+                prompt: prompt,
+                styleReferenceImage: styleReferenceImage,
+                aspectRatio: aspectRatio,
+            },
+            timestamp: Date.now()
+        };
+        localStorage.setItem('pending_super_node', JSON.stringify(payload));
+        navigate('/?mode=infinity');
+    };
+
     const handleGenerate = async () => {
         if (!user) {
             alert("Sign in required");
@@ -314,12 +332,32 @@ const SuperEditor: React.FC = () => {
                                 <p className="text-[11px] text-indigo-400 font-black tracking-[0.2em] uppercase opacity-80">Campaign Engine</p>
                             </div>
                         </div>
-                        {quota && (
-                            <div className="bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800 flex items-center gap-2">
-                                <Zap size={12} className="text-yellow-400 fill-yellow-400" />
-                                <span className="text-xs font-bold">{quota.limit - quota.used} Credits</span>
+
+                        <div className="flex items-center gap-4">
+                            <div className="flex bg-slate-900 rounded-lg p-1 border border-slate-800">
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-black text-slate-500 hover:text-white transition-all uppercase tracking-widest"
+                                >
+                                    <Layers size={12} />
+                                    <span>Linear</span>
+                                </button>
+                                <button
+                                    onClick={handleOpenInInfinity}
+                                    className="flex items-center gap-2 px-3 py-1.5 rounded-md text-[10px] font-black bg-indigo-600 text-white shadow-lg uppercase tracking-widest"
+                                >
+                                    <GitBranch size={12} />
+                                    <span>Infinity</span>
+                                </button>
                             </div>
-                        )}
+
+                            {quota && (
+                                <div className="bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800 flex items-center gap-2">
+                                    <Zap size={12} className="text-yellow-400 fill-yellow-400" />
+                                    <span className="text-xs font-bold">{quota.limit - quota.used}</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Product Source */}

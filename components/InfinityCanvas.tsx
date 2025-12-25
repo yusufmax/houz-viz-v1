@@ -7,9 +7,9 @@ import {
     Maximize2, Minimize2, Maximize, ChevronRight, ChevronDown,
     Palette, Wand2, Zap, Layout, Box, Circle, Triangle,
     Eraser, Pencil, Eye, Loader2, History, FileDown,
-    ChevronUp, History as HistoryIcon, Camera, FolderOpen, Film, GripHorizontal, Building
+    ChevronUp, History as HistoryIcon, Camera, FolderOpen, Film, GripHorizontal, Building, Shirt, Scissors, Footprints, ShoppingBag, Sparkles, Package
 } from 'lucide-react';
-import { Node, Connection, RenderStyle, Atmosphere, GenerationSettings, AspectRatio, CameraAngle, Project, SceneElements, HistoryItem } from '../types';
+import { Node, Connection, RenderStyle, Atmosphere, GenerationSettings, AspectRatio, CameraAngle, Project, SceneElements, HistoryItem, SuperAtmosphere, SuperRenderStyle, CameraLens } from '../types';
 import ImageUpload from './ImageUpload';
 import DrawEditor from './DrawEditor';
 import FullScreenPreview from './FullScreenPreview';
@@ -38,30 +38,89 @@ const STYLE_LIBRARY = [
     { name: 'Brutalist', url: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?w=200&q=80' }
 ];
 
+const CATEGORY_ICONS: Record<string, any> = {
+    'Top': <Shirt size={12} />,
+    'Bottom': <Scissors size={12} />,
+    'Shoes': <Footprints size={12} />,
+    'Accessories': <ShoppingBag size={12} />,
+    'Full Body': <Sparkles size={12} />,
+    'Other': <Package size={12} />
+};
+
 const InfinityCanvas: React.FC = () => {
     const { t } = useLanguage();
+
+    // ---- Constants ----
+    const baseSettings: GenerationSettings = {
+        style: RenderStyle.Photorealistic,
+        atmosphere: [Atmosphere.Sunny],
+        camera: CameraAngle.Default,
+        aspectRatio: '16:9',
+        prompt: '',
+        sceneElements: {
+            people: false,
+            cars: false,
+            clouds: true,
+            vegetation: true,
+            city: false,
+            motionBlur: false,
+            enhanceFacade: true
+        }
+    };
+
     // ---- State ----
     const [nodes, setNodes] = useState<Node[]>([
         { id: '1', type: 'input', x: 100, y: 100, data: { label: 'Source Image' }, inputs: [] },
-        {
-            id: '3', type: 'processor', x: 600, y: 100, data: {
-                label: 'Arch Render', subtype: 'arch', settings: {
-                    style: RenderStyle.Photorealistic,
-                    atmosphere: [Atmosphere.Sunny],
-                    camera: CameraAngle.Default,
-                    aspectRatio: '16:9',
-                    prompt: '',
-                    sceneElements: {
-                        people: false, cars: false, clouds: true, vegetation: true, city: false, motionBlur: false, enhanceFacade: true
-                    }
-                }
-            }, inputs: ['1']
-        },
+        { id: '2', type: 'processor', x: 400, y: 100, data: { label: t('nodeProcessor'), subtype: 'general', settings: baseSettings }, inputs: [] },
+        { id: '3', type: 'output', x: 700, y: 100, data: { label: 'Result Image' }, inputs: [] }
     ]);
 
     const [connections, setConnections] = useState<Connection[]>([
-        { id: 'c1', from: '1', to: '3' },
+        { id: 'c1', from: '1', to: '2' },
+        { id: 'c2', from: '2', to: '3' }
     ]);
+
+    // ---- Initialization & Checks ----
+    useEffect(() => {
+        const pending = localStorage.getItem('pending_super_node');
+        if (pending) {
+            try {
+                const data = JSON.parse(pending);
+                if (data.type === 'super' && data.settings) {
+                    const newNode: Node = {
+                        id: Date.now().toString(),
+                        type: 'processor',
+                        x: 100,
+                        y: 350,
+                        data: {
+                            label: 'Marketing AI',
+                            subtype: 'super',
+                            settings: {
+                                ...data.settings,
+                                model: 'gemini-3-pro-image-preview',
+                                superMode: {
+                                    ...data.settings,
+                                    productCategory: data.settings.productCategory || 'Clothing',
+                                    garments: data.settings.garments || [
+                                        { id: 'g1', type: 'Top', image: null },
+                                        { id: 'g2', type: 'Bottom', image: null }
+                                    ]
+                                }
+                            }
+                        },
+                        width: 400,
+                        height: 600,
+                        inputs: []
+                    };
+                    setNodes(prev => [...prev, newNode]);
+                }
+            } catch (e) {
+                console.error("Failed to parse pending super node", e);
+            } finally {
+                localStorage.removeItem('pending_super_node');
+            }
+        }
+    }, [setNodes]);
 
     // Viewport
     const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -670,7 +729,7 @@ const InfinityCanvas: React.FC = () => {
 
     // ---- Node Operations ----
 
-    const addNode = (type: Node['type'], subtype?: 'general' | 'arch' | 'product') => {
+    const addNode = (type: Node['type'], subtype?: 'general' | 'arch' | 'product' | 'super') => {
         if (!contextMenu) return;
         const worldX = (contextMenu.x - pan.x) / zoom;
         const worldY = (contextMenu.y - pan.y) / zoom;
@@ -691,6 +750,27 @@ const InfinityCanvas: React.FC = () => {
                 data = { label: t('nodeProcessor'), subtype, settings: { ...baseSettings, style: RenderStyle.Modernist, sceneElements: { ...baseSettings.sceneElements, vegetation: true, clouds: true, enhanceFacade: true } } };
             } else if (subtype === 'product') {
                 data = { label: t('nodeProduct'), subtype, settings: { ...baseSettings, style: RenderStyle.Photorealistic, aspectRatio: '1:1' } };
+            } else if (subtype === 'super') {
+                data = {
+                    label: 'Marketing AI',
+                    subtype,
+                    settings: {
+                        ...baseSettings,
+                        model: 'gemini-3-pro-image-preview',
+                        superMode: {
+                            productCategory: 'Clothing',
+                            lighting: SuperAtmosphere.StudioSoftbox,
+                            background: '',
+                            focus: 'Object',
+                            cameraAngle: 'Eye Level',
+                            isVirtualTryOn: true,
+                            garments: [
+                                { id: 'g1', type: 'Top', image: null },
+                                { id: 'g2', type: 'Bottom', image: null }
+                            ]
+                        }
+                    }
+                };
             } else {
                 data = { label: t('nodeGeneral'), subtype, settings: baseSettings };
             }
@@ -744,10 +824,17 @@ const InfinityCanvas: React.FC = () => {
                 }
             }
 
-            const settings: any = { ...node.data.settings, prompt: promptText };
+            const settings: GenerationSettings = { ...node.data.settings, prompt: promptText };
 
             let result = '';
-            if (sourceImg) {
+            // Super Mode handle
+            if (node.data.subtype === 'super' && settings.superMode) {
+                if (sourceImg) {
+                    result = await editImage(sourceImg, settings);
+                } else {
+                    result = await generateImage(settings);
+                }
+            } else if (sourceImg) {
                 result = await editImage(sourceImg, settings);
             } else {
                 result = await generateImage(settings);
@@ -764,7 +851,7 @@ const InfinityCanvas: React.FC = () => {
 
             // Create a new output node
             const newNodeId = Math.random().toString(36).substr(2, 9);
-            const newX = node.x + (node.width || 350);
+            const newX = node.x + (node.width || 350) + 50;
             const newY = node.y;
 
             const newNode: Node = {
@@ -790,6 +877,65 @@ const InfinityCanvas: React.FC = () => {
         } catch (e) {
             console.error(e);
             alert("Generation failed for this node.");
+        } finally {
+            setProcessingNodes(prev => {
+                const next = new Set(prev);
+                next.delete(nodeId);
+                return next;
+            });
+        }
+    };
+
+    const run4Shot = async (nodeId: string) => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node || node.data.subtype !== 'super') return;
+
+        setProcessingNodes(prev => new Set(prev).add(nodeId));
+
+        try {
+            if (!user) {
+                alert("Please sign in.");
+                return;
+            }
+
+            const inputConns = connections.filter(c => c.to === nodeId);
+            let sourceImg = null;
+            for (const conn of inputConns) {
+                const sourceNode = nodes.find(n => n.id === conn.from);
+                if (sourceNode?.data.imageSrc) sourceImg = sourceNode.data.imageSrc;
+            }
+
+            const baseSettings = { ...node.data.settings };
+            const angles = ['Hero shot', 'Low angle', 'Eye Level', 'Side View'];
+
+            for (let i = 0; i < angles.length; i++) {
+                const angle = angles[i];
+                const shotSettings: GenerationSettings = {
+                    ...baseSettings,
+                    prompt: `${baseSettings.prompt || ''} ${angle} view`.trim(),
+                    superMode: {
+                        ...baseSettings.superMode!,
+                        cameraAngle: angle as any
+                    }
+                };
+
+                const result = sourceImg
+                    ? await editImage(sourceImg, shotSettings)
+                    : await generateImage(shotSettings);
+
+                // Update node and history for each shot
+                setNodes(prev => prev.map(n => n.id === nodeId ? { ...n, data: { ...n.data, imageSrc: result } } : n));
+                addToHistory(result, shotSettings.prompt || '', shotSettings.style || RenderStyle.Photorealistic);
+                await quotaService.incrementUsage(user.id);
+            }
+
+            // After sequence, refresh quota
+            const updatedQuota = await quotaService.getUserQuota(user.id);
+            if (updatedQuota) setQuota({ used: updatedQuota.used, limit: updatedQuota.quota });
+
+        } catch (error: any) {
+            console.error('4-Shot error:', error);
+            alert(error.message || '4-Shot failed');
         } finally {
             setProcessingNodes(prev => {
                 const next = new Set(prev);
@@ -851,7 +997,7 @@ const InfinityCanvas: React.FC = () => {
             }
 
             const defaultSettings: GenerationSettings = {
-                style: RenderStyle.Photorealistic, atmosphere: [], camera: CameraAngle.Default, aspectRatio: 'Original', prompt: '',
+                style: RenderStyle.Photorealistic, atmosphere: [], camera: CameraAngle.Default, aspectRatio: '16:9', prompt: '',
                 sceneElements: { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: true }
             };
 
@@ -861,7 +1007,7 @@ const InfinityCanvas: React.FC = () => {
                 ...baseSettings,
                 prompt: prompt || baseSettings.prompt || "High quality architectural render",
                 styleReferenceImage: refImage || baseSettings.styleReferenceImage,
-                aspectRatio: ratio || baseSettings.aspectRatio || 'Original', // Use passed ratio or base
+                aspectRatio: ratio || baseSettings.aspectRatio || '16:9', // Use passed ratio or base
                 model: model || selectedModel // Use passed model or current selection
             };
 
@@ -980,6 +1126,73 @@ const InfinityCanvas: React.FC = () => {
                 return {
                     ...n,
                     data: { ...n.data, settings: { ...n.data.settings, atmosphere: newSelection } }
+                };
+            }
+            return n;
+        }));
+    };
+
+    const updateNodeGarment = (nodeId: string, garmentId: string, updates: Partial<{ type: any, image: string | null }>) => {
+        setNodes(prev => prev.map(n => {
+            if (n.id === nodeId && n.data.settings?.superMode) {
+                const currentGarments = n.data.settings.superMode.garments || [];
+                return {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        settings: {
+                            ...n.data.settings,
+                            superMode: {
+                                ...n.data.settings.superMode,
+                                garments: currentGarments.map(g => g.id === garmentId ? { ...g, ...updates } : g)
+                            }
+                        }
+                    }
+                };
+            }
+            return n;
+        }));
+    };
+
+    const addNodeGarmentSlot = (nodeId: string) => {
+        setNodes(prev => prev.map(n => {
+            if (n.id === nodeId && n.data.settings?.superMode) {
+                const currentGarments = n.data.settings.superMode.garments || [];
+                if (currentGarments.length >= 5) return n;
+                return {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        settings: {
+                            ...n.data.settings,
+                            superMode: {
+                                ...n.data.settings.superMode,
+                                garments: [...currentGarments, { id: Date.now().toString(), type: 'Other', image: null }]
+                            }
+                        }
+                    }
+                };
+            }
+            return n;
+        }));
+    };
+
+    const removeNodeGarmentSlot = (nodeId: string, garmentId: string) => {
+        setNodes(prev => prev.map(n => {
+            if (n.id === nodeId && n.data.settings?.superMode) {
+                const currentGarments = n.data.settings.superMode.garments || [];
+                return {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        settings: {
+                            ...n.data.settings,
+                            superMode: {
+                                ...n.data.settings.superMode,
+                                garments: currentGarments.filter(g => g.id !== garmentId)
+                            }
+                        }
+                    }
                 };
             }
             return n;
@@ -1226,7 +1439,7 @@ const InfinityCanvas: React.FC = () => {
                                                                 const response = await fetch(node.data.imageSrc!);
                                                                 const blob = await response.blob();
                                                                 // Create a PNG blob if it's not already (or just force extension)
-                                                                // Ideally we use the blob type, but user wants PNG. 
+                                                                // Ideally we use the blob type, but user wants PNG.
                                                                 // If it's webp, we might want to convert, but for now let's just ensure download works.
                                                                 // To strictly ensure PNG download from any source:
                                                                 const imageBitmap = await createImageBitmap(blob);
@@ -1279,193 +1492,285 @@ const InfinityCanvas: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Processor Controls */}
                                     {isProcessor && node.data.settings && (
                                         <div
-                                            className="space-y-2 overflow-y-auto custom-scrollbar"
+                                            className="space-y-4 overflow-y-auto custom-scrollbar"
                                             style={{
                                                 maxHeight: node.height ? `${node.height - 100}px` : '500px'
                                             }}
                                         >
-                                            <textarea
-                                                className="w-full h-16 bg-slate-950 border border-slate-800 rounded p-2 text-[10px] text-slate-300 resize-none focus:border-indigo-500 outline-none"
-                                                placeholder={t('nodePrompt')}
-                                                value={node.data.settings.prompt}
-                                                onChange={(e) => {
-                                                    const v = e.target.value;
-                                                    setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, prompt: v } } } : n));
-                                                }}
-                                                onMouseDown={(e) => e.stopPropagation()}
-                                            />
-
-                                            {/* Reference Image Selector */}
-                                            <div className="space-y-1">
-                                                <label className="text-[9px] text-slate-500 font-bold uppercase block">Style Reference (Optional)</label>
-                                                <div className="grid grid-cols-5 gap-1">
-                                                    {(customReferenceImages.length > 0
-                                                        ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
-                                                        : STYLE_LIBRARY
-                                                    ).map((styleRef, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                const isSelected = node.data.settings?.styleReferenceImage === styleRef.url;
-                                                                setNodes(prev => prev.map(n =>
-                                                                    n.id === node.id
-                                                                        ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : styleRef.url } } }
-                                                                        : n
-                                                                ));
-                                                            }}
-                                                            className={`relative aspect-square rounded overflow-hidden border ${node.data.settings?.styleReferenceImage === styleRef.url
-                                                                ? 'border-indigo-500 ring-2 ring-indigo-500/50'
-                                                                : 'border-slate-700 hover:border-indigo-500'
-                                                                } group transition-all`}
-                                                            title={styleRef.name}
-                                                        >
-                                                            <img src={styleRef.url} alt={styleRef.name} className="w-full h-full object-cover" />
-                                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[7px] text-center text-white p-0.5 transition-opacity">
-                                                                {styleRef.name}
-                                                            </div>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Aspect Ratio & Camera */}
-                                            <div className="space-y-2">
-                                                <div className="flex justify-between items-center">
-                                                    <label className="text-[9px] text-slate-500 font-bold uppercase">{t('aspectRatio')}</label>
-                                                    <label className="text-[9px] text-slate-500 font-bold uppercase">{t('camera')}</label>
-                                                </div>
-                                                <div className="flex items-start gap-2">
-                                                    <div className="flex flex-wrap gap-1 flex-1">
-                                                        {['16:9', '1:1', '9:16', '4:3', '3:4', 'Original'].map(r => (
-                                                            <button
-                                                                key={r}
-                                                                onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, aspectRatio: r as AspectRatio } } } : n)) }}
-                                                                className={`px-1.5 py-0.5 text-[9px] rounded border ${node.data.settings!.aspectRatio === r ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
-                                                            >
-                                                                {r}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                    <select
-                                                        className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 text-[9px] text-slate-300 outline-none w-24"
-                                                        value={node.data.settings.camera}
-                                                        onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, camera: e.target.value as CameraAngle } } } : n)) }}
-                                                        onMouseDown={(e) => e.stopPropagation()}
-                                                    >
-                                                        {Object.values(CameraAngle).map(c => <option key={c} value={c}>{c}</option>)}
-                                                    </select>
-                                                </div>
-                                            </div>
-
-                                            {/* Dropdowns */}
-                                            <div className="space-y-2">
-                                                <div>
-                                                    <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('stylePreset')}</label>
-                                                    <select
-                                                        className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none"
-                                                        value={node.data.settings.style}
-                                                        onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, style: e.target.value as RenderStyle } } } : n)) }}
-                                                        onMouseDown={(e) => e.stopPropagation()}
-                                                    >
-                                                        {Object.values(RenderStyle).map(s => <option key={s} value={s}>{t(s as any)}</option>)}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('atmosphere')}</label>
-                                                    {/* Multi-Select Grid for Node */}
-                                                    <div className="grid grid-cols-3 gap-1 overflow-hidden">
-                                                        {Object.values(Atmosphere).slice(0, 20).map(atm => {
-                                                            const isSelected = (node.data.settings!.atmosphere || []).includes(atm);
-                                                            return (
-                                                                <button
-                                                                    key={atm}
-                                                                    onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(node.id, atm); }}
-                                                                    className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
-                                                                    title={atm}
-                                                                >
-                                                                    <span className="truncate block">{t(atm as any)}</span>
-                                                                </button>
-                                                            )
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Lock Controls (New from Linear Mode) */}
-                                            <div className="space-y-1 pt-1 border-t border-slate-800/50">
-                                                <label className="text-[9px] text-slate-500 font-bold uppercase">{t('locks') || 'Locks'}</label>
-                                                <div className="flex flex-col gap-1">
-                                                    {[
-                                                        { key: 'keepBuilding', label: 'Lock Shape' },
-                                                        { key: 'lockCamera', label: 'Lock Camera' },
-                                                        { key: 'lockInterior', label: 'Lock Interior' }
-                                                    ].map((item) => (
-                                                        <label key={item.key} className="flex items-center gap-2 cursor-pointer group hover:bg-slate-800/50 p-1 rounded">
-                                                            <div className={`w-3 h-3 rounded-sm border flex items-center justify-center transition-colors ${(node.data.settings as any)[item.key]
-                                                                ? 'bg-indigo-600 border-indigo-600'
-                                                                : 'border-slate-600 group-hover:border-indigo-500'
-                                                                }`}>
-                                                                {(node.data.settings as any)[item.key] && <Zap size={8} className="text-white" />}
-                                                            </div>
-                                                            <input
-                                                                type="checkbox"
-                                                                className="hidden"
-                                                                checked={!!(node.data.settings as any)[item.key]}
+                                            {node.data.subtype === 'super' ? (
+                                                <div className="space-y-4">
+                                                    {/* Quick Location & Lighting */}
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <div className="space-y-1">
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Location</label>
+                                                            <select
+                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none focus:border-indigo-500"
+                                                                value={node.data.settings.superMode?.location || 'Studio'}
                                                                 onChange={(e) => {
-                                                                    setNodes(prev => prev.map(n =>
-                                                                        n.id === node.id
-                                                                            ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, [item.key]: e.target.checked } } }
-                                                                            : n
-                                                                    ));
+                                                                    setNodes(prev => prev.map(n => n.id === node.id ? {
+                                                                        ...n,
+                                                                        data: {
+                                                                            ...n.data,
+                                                                            settings: {
+                                                                                ...n.data.settings!,
+                                                                                superMode: { ...n.data.settings!.superMode!, location: e.target.value as any }
+                                                                            }
+                                                                        }
+                                                                    } : n));
                                                                 }}
-                                                            />
-                                                            <span className={`text-[10px] ${(node.data.settings as any)[item.key] ? 'text-indigo-300' : 'text-slate-400'}`}>
-                                                                {item.label}
-                                                            </span>
-                                                        </label>
-                                                    ))}
-                                                </div>
-                                            </div>
-
-                                            {/* Options Toggles */}
-                                            <div className="space-y-1 pt-1 border-t border-slate-800/50">
-                                                <label className="text-[9px] text-slate-500 font-bold uppercase">{t('sceneElements')}</label>
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {[
-                                                        { k: 'enhanceFacade', l: t('enhanceFacade') }, { k: 'motionBlur', l: t('motionBlur') },
-                                                        { k: 'vegetation', l: t('greenery') }, { k: 'people', l: t('people') },
-                                                        { k: 'cars', l: t('cars') }, { k: 'clouds', l: t('clouds') },
-                                                        { k: 'city', l: t('city') }
-                                                    ].map((opt: any) => (
-                                                        <div
-                                                            key={opt.k}
-                                                            className="flex items-center justify-between cursor-pointer select-none"
-                                                            onClick={(e) => { e.stopPropagation(); toggleSceneElement(node.id, opt.k as keyof SceneElements); }}
-                                                            onMouseDown={(e) => e.stopPropagation()}
-                                                        >
-                                                            <span className="text-[10px] text-slate-400">{opt.l}</span>
-                                                            <div
-                                                                className={`w-8 h-4 rounded-full relative transition-colors ${((sceneSettings as any)[opt.k]) ? 'bg-indigo-600' : 'bg-slate-800'}`}
                                                             >
-                                                                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${((sceneSettings as any)[opt.k]) ? 'left-[18px]' : 'left-0.5'}`}></div>
+                                                                <option>Studio</option>
+                                                                <option>Interior</option>
+                                                                <option>Exterior</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block">Lighting</label>
+                                                            <select
+                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none focus:border-indigo-500"
+                                                                value={node.data.settings.superMode?.lighting}
+                                                                onChange={(e) => {
+                                                                    setNodes(prev => prev.map(n => n.id === node.id ? {
+                                                                        ...n,
+                                                                        data: {
+                                                                            ...n.data,
+                                                                            settings: {
+                                                                                ...n.data.settings!,
+                                                                                superMode: { ...n.data.settings!.superMode!, lighting: e.target.value as SuperAtmosphere }
+                                                                            }
+                                                                        }
+                                                                    } : n));
+                                                                }}
+                                                            >
+                                                                {Object.values(SuperAtmosphere).map(a => <option key={a} value={a}>{a}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Wardrobe (Outfit Builder) */}
+                                                    <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Wardrobe</label>
+                                                            <button
+                                                                onClick={(e) => { e.stopPropagation(); addNodeGarmentSlot(node.id); }}
+                                                                className="text-[9px] font-black text-slate-400 hover:text-indigo-400 uppercase flex items-center gap-1"
+                                                            >
+                                                                <Plus size={10} /> Add
+                                                            </button>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {node.data.settings.superMode?.garments?.map((slot) => (
+                                                                <div key={slot.id} className="relative group bg-slate-950/50 border border-slate-800 rounded-xl p-1.5 space-y-1.5 transition-all hover:border-indigo-500/30">
+                                                                    <div className="flex items-center justify-between px-0.5">
+                                                                        <div className="flex items-center gap-1 min-w-0">
+                                                                            <div className="text-indigo-400 opacity-80 flex-shrink-0">
+                                                                                {CATEGORY_ICONS[slot.type] || <Package size={10} />}
+                                                                            </div>
+                                                                            <select
+                                                                                value={slot.type}
+                                                                                onChange={(e) => updateNodeGarment(node.id, slot.id, { type: e.target.value as any })}
+                                                                                className="bg-transparent text-[8px] font-black text-slate-500 hover:text-indigo-300 uppercase tracking-widest outline-none border-none cursor-pointer truncate"
+                                                                            >
+                                                                                {['Top', 'Bottom', 'Shoes', 'Accessories', 'Full Body', 'Other'].map(cat => (
+                                                                                    <option key={cat} value={cat} className="bg-slate-900 text-white">{cat}</option>
+                                                                                ))}
+                                                                            </select>
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => removeNodeGarmentSlot(node.id, slot.id)}
+                                                                            className="text-slate-700 hover:text-red-400 p-0.5"
+                                                                        >
+                                                                            <Trash2 size={8} />
+                                                                        </button>
+                                                                    </div>
+                                                                    <div className="aspect-[3/4] rounded-lg overflow-hidden border border-slate-800/50">
+                                                                        <ImageUpload
+                                                                            compact
+                                                                            selectedImage={slot.image}
+                                                                            onImageSelected={(img) => updateNodeGarment(node.id, slot.id, { image: img })}
+                                                                            label={slot.type}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Model Generator Summary */}
+                                                    <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                                        <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">AI Model Gen</label>
+                                                        <div className="grid grid-cols-2 gap-2 text-left">
+                                                            {[
+                                                                { k: 'gender', l: 'Gender', opts: ['Any', 'Female', 'Male', 'Non-binary'] },
+                                                                { k: 'age', l: 'Age', opts: ['Teen', '20s', '30s', '40s', 'Senior'] },
+                                                                { k: 'nationality', l: 'Ethno.', opts: ['Any', 'European', 'Asian', 'African', 'Latin American'] },
+                                                                { k: 'skinTone', l: 'Skin', opts: ['Fair', 'Tan', 'Dark', 'Natural'] }
+                                                            ].map(gen => (
+                                                                <div key={gen.k} className="space-y-1">
+                                                                    <label className="text-[8px] text-slate-600 font-bold uppercase">{gen.l}</label>
+                                                                    <select
+                                                                        className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-[9px] text-slate-400 outline-none"
+                                                                        value={(node.data.settings?.superMode?.modelGen as any)?.[gen.k]}
+                                                                        onChange={(e) => {
+                                                                            setNodes(prev => prev.map(n => n.id === node.id ? {
+                                                                                ...n,
+                                                                                data: {
+                                                                                    ...n.data,
+                                                                                    settings: {
+                                                                                        ...n.data.settings!,
+                                                                                        superMode: {
+                                                                                            ...n.data.settings!.superMode!,
+                                                                                            modelGen: { ...n.data.settings!.superMode!.modelGen, [gen.k]: e.target.value }
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            } : n));
+                                                                        }}
+                                                                    >
+                                                                        {gen.opts.map(o => <option key={o} value={o}>{o}</option>)}
+                                                                    </select>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <textarea
+                                                        className="w-full h-16 bg-slate-950 border border-slate-800 rounded p-2 text-[10px] text-slate-300 resize-none focus:border-indigo-500 outline-none"
+                                                        placeholder={t('nodePrompt')}
+                                                        value={node.data.settings.prompt}
+                                                        onChange={(e) => {
+                                                            const v = e.target.value;
+                                                            setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, prompt: v } } } : n));
+                                                        }}
+                                                        onMouseDown={(e) => e.stopPropagation()}
+                                                    />
+
+                                                    {/* Reference Image Selector */}
+                                                    <div className="space-y-1">
+                                                        <label className="text-[9px] text-slate-500 font-bold uppercase block">Style Reference (Optional)</label>
+                                                        <div className="grid grid-cols-5 gap-1">
+                                                            {(customReferenceImages.length > 0
+                                                                ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
+                                                                : STYLE_LIBRARY
+                                                            ).map((styleRef, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        const isSelected = node.data.settings?.styleReferenceImage === styleRef.url;
+                                                                        setNodes(prev => prev.map(n =>
+                                                                            n.id === node.id
+                                                                                ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : styleRef.url } } }
+                                                                                : n
+                                                                        ));
+                                                                    }}
+                                                                    className={`relative aspect-square rounded overflow-hidden border ${node.data.settings?.styleReferenceImage === styleRef.url
+                                                                        ? 'border-indigo-500 ring-2 ring-indigo-500/50'
+                                                                        : 'border-slate-700 hover:border-indigo-500'
+                                                                        } group transition-all`}
+                                                                    title={styleRef.name}
+                                                                >
+                                                                    <img src={styleRef.url} alt={styleRef.name} className="w-full h-full object-cover" />
+                                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[7px] text-center text-white p-0.5 transition-opacity">
+                                                                        {styleRef.name}
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Aspect Ratio & Camera */}
+                                                    <div className="space-y-2">
+                                                        <div className="flex justify-between items-center">
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase">{t('aspectRatio')}</label>
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase">{t('camera')}</label>
+                                                        </div>
+                                                        <div className="flex items-start gap-2">
+                                                            <div className="flex flex-wrap gap-1 flex-1">
+                                                                {['16:9', '1:1', '9:16', '4:3', '3:4', 'Original'].map(r => (
+                                                                    <button
+                                                                        key={r}
+                                                                        onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, aspectRatio: r as AspectRatio } } } : n)) }}
+                                                                        className={`px-1.5 py-0.5 text-[9px] rounded border ${node.data.settings!.aspectRatio === r ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                                                                    >
+                                                                        {r}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                            <select
+                                                                className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 text-[9px] text-slate-300 outline-none w-24"
+                                                                value={node.data.settings.camera}
+                                                                onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, camera: e.target.value as CameraAngle } } } : n)) }}
+                                                                onMouseDown={(e) => e.stopPropagation()}
+                                                            >
+                                                                {Object.values(CameraAngle).map(c => <option key={c} value={c}>{c}</option>)}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Dropdowns */}
+                                                    <div className="space-y-2">
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('stylePreset')}</label>
+                                                            <select
+                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none"
+                                                                value={node.data.settings.style}
+                                                                onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, style: e.target.value as RenderStyle } } } : n)) }}
+                                                                onMouseDown={(e) => e.stopPropagation()}
+                                                            >
+                                                                {Object.values(RenderStyle).map(s => <option key={s} value={s}>{t(s as any)}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        <div>
+                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('atmosphere')}</label>
+                                                            {/* Multi-Select Grid for Node */}
+                                                            <div className="grid grid-cols-3 gap-1 overflow-hidden">
+                                                                {Object.values(Atmosphere).slice(0, 20).map(atm => {
+                                                                    const isSelected = (node.data.settings!.atmosphere || []).includes(atm);
+                                                                    return (
+                                                                        <button
+                                                                            key={atm}
+                                                                            onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(node.id, atm); }}
+                                                                            className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                                                                            title={atm}
+                                                                        >
+                                                                            <span className="truncate block">{t(atm as any)}</span>
+                                                                        </button>
+                                                                    )
+                                                                })}
                                                             </div>
                                                         </div>
-                                                    ))}
+                                                    </div>
+                                                </>
+                                            )}
+
+                                            {/* Common Footer Actions */}
+                                            <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); runNode(node.id) }}
+                                                        disabled={processingNodes.has(node.id)}
+                                                        className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide shadow-lg shadow-indigo-900/20 flex items-center justify-center gap-2 transition-all"
+                                                    >
+                                                        {processingNodes.has(node.id) ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                                                        {t('generate')}
+                                                    </button>
+                                                    {node.data.subtype === 'super' && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); run4Shot(node.id) }}
+                                                            disabled={processingNodes.has(node.id)}
+                                                            className="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-indigo-500/30 rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
+                                                        >
+                                                            <Layers size={12} />
+                                                            Sequence
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
-
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); runNode(node.id) }}
-                                                disabled={processingNodes.has(node.id)}
-                                                className="mt-2 w-full bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg py-2 font-bold text-xs uppercase tracking-wide shadow-lg shadow-indigo-900/20 flex items-center justify-center gap-2 transition-all"
-                                            >
-                                                {processingNodes.has(node.id) ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />}
-                                                {t('generate')}
-                                            </button>
                                         </div>
                                     )}
 
@@ -1557,8 +1862,13 @@ const InfinityCanvas: React.FC = () => {
                     <button onClick={() => addNode('processor', 'arch')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
                         <Building size={14} className="text-purple-400" /> {t('nodeProcessor')}
                     </button>
-                    <button onClick={() => addNode('processor', 'product')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
-                        <Box size={14} className="text-amber-400" /> {t('nodeProduct')}
+                    <button onClick={() => addNode('processor', 'product')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition-colors group">
+                        <Box size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                        <span>Product Staging</span>
+                    </button>
+                    <button onClick={() => addNode('processor', 'super')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition-colors group">
+                        <Sparkles size={14} className="text-indigo-400 group-hover:scale-110 transition-transform" />
+                        <span>Marketing AI (Super)</span>
                     </button>
                     <div className="h-px bg-slate-800 my-1"></div>
                     <button onClick={() => addNode('output')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
