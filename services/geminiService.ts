@@ -148,7 +148,10 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
       textParts.push("SPECIAL INSTRUCTION: Generate a MOODBOARD style image with multiple related product concepts or lifestyle shots in a grid.");
     }
     if (sm.generateMultiAngle) {
-      textParts.push("SPECIAL INSTRUCTION: Generate 4 distinct camera angles of the product (Profile, Front, Macro, Cinematic) while keeping the product design 100% consistent.");
+      const shots = sm.multiAngleSelection && sm.multiAngleSelection.length > 0
+        ? sm.multiAngleSelection.join(', ')
+        : 'Profile, Front, Macro, Cinematic';
+      textParts.push(`SPECIAL INSTRUCTION: Generate 4 distinct camera angles of the product (${shots}) while keeping the product design 100% consistent.`);
     }
     if (sm.isVirtualTryOn) {
       textParts.push(`VIRTUAL TRY-ON INSTRUCTION:

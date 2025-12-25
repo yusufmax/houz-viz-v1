@@ -84,7 +84,13 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                         {/* Batch & Moodboard */}
                         <div className="grid grid-cols-2 gap-3">
                             <button
-                                onClick={() => updateSetting('generateMultiAngle', !settings.generateMultiAngle)}
+                                onClick={() => {
+                                    const nextValue = !settings.generateMultiAngle;
+                                    updateSetting('generateMultiAngle', nextValue);
+                                    if (nextValue && !settings.multiAngleSelection) {
+                                        updateSetting('multiAngleSelection', ['Profile', 'Front', 'Macro', 'Cinematic']);
+                                    }
+                                }}
                                 className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${settings.generateMultiAngle
                                     ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
                                     : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
@@ -104,6 +110,39 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                 <span className="text-[10px] font-black uppercase">Moodboard</span>
                             </button>
                         </div>
+
+                        {/* Shot Selector (Visible when 4 Shots is active) */}
+                        {settings.generateMultiAngle && (
+                            <div className="space-y-3 p-3 bg-slate-950 rounded-xl border border-indigo-500/30 animate-in slide-in-from-top-2">
+                                <label className="text-[9px] font-black text-indigo-400 uppercase tracking-widest flex items-center justify-between">
+                                    <span>Shot Preview (Select 4)</span>
+                                    <span className="text-slate-600">{(settings.multiAngleSelection?.length || 0)} / 4</span>
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {['Profile', 'Front', 'Macro', 'Cinematic', 'Lifestyle', 'Top-down', 'Side', 'Diagonal', 'Eye-level'].map(shot => {
+                                        const isSelected = settings.multiAngleSelection?.includes(shot);
+                                        return (
+                                            <button
+                                                key={shot}
+                                                onClick={() => {
+                                                    const current = settings.multiAngleSelection || [];
+                                                    const nextSelection = isSelected
+                                                        ? current.filter(s => s !== shot)
+                                                        : current.length < 4 ? [...current, shot] : current;
+                                                    updateSetting('multiAngleSelection', nextSelection);
+                                                }}
+                                                className={`px-2 py-1.5 text-[8px] font-bold rounded-md border transition-all ${isSelected
+                                                    ? 'bg-indigo-500 border-indigo-400 text-white'
+                                                    : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'
+                                                    }`}
+                                            >
+                                                {shot}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
