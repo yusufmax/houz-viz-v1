@@ -154,10 +154,13 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
       textParts.push(`SPECIAL INSTRUCTION: Generate 4 distinct camera angles of the product (${shots}) while keeping the product design 100% consistent.`);
     }
     if (sm.isVirtualTryOn) {
+      if (sm.location) {
+        textParts.push(`ENVIRONMENT LOCATION: Set the scene in a ${sm.location} setting.`);
+      }
       textParts.push(`VIRTUAL TRY-ON INSTRUCTION:
 1. You are provided with a Model Image and a Garment Image.
 2. Your goal is to realisticly fit the garment onto the model.
-3. Maintain the model's pose, facial features, and background.
+3. Maintain the model's pose, facial features, and background structure.
 4. Correct for lighting, shadows, and fabric draping to make it look 100% authentic.
 5. The output should be a single high-quality marketing shot.`);
     }
@@ -568,9 +571,13 @@ export const generateCustomModel = async (settings: ModelGenSettings): Promise<s
   try {
     const prompt = `Highly photorealistic, professional fashion photography of a model.
 Attributes:
+- Gender: ${settings.gender || 'Any'}
 - Nationality/Ethnicity: ${settings.nationality || 'Any'}
 - Age: ${settings.age || '20s'}
+- Height: ${settings.height || 'Average'}
 - Skin Tone: ${settings.skinTone || 'Natural'}
+- Eye Color: ${settings.eyeColor || 'Natural'}
+- Hair Color: ${settings.hairColor || 'Natural'}
 - Pose: ${settings.pose || 'Standing, facing camera'}
 
 Style: High-end magazine spread, 8k resolution, sharp focus, neutral studio background, flattering lighting.

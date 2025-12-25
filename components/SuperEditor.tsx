@@ -375,6 +375,19 @@ const SuperEditor: React.FC = () => {
                                     <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-5 animate-in slide-in-from-top-4 duration-300">
                                         <div className="grid grid-cols-2 gap-4 text-left">
                                             <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Gender</label>
+                                                <select
+                                                    value={superSettings.modelGen?.gender}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, gender: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Any</option>
+                                                    <option>Female</option>
+                                                    <option>Male</option>
+                                                    <option>Non-binary</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Nationality</label>
                                                 <select
                                                     value={superSettings.modelGen?.nationality}
@@ -404,6 +417,19 @@ const SuperEditor: React.FC = () => {
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Height</label>
+                                                <select
+                                                    value={superSettings.modelGen?.height}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, height: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Average</option>
+                                                    <option>Petite</option>
+                                                    <option>Tall</option>
+                                                    <option>Athletic</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
                                                 <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Skin Tone</label>
                                                 <select
                                                     value={superSettings.modelGen?.skinTone}
@@ -415,6 +441,36 @@ const SuperEditor: React.FC = () => {
                                                     <option>Dark</option>
                                                     <option>Golden</option>
                                                     <option>Natural</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Eye Color</label>
+                                                <select
+                                                    value={superSettings.modelGen?.eyeColor}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, eyeColor: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Natural</option>
+                                                    <option>Blue</option>
+                                                    <option>Brown</option>
+                                                    <option>Green</option>
+                                                    <option>Hazel</option>
+                                                    <option>Grey</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Hair Color</label>
+                                                <select
+                                                    value={superSettings.modelGen?.hairColor}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, hairColor: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Natural</option>
+                                                    <option>Black</option>
+                                                    <option>Brunette</option>
+                                                    <option>Blonde</option>
+                                                    <option>Red</option>
+                                                    <option>Grey</option>
                                                 </select>
                                             </div>
                                             <div className="space-y-2">
@@ -458,34 +514,67 @@ const SuperEditor: React.FC = () => {
 
                     {/* Main Controls */}
                     <section className="space-y-6">
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                                    <Sparkles size={14} className="text-indigo-400" /> Style Preset
-                                </label>
-                                <button onClick={() => setShowStyles(!showStyles)} className="text-slate-500 hover:text-white">
-                                    {showStyles ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                </button>
-                            </div>
+                        {/* Style Preset (Hidden for Try-On) */}
+                        {!superSettings.isVirtualTryOn && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Sparkles size={14} className="text-indigo-400" /> Style Preset
+                                    </label>
+                                    <button onClick={() => setShowStyles(!showStyles)} className="text-slate-500 hover:text-white">
+                                        {showStyles ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                    </button>
+                                </div>
 
-                            {showStyles && (
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                    {Object.entries(STYLE_PREVIEWS).map(([s, img]) => (
+                                {showStyles && (
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        {Object.entries(STYLE_PREVIEWS).map(([s, img]) => (
+                                            <button
+                                                key={s}
+                                                onClick={() => setStyle(s as SuperRenderStyle)}
+                                                className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${style === s ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
+                                                    }`}
+                                            >
+                                                <img src={img} alt={s} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2 transition-opacity ${style === s ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                                    <span className="text-[11px] font-black text-white uppercase truncate tracking-wider">{s === 'None' ? 'Raw Style' : s}</span>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Try-On specific: Location Selector */}
+                        {superSettings.isVirtualTryOn && (
+                            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                        <Layout size={14} className="text-indigo-400" /> Environment Location
+                                    </label>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[
+                                        { id: 'Studio', label: 'Studio', desc: 'Neutral, clean' },
+                                        { id: 'Interior', label: 'Interior', desc: 'Home, luxury' },
+                                        { id: 'Exterior', label: 'Exterior', desc: 'Street, nature' }
+                                    ].map(loc => (
                                         <button
-                                            key={s}
-                                            onClick={() => setStyle(s as SuperRenderStyle)}
-                                            className={`group relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${style === s ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
+                                            key={loc.id}
+                                            onClick={() => setSuperSettings(prev => ({ ...prev, location: loc.id as any }))}
+                                            className={`flex flex-col items-center p-3 rounded-xl border transition-all ${superSettings.location === loc.id || (!superSettings.location && loc.id === 'Studio')
+                                                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
+                                                : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
                                                 }`}
                                         >
-                                            <img src={img} alt={s} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                            <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-2 transition-opacity ${style === s ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                                <span className="text-[11px] font-black text-white uppercase truncate tracking-wider">{s === 'None' ? 'Raw Style' : s}</span>
-                                            </div>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">{loc.label}</span>
+                                            <span className={`text-[8px] mt-0.5 opacity-60`}>{loc.desc}</span>
                                         </button>
                                     ))}
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Prompt Input */}
                         <div className="space-y-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">

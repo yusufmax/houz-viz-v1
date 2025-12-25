@@ -204,6 +204,27 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                             </div>
                         </div>
 
+                        {/* Lighting Intensity */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Sparkles size={12} className="text-yellow-400" /> Light Intensity
+                            </label>
+                            <div className="flex gap-2">
+                                {['Soft', 'Balanced', 'Hard'].map(int => (
+                                    <button
+                                        key={int}
+                                        onClick={() => updateSetting('lightingIntensity', int)}
+                                        className={`flex-1 py-1.5 text-[9px] font-black rounded-lg border uppercase tracking-widest transition-all ${settings.lightingIntensity === int || (!settings.lightingIntensity && int === 'Balanced')
+                                            ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-500/20'
+                                            : 'bg-slate-900 border-slate-800 text-slate-500 hover:text-slate-300 hover:border-slate-700'
+                                            }`}
+                                    >
+                                        {int}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Surface & Props */}
                         <div className="space-y-4">
                             <div className="space-y-2">

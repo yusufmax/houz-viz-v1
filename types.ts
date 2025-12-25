@@ -221,12 +221,17 @@ export interface SuperModeSettings {
   isVirtualTryOn?: boolean;
   garmentImage?: string | null;
   modelGen?: ModelGenSettings;
+  location?: 'Studio' | 'Interior' | 'Exterior';
 }
 
 export interface ModelGenSettings {
+  gender?: string;
   age?: string;
   skinTone?: string;
   nationality?: string;
+  eyeColor?: string;
+  hairColor?: string;
+  height?: string;
   pose?: string;
 }
 
