@@ -7,16 +7,35 @@ interface ProductCustomizationProps {
     onChange: (settings: SuperModeSettings) => void;
 }
 
-const LIGHTING_PREVIEWS: Record<SuperAtmosphere, string> = {
-    [SuperAtmosphere.None]: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80',
-    [SuperAtmosphere.StudioSoftbox]: 'https://images.unsplash.com/photo-1492707892479-7bc8d5a4ee93?w=500&q=80',
-    [SuperAtmosphere.DramaticShadows]: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=500&q=80',
-    [SuperAtmosphere.NeonCyber]: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500&q=80',
-    [SuperAtmosphere.GoldenHour]: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=500&q=80',
-    [SuperAtmosphere.HardLight]: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&q=80',
-    [SuperAtmosphere.SoftDiffused]: 'https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=500&q=80',
-    [SuperAtmosphere.Vibrant]: 'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=500&q=80'
+const LIGHTING_BY_LOCATION: Record<string, { id: string; label: string; url: string }[]> = {
+    Studio: [
+        { id: 'Studio:Softbox', label: 'Softbox', url: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=200&q=80' },
+        { id: 'Studio:RingLight', label: 'Ring Light', url: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=200&q=80' },
+        { id: 'Studio:HighKey', label: 'High Key', url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=200&q=80' },
+        { id: 'Studio:Dramatic', label: 'Dramatic', url: 'https://images.unsplash.com/photo-1470790376778-a9fbc86d70e2?w=200&q=80' },
+    ],
+    Interior: [
+        { id: 'Interior:Ambient', label: 'Ambient', url: 'https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?w=200&q=80' },
+        { id: 'Interior:Lamp', label: 'Warm Lamp', url: 'https://images.unsplash.com/photo-1534073828943-f801091bb18c?w=200&q=80' },
+        { id: 'Interior:Window', label: 'Window Side', url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=200&q=80' },
+        { id: 'Interior:Neon', label: 'Neon Glow', url: 'https://images.unsplash.com/photo-1550747528-cdb45925b3f7?w=200&q=80' },
+    ],
+    Exterior: [
+        { id: 'Exterior:GoldenHour', label: 'Golden Hour', url: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=200&q=80' },
+        { id: 'Exterior:Sunset', label: 'Sunset', url: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=200&q=80' },
+        { id: 'Exterior:Overcast', label: 'Overcast', url: 'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=200&q=80' },
+        { id: 'Exterior:Moonlight', label: 'Moonlight', url: 'https://images.unsplash.com/photo-1472552947727-b40348702bb7?w=200&q=80' },
+    ]
 };
+
+const RGB_PRESETS = [
+    { color: '#FFFFFF', name: 'White' },
+    { color: '#FFD700', name: 'Gold' },
+    { color: '#FF4500', name: 'Warm' },
+    { color: '#00BFFF', name: 'Cool' },
+    { color: '#FF007F', name: 'Neon' },
+    { color: '#32CD32', name: 'Lime' }
+];
 
 const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, onChange }) => {
     const [sections, setSections] = React.useState({
@@ -183,24 +202,57 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                             </div>
                         </div>
 
-                        {/* Lighting Presets */}
+                        {/* Lighting Presets (Dynamic) */}
                         <div className="space-y-3">
-                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lighting Presets</label>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                                <span>Lighting Presets</span>
+                                <span className="text-indigo-400 text-[9px]">{settings.location || 'Studio'} Selection</span>
+                            </label>
                             <div className="grid grid-cols-4 gap-2">
-                                {Object.entries(LIGHTING_PREVIEWS).map(([a, img]) => (
+                                {(LIGHTING_BY_LOCATION[settings.location || 'Studio'] || LIGHTING_BY_LOCATION.Studio).map((p) => (
                                     <button
-                                        key={a}
-                                        onClick={() => updateSetting('lighting', a as SuperAtmosphere)}
-                                        className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${settings.lighting === a ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
+                                        key={p.id}
+                                        onClick={() => updateSetting('lighting', p.id)}
+                                        className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${settings.lighting === p.id ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
                                             }`}
-                                        title={a}
+                                        title={p.label}
                                     >
-                                        <img src={img} alt={a} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
-                                        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center p-1 transition-opacity ${settings.lighting === a ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                            <span className="text-[8px] font-black text-white text-center leading-tight uppercase tracking-tighter">{a.split(':').pop()}</span>
+                                        <img src={p.url} alt={p.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                                        <div className={`absolute inset-0 bg-black/60 flex items-center justify-center p-1 transition-opacity ${settings.lighting === p.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                            <span className="text-[8px] font-black text-white text-center leading-tight uppercase tracking-tighter">{p.label}</span>
                                         </div>
                                     </button>
                                 ))}
+                            </div>
+                        </div>
+
+                        {/* RGB Lighting Selector */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Palette size={12} className="text-indigo-400" /> RGB Light Color
+                            </label>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 flex gap-2">
+                                    {RGB_PRESETS.map((p) => (
+                                        <button
+                                            key={p.color}
+                                            onClick={() => updateSetting('lightingColor', p.color)}
+                                            className={`w-6 h-6 rounded-full border-2 transition-all ${settings.lightingColor === p.color ? 'border-white scale-110 shadow-lg' : 'border-transparent hover:scale-110'
+                                                }`}
+                                            style={{ backgroundColor: p.color }}
+                                            title={p.name}
+                                        />
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-2 p-1.5 bg-slate-950 border border-slate-800 rounded-lg">
+                                    <input
+                                        type="color"
+                                        value={settings.lightingColor || '#FFFFFF'}
+                                        onChange={(e) => updateSetting('lightingColor', e.target.value)}
+                                        className="w-5 h-5 bg-transparent border-none cursor-pointer"
+                                    />
+                                    <span className="text-[9px] font-mono text-slate-500 uppercase">{settings.lightingColor || '#FFFFFF'}</span>
+                                </div>
                             </div>
                         </div>
 
