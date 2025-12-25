@@ -14,6 +14,7 @@ const AdminPage: React.FC = () => {
     const [creditRequests, setCreditRequests] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'users' | 'requests'>('users');
     const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editQuota, setEditQuota] = useState<number>(0);
 
@@ -55,13 +56,15 @@ const AdminPage: React.FC = () => {
 
     const handleProcessRequest = async (requestId: string, userId: string, amount: number, action: 'approve' | 'declined') => {
         try {
+            setProcessingId(requestId);
             if (action === 'approve') {
                 const user = users.find(u => u.id === userId);
                 const currentQuota = user?.generation_quota || 0;
                 await adminService.updateUserQuota(userId, currentQuota + amount);
             }
 
-            await supabase.from('credit_requests').update({ status: action }).eq('id', requestId);
+            const { error } = await supabase.from('credit_requests').update({ status: action }).eq('id', requestId);
+            if (error) throw error;
 
             // Update local state
             setCreditRequests(creditRequests.map(r => r.id === requestId ? { ...r, status: action } : r));
@@ -69,7 +72,10 @@ const AdminPage: React.FC = () => {
                 setUsers(users.map(u => u.id === userId ? { ...u, generation_quota: (u.generation_quota || 0) + amount } : u));
             }
         } catch (error) {
-            alert('Failed to process request');
+            console.error(error);
+            alert('Failed to process request: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        } finally {
+            setProcessingId(null);
         }
     };
 
@@ -287,15 +293,17 @@ const AdminPage: React.FC = () => {
                                                             <>
                                                                 <button
                                                                     onClick={() => handleProcessRequest(r.id, r.user_id, r.amount, 'approve')}
-                                                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black"
+                                                                    disabled={processingId === r.id}
+                                                                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black disabled:opacity-50 flex items-center gap-1"
                                                                 >
-                                                                    APPROVE
+                                                                    {processingId === r.id ? <Loader2 size={12} className="animate-spin" /> : 'APPROVE'}
                                                                 </button>
                                                                 <button
                                                                     onClick={() => handleProcessRequest(r.id, r.user_id, r.amount, 'declined')}
-                                                                    className="px-3 py-1.5 bg-slate-800 hover:bg-red-900 text-slate-400 hover:text-white rounded-lg text-xs font-black transition-colors"
+                                                                    disabled={processingId === r.id}
+                                                                    className="px-3 py-1.5 bg-slate-800 hover:bg-red-900 text-slate-400 hover:text-white rounded-lg text-xs font-black transition-colors disabled:opacity-50"
                                                                 >
-                                                                    DECLINE
+                                                                    {processingId === r.id ? '...' : 'DECLINE'}
                                                                 </button>
                                                             </>
                                                         )}
