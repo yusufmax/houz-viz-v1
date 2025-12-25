@@ -138,7 +138,9 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
     if (sm.lightingColor) textParts.push(`Lighting Tint/Color: ${sm.lightingColor}`);
     if (sm.groundMaterial) textParts.push(`Surface/Ground Material: ${sm.groundMaterial}`);
     if (sm.environmentProps) textParts.push(`Atmospheric Props: ${sm.environmentProps}`);
-    if (sm.cameraAngle) textParts.push(`Camera Perspective: ${sm.cameraAngle}`);
+    if (sm.cameraAngle) {
+      textParts.push(`Camera Perspective: ${sm.cameraAngle}. IMPORTANT: View the subject from this specific ${sm.cameraAngle} angle, even if the reference image shows a different orientation.`);
+    }
     if (sm.lens) textParts.push(`Camera Lens characteristics: ${sm.lens}`);
     if (sm.aperture) textParts.push(`Aperture setting: ${sm.aperture} (simulate appropriate depth of field depth).`);
     if (sm.shutterSpeed) textParts.push(`Shutter Speed effect: ${sm.shutterSpeed} (simulate appropriate motion characteristics).`);
@@ -160,9 +162,10 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
       textParts.push(`VIRTUAL TRY-ON INSTRUCTION:
 1. You are provided with a Model Image and a Garment Image.
 2. Your goal is to realisticly fit the garment onto the model.
-3. Maintain the model's pose, facial features, and background structure.
-4. Correct for lighting, shadows, and fabric draping to make it look 100% authentic.
-5. The output should be a single high-quality marketing shot.`);
+3. Maintain the model's facial features and character identity.
+4. ${sm.cameraAngle ? `Adjust the model's pose to match the ${sm.cameraAngle} perspective.` : "Maintain the model's pose and background structure."}
+5. Correct for lighting, shadows, and fabric draping to make it look 100% authentic.
+6. The output should be a single high-quality marketing shot.`);
     }
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
@@ -376,7 +379,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         // Explicit instruction immediately following the source image
         if (settings.superMode?.isVirtualTryOn) {
           parts.push({
-            text: "IMAGE 1 (Above): TARGET MODEL. This is the person who will be wearing the new outfit. Keep their body structure and pose exactly as is."
+            text: `IMAGE 1 (Above): TARGET MODEL. This is the person who will be wearing the new outfit. Maintain their facial features and identity perfectly. ${settings.superMode.cameraAngle ? `However, you ARE authorized to change their pose and camera angle to a ${settings.superMode.cameraAngle} orientation as requested in the instructions.` : "Keep their body structure and pose exactly as is."}`
           });
         } else if (settings.superMode) {
           parts.push({

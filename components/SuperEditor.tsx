@@ -207,9 +207,10 @@ const SuperEditor: React.FC = () => {
                     ? superSettings.multiAngleSelection
                     : ['Profile shot', 'Front shot', 'Perspective view', 'Macro detail'];
 
-                const batchPromises = angles.map(angle => {
+                const batchPromises = angles.map((angle, index) => {
                     const batchSettings = {
                         ...settings,
+                        prompt: `${settings.prompt} - ${angle} view (Shot ${index + 1} of ${angles.length})`,
                         superMode: {
                             ...superSettings,
                             cameraAngle: angle,
