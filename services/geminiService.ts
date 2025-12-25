@@ -159,13 +159,20 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
       if (sm.location) {
         textParts.push(`ENVIRONMENT LOCATION: Set the scene in a ${sm.location} setting.`);
       }
+
+      const garmentsToApply = sm.garments?.filter(g => g.image) || [];
+      const garmentInstructions = garmentsToApply.length > 0
+        ? garmentsToApply.map((g, i) => `${i + 2}. GARMENT (${g.type}): Apply this specific item.`).join('\n')
+        : "2. GARMENT: Apply the provided clothing item.";
+
       textParts.push(`VIRTUAL TRY-ON INSTRUCTION:
-1. You are provided with a Model Image and a Garment Image.
-2. Your goal is to realisticly fit the garment onto the model.
-3. Maintain the model's facial features and character identity.
-4. ${sm.cameraAngle ? `Adjust the model's pose to match the ${sm.cameraAngle} perspective.` : "Maintain the model's pose and background structure."}
-5. Correct for lighting, shadows, and fabric draping to make it look 100% authentic.
-6. The output should be a single high-quality marketing shot.`);
+1. You are provided with a Model Image and ${garmentsToApply.length || 1} Garment Image(s).
+${garmentInstructions}
+${garmentsToApply.length + 2}. Your goal is to realisticly fit all these garments onto the model to create a complete outfit.
+${garmentsToApply.length + 3}. Maintain the model's facial features and character identity.
+${garmentsToApply.length + 4}. ${sm.cameraAngle ? `Adjust the model's pose to match the ${sm.cameraAngle} perspective.` : "Maintain the model's pose and background structure."}
+${garmentsToApply.length + 5}. Correct for lighting, shadows, and fabric draping for all garments to make it look 100% authentic.
+${garmentsToApply.length + 6}. The output should be a single high-quality marketing shot.`);
     }
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
@@ -393,19 +400,37 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       }
     }
 
-    // 1.5. Add Garment Image for Virtual Try-On
-    if (settings.superMode?.isVirtualTryOn && settings.superMode.garmentImage) {
-      const { mimeType, data } = await toInlineData(settings.superMode.garmentImage);
-      if (data) {
-        parts.push({
-          inlineData: {
-            mimeType: mimeType,
-            data: data
+    // 1.5. Add Garment Image(s) for Virtual Try-On
+    if (settings.superMode?.isVirtualTryOn) {
+      const garments = settings.superMode.garments?.filter(g => g.image) || [];
+
+      // Handle legacy single image if no garments array is present or empty
+      if (garments.length === 0 && settings.superMode.garmentImage) {
+        const { mimeType, data } = await toInlineData(settings.superMode.garmentImage);
+        if (data) {
+          parts.push({
+            inlineData: { mimeType, data }
+          });
+          parts.push({
+            text: "IMAGE 2 (Above): GARMENT TO APPLY. Fit this specific clothing item onto the model in IMAGE 1."
+          });
+        }
+      } else {
+        // Handle multi-garment array
+        for (let i = 0; i < garments.length; i++) {
+          const g = garments[i];
+          if (g.image) {
+            const { mimeType, data } = await toInlineData(g.image);
+            if (data) {
+              parts.push({
+                inlineData: { mimeType, data }
+              });
+              parts.push({
+                text: `IMAGE ${i + 2} (Above): GARMENT (${g.type}). Apply this item to the model.`
+              });
+            }
           }
-        });
-        parts.push({
-          text: "IMAGE 2 (Above): GARMENT TO APPLY. Fit this specific clothing item onto the model in IMAGE 1. Retain all colors, patterns, and design details of this clothing."
-        });
+        }
       }
     }
 

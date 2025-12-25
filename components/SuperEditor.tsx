@@ -104,6 +104,10 @@ const SuperEditor: React.FC = () => {
         generateMultiAngle: false,
         isVirtualTryOn: false,
         garmentImage: null,
+        garments: [
+            { id: 'g1', type: 'Top', image: null },
+            { id: 'g2', type: 'Bottom', image: null }
+        ],
         model: 'gemini-3-pro-image-preview',
         modelGen: {
             age: '20s',
@@ -148,6 +152,28 @@ const SuperEditor: React.FC = () => {
         } catch (e) {
             console.error("Failed to load history", e);
         }
+    };
+
+    const updateGarment = (id: string, updates: Partial<{ type: any, image: string | null }>) => {
+        setSuperSettings(prev => ({
+            ...prev,
+            garments: prev.garments?.map(g => g.id === id ? { ...g, ...updates } : g)
+        }));
+    };
+
+    const addGarmentSlot = () => {
+        if ((superSettings.garments?.length || 0) >= 5) return;
+        setSuperSettings(prev => ({
+            ...prev,
+            garments: [...(prev.garments || []), { id: Date.now().toString(), type: 'Other', image: null }]
+        }));
+    };
+
+    const removeGarmentSlot = (id: string) => {
+        setSuperSettings(prev => ({
+            ...prev,
+            garments: prev.garments?.filter(g => g.id !== id)
+        }));
     };
 
     const handleGenerateModel = async () => {
@@ -301,35 +327,77 @@ const SuperEditor: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className={`grid gap-4 transition-all ${superSettings.isVirtualTryOn ? 'grid-cols-2' : 'grid-cols-1'}`}>
-                            <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
+                        <div className={`transition-all space-y-4 ${superSettings.isVirtualTryOn ? 'block' : 'hidden'}`}>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
+                                        <ImageUpload
+                                            selectedImage={sourceImage}
+                                            onImageSelected={setSourceImage}
+                                            label="Base Model"
+                                        />
+                                        {sourceImage && (
+                                            <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
+                                                Base Model
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Garments</label>
+                                        <button
+                                            onClick={addGarmentSlot}
+                                            className="text-[9px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest"
+                                            disabled={(superSettings.garments?.length || 0) >= 5}
+                                        >
+                                            + Add Item
+                                        </button>
+                                    </div>
+                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800">
+                                        {superSettings.garments?.map((slot) => (
+                                            <div key={slot.id} className="relative bg-slate-900/50 rounded-xl border border-slate-800 p-2 space-y-2 group">
+                                                <div className="flex items-center justify-between">
+                                                    <select
+                                                        value={slot.type}
+                                                        onChange={(e) => updateGarment(slot.id, { type: e.target.value as any })}
+                                                        className="bg-transparent text-[9px] font-black text-indigo-400 uppercase tracking-widest outline-none border-none cursor-pointer"
+                                                    >
+                                                        {['Top', 'Bottom', 'Shoes', 'Accessories', 'Full Body', 'Other'].map(cat => (
+                                                            <option key={cat} value={cat} className="bg-slate-900 text-white">{cat}</option>
+                                                        ))}
+                                                    </select>
+                                                    <button
+                                                        onClick={() => removeGarmentSlot(slot.id)}
+                                                        className="text-slate-600 hover:text-red-400 transition-colors"
+                                                    >
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                </div>
+                                                <div className="aspect-[3/4] rounded-lg overflow-hidden border border-slate-800/50">
+                                                    <ImageUpload
+                                                        selectedImage={slot.image}
+                                                        onImageSelected={(img) => updateGarment(slot.id, { image: img })}
+                                                        label={slot.type}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {!superSettings.isVirtualTryOn && (
+                            <div className="relative aspect-[16/9] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
                                 <ImageUpload
                                     selectedImage={sourceImage}
                                     onImageSelected={setSourceImage}
-                                    label={superSettings.isVirtualTryOn ? "Base Model" : "Product Image"}
+                                    label="Product Image"
                                 />
-                                {sourceImage && superSettings.isVirtualTryOn && (
-                                    <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
-                                        Base Model
-                                    </div>
-                                )}
                             </div>
-
-                            {superSettings.isVirtualTryOn && (
-                                <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group animate-in zoom-in-95 duration-300">
-                                    <ImageUpload
-                                        selectedImage={superSettings.garmentImage || null}
-                                        onImageSelected={(img) => setSuperSettings(prev => ({ ...prev, garmentImage: img }))}
-                                        label="Clothing"
-                                    />
-                                    {superSettings.garmentImage && (
-                                        <div className="absolute top-3 left-3 px-2 py-1 bg-purple-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
-                                            Garment
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                        )}
 
                         {superSettings.isVirtualTryOn && (
                             <div className="space-y-4 pt-4 border-t border-slate-800/50 animate-in fade-in slide-in-from-top-4 duration-700 delay-150">

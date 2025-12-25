@@ -201,6 +201,14 @@ export interface GenerationSettings {
   superMode?: SuperModeSettings;
 }
 
+export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';
+
+export interface GarmentSlot {
+  id: string;
+  type: GarmentCategory;
+  image: string | null;
+}
+
 export interface SuperModeSettings {
   productCategory: string;
   lighting: SuperAtmosphere;
@@ -219,7 +227,8 @@ export interface SuperModeSettings {
   aperture?: string;
   shutterSpeed?: string;
   isVirtualTryOn?: boolean;
-  garmentImage?: string | null;
+  garmentImage?: string | null; // Deprecated but kept for compatibility
+  garments?: GarmentSlot[];
   modelGen?: ModelGenSettings;
   location?: 'Studio' | 'Interior' | 'Exterior';
 }
