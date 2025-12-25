@@ -91,7 +91,9 @@ const SuperEditor: React.FC = () => {
         cameraAngle: 'Hero shot (45 degree)',
         lens: CameraLens.Portrait,
         isMoodboard: false,
-        generateMultiAngle: false
+        generateMultiAngle: false,
+        isVirtualTryOn: false,
+        garmentImage: null
     });
 
     // UI State
@@ -247,17 +249,49 @@ const SuperEditor: React.FC = () => {
 
                     {/* Product Source */}
                     <section className="space-y-4">
-                        <div className="flex items-center gap-2 text-indigo-400 font-semibold uppercase text-xs">
-                            <ImageIcon size={16} />
-                            <span>Product Image</span>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-indigo-400 font-semibold uppercase text-xs">
+                                <ImageIcon size={16} />
+                                <span>{superSettings.isVirtualTryOn ? 'Model & Outfit' : 'Product Image'}</span>
+                            </div>
+                            <button
+                                onClick={() => setSuperSettings(prev => ({ ...prev, isVirtualTryOn: !prev.isVirtualTryOn }))}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${superSettings.isVirtualTryOn
+                                    ? 'bg-indigo-600 border-indigo-400 text-white'
+                                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700'
+                                    }`}
+                            >
+                                <Sparkles size={12} />
+                                {superSettings.isVirtualTryOn ? 'Virtual Try-On: ON' : 'Try-On Mode'}
+                            </button>
                         </div>
-                        <div className="h-48">
-                            <ImageUpload
-                                selectedImage={sourceImage}
-                                onImageSelected={setSourceImage}
-                                label="Upload Raw Product"
-                            />
+
+                        <div className={`grid gap-4 transition-all ${superSettings.isVirtualTryOn ? 'grid-cols-2 h-44' : 'grid-cols-1 h-48'}`}>
+                            <div className="relative">
+                                <ImageUpload
+                                    selectedImage={sourceImage}
+                                    onImageSelected={setSourceImage}
+                                    label={superSettings.isVirtualTryOn ? "Upload Model Image" : "Upload Raw Product"}
+                                />
+                                {superSettings.isVirtualTryOn && <div className="absolute top-2 left-2 px-2 py-0.5 bg-indigo-600/80 backdrop-blur rounded text-[8px] font-bold uppercase">Base Model</div>}
+                            </div>
+
+                            {superSettings.isVirtualTryOn && (
+                                <div className="relative animate-in slide-in-from-right-4 duration-300">
+                                    <ImageUpload
+                                        selectedImage={superSettings.garmentImage || null}
+                                        onImageSelected={(img) => setSuperSettings(prev => ({ ...prev, garmentImage: img }))}
+                                        label="Upload Clothing"
+                                    />
+                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-purple-600/80 backdrop-blur rounded text-[8px] font-bold uppercase">Garment</div>
+                                </div>
+                            )}
                         </div>
+                        {superSettings.isVirtualTryOn && (
+                            <p className="text-[10px] text-slate-500 italic bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
+                                Tip: For best results, use a model facing forward and clear flat-lay or worn images of clothes.
+                            </p>
+                        )}
                     </section>
 
                     {/* Main Controls */}

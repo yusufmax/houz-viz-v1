@@ -218,6 +218,8 @@ export interface SuperModeSettings {
   multiAngleSelection?: string[];
   aperture?: string;
   shutterSpeed?: string;
+  isVirtualTryOn?: boolean;
+  garmentImage?: string | null;
 }
 
 export interface InteriorSettings {

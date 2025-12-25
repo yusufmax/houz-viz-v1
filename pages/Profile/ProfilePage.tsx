@@ -239,12 +239,6 @@ const ProfilePage: React.FC = () => {
                                     <span className="text-slate-500 text-xs font-bold pb-0.5">/ {quota.limit} REMAINING</span>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setShowRequestModal(true)}
-                                className="ml-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black transition-all border border-slate-700 active:scale-95"
-                            >
-                                REQUEST MORE
-                            </button>
                         </div>
                     )}
 

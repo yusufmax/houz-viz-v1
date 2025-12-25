@@ -150,6 +150,14 @@ Task: Generate a photorealistic architectural visualization based on the inputs.
     if (sm.generateMultiAngle) {
       textParts.push("SPECIAL INSTRUCTION: Generate 4 distinct camera angles of the product (Profile, Front, Macro, Cinematic) while keeping the product design 100% consistent.");
     }
+    if (sm.isVirtualTryOn) {
+      textParts.push(`VIRTUAL TRY-ON INSTRUCTION:
+1. You are provided with a Model Image and a Garment Image.
+2. Your goal is to realisticly fit the garment onto the model.
+3. Maintain the model's pose, facial features, and background.
+4. Correct for lighting, shadows, and fabric draping to make it look 100% authentic.
+5. The output should be a single high-quality marketing shot.`);
+    }
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
     textParts.push(`Style: ${settings.style}`);
@@ -360,7 +368,11 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           }
         });
         // Explicit instruction immediately following the source image
-        if (settings.superMode) {
+        if (settings.superMode?.isVirtualTryOn) {
+          parts.push({
+            text: "IMAGE 1 (Above): TARGET MODEL. This is the person who will be wearing the new outfit. Keep their body structure and pose exactly as is."
+          });
+        } else if (settings.superMode) {
           parts.push({
             text: "IMAGE 1 (Above): PRODUCT REFERENCE. Maintain the exact design, shape, and details of this product. You ARE encouraged to change the camera angle as specified in secondary instructions."
           });
@@ -369,6 +381,22 @@ export const editImage = async (sourceImage: string | null, settings: Generation
             text: "IMAGE 1 (Above): PRIMARY STRUCTURAL REFERENCE. Use this image's exact geometry, lines, and perspective. Do not alter the building shape."
           });
         }
+      }
+    }
+
+    // 1.5. Add Garment Image for Virtual Try-On
+    if (settings.superMode?.isVirtualTryOn && settings.superMode.garmentImage) {
+      const { mimeType, data } = await toInlineData(settings.superMode.garmentImage);
+      if (data) {
+        parts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: data
+          }
+        });
+        parts.push({
+          text: "IMAGE 2 (Above): GARMENT TO APPLY. Fit this specific clothing item onto the model in IMAGE 1. Retain all colors, patterns, and design details of this clothing."
+        });
       }
     }
 
