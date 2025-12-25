@@ -19,7 +19,7 @@ interface DrawEditorProps {
 
 type Tool = 'brush' | 'arrow' | 'text' | 'image';
 
-const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender, onClose, selectedModel = 'gemini-2.5-flash-image', onModelChange }) => {
+const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender, onClose, selectedModel = 'gemini-3-pro-image-preview', onModelChange }) => {
   const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ctx, setCtx] = useState<CanvasRenderingContext2D | null>(null);

@@ -237,7 +237,7 @@ export const analyzeProductImage = async (image: string): Promise<string> => {
   try {
     const inlineData = await toInlineData(image);
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-image-preview',
       contents: [
         {
           role: 'user',
@@ -261,7 +261,7 @@ export const analyzeProductImage = async (image: string): Promise<string> => {
 export const enhancePrompt = async (currentPrompt: string): Promise<string> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-image-preview',
       contents: `Improve this architectural rendering prompt to be more descriptive and artistic, suitable for a high-end AI image generator. Keep it concise but vivid. Input: "${currentPrompt}"`,
     });
     return response.text || currentPrompt;
@@ -319,7 +319,7 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
     console.log("Gemini Flash Config:", JSON.stringify(config, null, 2));
 
     const response = await ai.models.generateContent({
-      model: settings.model || 'gemini-2.5-flash', // Use Flash 2.5 which is better at multi-modal
+      model: settings.model || 'gemini-3-pro-image-preview',
       contents: [{ role: 'user', parts: fullPromptParts }],
       config: config
     });
@@ -479,7 +479,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     }
 
     const response = await ai.models.generateContent({
-      model: settings.model || 'gemini-2.5-flash',
+      model: settings.model || 'gemini-3-pro-image-preview',
       contents: [{ role: 'user', parts: parts }],
       config: config
     });
@@ -582,7 +582,7 @@ Task: The model should be clearly visible and centered, suitable for a virtual c
     };
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-pro-image-preview',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: config
     });

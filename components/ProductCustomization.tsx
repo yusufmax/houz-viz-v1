@@ -69,7 +69,7 @@ const ProductCustomization: React.FC<ProductCustomizationProps> = ({ settings, o
                                     <button
                                         key={model.id}
                                         onClick={() => updateSetting('model', model.id)}
-                                        className={`flex flex-col items-start p-3 rounded-xl border transition-all ${settings.model === model.id || (!settings.model && model.id === 'gemini-2.5-flash')
+                                        className={`flex flex-col items-start p-3 rounded-xl border transition-all ${settings.model === model.id || (!settings.model && model.id === 'gemini-3-pro-image-preview')
                                             ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg'
                                             : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
                                             }`}

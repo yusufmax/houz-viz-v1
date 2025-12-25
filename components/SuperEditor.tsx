@@ -94,7 +94,6 @@ const SuperEditor: React.FC = () => {
         lighting: SuperAtmosphere.StudioSoftbox,
         background: '',
         focus: 'Object',
-        model: 'gemini-2.5-flash',
         lightingIntensity: 'Balanced',
         lightingColor: '#ffffff',
         groundMaterial: '',
@@ -105,6 +104,7 @@ const SuperEditor: React.FC = () => {
         generateMultiAngle: false,
         isVirtualTryOn: false,
         garmentImage: null,
+        model: 'gemini-3-pro-image-preview',
         modelGen: {
             age: '20s',
             skinTone: 'Natural',
@@ -195,7 +195,7 @@ const SuperEditor: React.FC = () => {
                     motionBlur: false,
                     enhanceFacade: false
                 },
-                model: superSettings.model || 'gemini-2.5-flash',
+                model: superSettings.model || 'gemini-3-pro-image-preview',
                 superMode: superSettings
             };
 

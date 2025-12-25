@@ -200,7 +200,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [sceneElements, setSceneElements] = useState<SceneElements>({
     people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
   });
-  const [model, setModel] = useState<string>('gemini-2.5-flash-image');
+  const [model, setModel] = useState<string>('gemini-3-pro-image-preview');
   const [resolution, setResolution] = useState<string>('4K');
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
@@ -436,7 +436,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setCamera(item.metadata.camera as CameraAngle);
       setAspectRatio(item.metadata.aspectRatio as AspectRatio);
       setSceneElements(item.metadata.sceneElements || { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false });
-      setModel(item.metadata.model || 'gemini-2.5-flash-image');
+      setModel(item.metadata.model || 'gemini-3-pro-image-preview');
       setResolution(item.metadata.resolution || '4K');
       setLockCamera(item.metadata.lockCamera || false);
       setLockInterior(item.metadata.lockInterior || false);
