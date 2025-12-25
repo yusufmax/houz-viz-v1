@@ -24,6 +24,7 @@ import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
+import CreditRequestModal from './components/CreditRequestModal';
 
 const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -34,6 +35,7 @@ const Home: React.FC = () => {
   const { lang, setLang, t } = useLanguage();
   const { user, profile } = useAuth();
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
   const isAdmin = profile?.is_admin || false;
 
   useEffect(() => {
@@ -126,20 +128,28 @@ const Home: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Credits Indicator */}
           {quota && (
-            <div className="hidden md:flex flex-col gap-1 w-32">
-              <div className="flex justify-between text-[10px] uppercase font-bold text-slate-400">
-                <span>Credits</span>
-                <span className={quota.limit - quota.used <= 10 ? 'text-yellow-400' : 'text-indigo-400'}>
-                  {quota.limit - quota.used} / {quota.limit}
-                </span>
+            <div className="hidden md:flex items-center gap-3 bg-slate-800/50 border border-slate-700/50 pl-3 pr-1 py-1 rounded-xl">
+              <div className="flex flex-col gap-1 w-24">
+                <div className="flex justify-between text-[8px] uppercase font-black tracking-tight text-slate-500">
+                  <span>Credits</span>
+                  <span className={quota.limit - quota.used <= 5 ? 'text-red-400' : 'text-indigo-400'}>
+                    {quota.limit - quota.used}
+                  </span>
+                </div>
+                <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 5 ? 'bg-red-500' : 'bg-indigo-500'
+                      }`}
+                    style={{ width: `${Math.min(100, Math.max(0, (quota.used / quota.limit) * 100))}%` }}
+                  />
+                </div>
               </div>
-              <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 10 ? 'bg-red-500' : 'bg-indigo-500'
-                    }`}
-                  style={{ width: `${Math.min(100, Math.max(0, (quota.used / quota.limit) * 100))}%` }}
-                />
-              </div>
+              <button
+                onClick={() => setShowRequestModal(true)}
+                className="px-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
+              >
+                REQUEST
+              </button>
             </div>
           )}
 
@@ -183,6 +193,14 @@ const Home: React.FC = () => {
           <VideoEditor />
         </div>
       </main>
+
+      {user && (
+        <CreditRequestModal
+          isOpen={showRequestModal}
+          onClose={() => setShowRequestModal(false)}
+          userId={user.id}
+        />
+      )}
     </div>
   );
 
