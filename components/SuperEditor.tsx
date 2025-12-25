@@ -20,7 +20,12 @@ import {
     Layers,
     Sparkles,
     Users,
-    UserCircle
+    UserCircle,
+    Shirt,
+    ShoppingBag,
+    Scissors,
+    Footprints,
+    Plus
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
@@ -137,6 +142,15 @@ const SuperEditor: React.FC = () => {
             loadQuota();
         }
     }, [user]);
+
+    const CATEGORY_ICONS: Record<string, any> = {
+        'Top': <Shirt size={12} />,
+        'Bottom': <Scissors size={12} />,
+        'Shoes': <Footprints size={12} />,
+        'Accessories': <ShoppingBag size={12} />,
+        'Full Body': <UserCircle size={12} />,
+        'Other': <Package size={12} />
+    };
 
     const loadQuota = async () => {
         if (!user) return;
@@ -327,55 +341,82 @@ const SuperEditor: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className={`transition-all space-y-4 ${superSettings.isVirtualTryOn ? 'block' : 'hidden'}`}>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
+                        <div className={`transition-all space-y-6 ${superSettings.isVirtualTryOn ? 'block' : 'hidden'}`}>
+                            {/* Visual Header */}
+                            <div className="flex items-center justify-between px-1">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-400">
+                                        <Layout size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xs font-black text-slate-200 uppercase tracking-widest">Outfit Builder</h3>
+                                        <p className="text-[10px] text-slate-500 font-medium">Combine up to 5 items for a complete look</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest">Slots: {superSettings.garments?.length || 0}/5</span>
+                                    <button
+                                        onClick={addGarmentSlot}
+                                        disabled={(superSettings.garments?.length || 0) >= 5}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-600 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all shadow-lg shadow-indigo-500/20"
+                                    >
+                                        <Plus size={12} /> Add Item
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col xl:flex-row gap-6">
+                                {/* Left: Target Model */}
+                                <div className="w-full xl:w-1/2 space-y-3">
+                                    <div className="flex items-center gap-2 px-1 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                        <UserCircle size={12} className="text-indigo-400" /> Primary Model
+                                    </div>
+                                    <div className="relative aspect-[3/4] bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden group shadow-2xl">
                                         <ImageUpload
                                             selectedImage={sourceImage}
                                             onImageSelected={setSourceImage}
                                             label="Base Model"
                                         />
-                                        {sourceImage && (
-                                            <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
-                                                Base Model
-                                            </div>
-                                        )}
+                                        <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <p className="text-[10px] text-slate-300 font-medium text-center">Reference for body shape & pose</p>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between px-1">
-                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Garments</label>
-                                        <button
-                                            onClick={addGarmentSlot}
-                                            className="text-[9px] font-black text-indigo-400 hover:text-indigo-300 uppercase tracking-widest"
-                                            disabled={(superSettings.garments?.length || 0) >= 5}
-                                        >
-                                            + Add Item
-                                        </button>
+                                {/* Right: Garment Grid */}
+                                <div className="w-full xl:w-1/2 space-y-3">
+                                    <div className="flex items-center gap-2 px-1 text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                                        <Shirt size={12} className="text-purple-400" /> Wardrobe
                                     </div>
-                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800">
+                                    <div className="grid grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
                                         {superSettings.garments?.map((slot) => (
-                                            <div key={slot.id} className="relative bg-slate-900/50 rounded-xl border border-slate-800 p-2 space-y-2 group">
-                                                <div className="flex items-center justify-between">
-                                                    <select
-                                                        value={slot.type}
-                                                        onChange={(e) => updateGarment(slot.id, { type: e.target.value as any })}
-                                                        className="bg-transparent text-[9px] font-black text-indigo-400 uppercase tracking-widest outline-none border-none cursor-pointer"
-                                                    >
-                                                        {['Top', 'Bottom', 'Shoes', 'Accessories', 'Full Body', 'Other'].map(cat => (
-                                                            <option key={cat} value={cat} className="bg-slate-900 text-white">{cat}</option>
-                                                        ))}
-                                                    </select>
+                                            <div key={slot.id} className="relative group bg-slate-900/40 backdrop-blur-sm border border-slate-800/80 rounded-2xl p-2 transition-all hover:border-indigo-500/30 hover:bg-slate-900/60">
+                                                {/* Slot Header */}
+                                                <div className="flex items-center justify-between mb-2 px-1">
+                                                    <div className="flex items-center gap-1.5 min-w-0">
+                                                        <div className="text-indigo-400 opacity-80 flex-shrink-0">
+                                                            {CATEGORY_ICONS[slot.type] || <Package size={12} />}
+                                                        </div>
+                                                        <select
+                                                            value={slot.type}
+                                                            onChange={(e) => updateGarment(slot.id, { type: e.target.value as any })}
+                                                            className="bg-transparent text-[8px] font-black text-slate-400 hover:text-indigo-300 uppercase tracking-widest outline-none border-none cursor-pointer truncate"
+                                                        >
+                                                            {['Top', 'Bottom', 'Shoes', 'Accessories', 'Full Body', 'Other'].map(cat => (
+                                                                <option key={cat} value={cat} className="bg-slate-900 text-white">{cat}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
                                                     <button
                                                         onClick={() => removeGarmentSlot(slot.id)}
-                                                        className="text-slate-600 hover:text-red-400 transition-colors"
+                                                        className="text-slate-600 hover:text-red-400 transition-colors p-1"
                                                     >
-                                                        <Trash2 size={12} />
+                                                        <Trash2 size={10} />
                                                     </button>
                                                 </div>
-                                                <div className="aspect-[3/4] rounded-lg overflow-hidden border border-slate-800/50">
+
+                                                {/* Upload Area */}
+                                                <div className="aspect-[1/1.2] rounded-xl overflow-hidden border border-slate-800/40 bg-slate-950/30">
                                                     <ImageUpload
                                                         selectedImage={slot.image}
                                                         onImageSelected={(img) => updateGarment(slot.id, { image: img })}
@@ -384,18 +425,35 @@ const SuperEditor: React.FC = () => {
                                                 </div>
                                             </div>
                                         ))}
+
+                                        {/* Add Placeholder Card */}
+                                        {(superSettings.garments?.length || 0) < 5 && (
+                                            <button
+                                                onClick={addGarmentSlot}
+                                                className="aspect-[1/1.2] rounded-2xl border-2 border-dashed border-slate-800 flex flex-col items-center justify-center gap-2 text-slate-600 hover:border-indigo-500/50 hover:text-indigo-400 hover:bg-indigo-500/5 transition-all group"
+                                            >
+                                                <div className="p-3 bg-slate-900 rounded-full group-hover:scale-110 transition-transform">
+                                                    <Plus size={20} />
+                                                </div>
+                                                <span className="text-[9px] font-black uppercase tracking-widest">New Piece</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         {!superSettings.isVirtualTryOn && (
-                            <div className="relative aspect-[16/9] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
+                            <div className="relative aspect-[16/9] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group shadow-2xl">
                                 <ImageUpload
                                     selectedImage={sourceImage}
                                     onImageSelected={setSourceImage}
                                     label="Product Image"
                                 />
+                                <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <h3 className="text-sm font-black text-white uppercase tracking-widest">Source Image</h3>
+                                    <p className="text-xs text-slate-400">The primary product for background replacement</p>
+                                </div>
                             </div>
                         )}
 
