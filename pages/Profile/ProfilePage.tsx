@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Trash2, FolderOpen, Plus, Image as ImageIcon, Edit2, X, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { quotaService } from '../../services/quotaService';
+import CreditRequestModal from '../../components/CreditRequestModal';
 
 interface Project {
     id: string;
@@ -214,9 +215,53 @@ const ProfilePage: React.FC = () => {
         return category === uploadCategory;
     });
 
+    const [showRequestModal, setShowRequestModal] = useState(false);
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-8">
-            {/* ... (Header and Quota sections) */}
+            <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h1 className="text-4xl font-black text-white mb-2 uppercase tracking-tighter">Command Center</h1>
+                    <p className="text-slate-400">Manage your architectural assets, projects, and creative capacity.</p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Quota Card */}
+                    {quota && (
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+                            <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+                                <Zap size={24} />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Creative Credits</div>
+                                <div className="flex items-end gap-2 text-white">
+                                    <span className="text-2xl font-black leading-none">{quota.limit - quota.used}</span>
+                                    <span className="text-slate-500 text-xs font-bold pb-0.5">/ {quota.limit} REMAINING</span>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowRequestModal(true)}
+                                className="ml-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-black transition-all border border-slate-700 active:scale-95"
+                            >
+                                REQUEST MORE
+                            </button>
+                        </div>
+                    )}
+
+                    <button
+                        onClick={() => signOut()}
+                        className="px-6 py-4 bg-red-900/20 hover:bg-red-900/40 text-red-500 rounded-2xl text-sm font-black transition-all border border-red-500/20 active:scale-95"
+                    >
+                        Sign Out
+                    </button>
+                </div>
+            </header>
+
+            <CreditRequestModal
+                isOpen={showRequestModal}
+                onClose={() => setShowRequestModal(false)}
+                userId={user?.id || ''}
+            />
 
             {/* Reference Images Section */}
             <div className="mb-12">

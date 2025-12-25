@@ -66,6 +66,24 @@ export const quotaService = {
             console.error('Error incrementing usage:', error);
             throw error;
         }
+    },
+
+    /**
+     * Request additional credits
+     */
+    async requestCredits(userId: string, amount: number) {
+        const { error } = await supabase
+            .from('credit_requests')
+            .insert({
+                user_id: userId,
+                amount: amount,
+                status: 'pending'
+            });
+
+        if (error) {
+            console.error('Error requesting credits:', error);
+            throw error;
+        }
     }
 };
 
