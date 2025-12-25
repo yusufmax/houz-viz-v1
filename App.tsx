@@ -24,7 +24,6 @@ import { User } from 'lucide-react';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
-import { adminService } from './services/adminService';
 
 const Home: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -184,7 +183,6 @@ const Home: React.FC = () => {
           <VideoEditor />
         </div>
       </main>
-      <AgenticOverlay />
     </div>
   );
 

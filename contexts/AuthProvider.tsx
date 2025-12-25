@@ -24,75 +24,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         let mounted = true;
 
-        // Create a timeout promise
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Auth timeout')), 5000)
-        })
-
-        // Race between actual auth check and timeout
-        Promise.race([
-            supabase.auth.getSession(),
-            timeoutPromise
-        ])
-            .then((result: any) => {
-                if (!mounted) return
-                // Check if result is from getSession (has data property)
-                if (result && result.data) {
-                    const { session } = result.data
-                    setSession(session)
-                    setUser(session?.user ?? null)
-                }
-            })
-            .catch((err) => {
-                console.warn("Auth check failed or timed out:", err)
-                if (mounted) setError(err instanceof Error ? err : new Error(String(err)))
-                // Even on error, we must stop loading to show the app (likely Login page)
-            })
-            .finally(() => {
-                if (mounted) setLoading(false)
-            })
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             if (mounted) {
-                setSession(session)
-                setUser(session?.user ?? null)
-
-                if (session?.user) {
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('*')
-                        .eq('id', session.user.id)
-                        .maybeSingle();
-                    setProfile(profile);
-                } else {
+                setSession(session);
+                setUser(session?.user ?? null);
+                if (!session) {
                     setProfile(null);
+                    setLoading(false);
                 }
-
-                setLoading(false)
             }
-        })
+        });
 
-        const fetchProfile = async (userId: string) => {
-            const { data } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle();
-            if (mounted) setProfile(data);
-        }
-
-        // Initial fetch
+        // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (mounted && session?.user) {
-                fetchProfile(session.user.id);
+            if (mounted) {
+                setSession(session);
+                setUser(session?.user ?? null);
+                setLoading(false);
             }
         });
 
         return () => {
-            mounted = false
-            subscription.unsubscribe()
+            mounted = false;
+            subscription.unsubscribe();
         }
-    }, [])
+    }, []);
+
+    // Fetch profile whenever the user ID changes
+    useEffect(() => {
+        let mounted = true;
+        if (!user) return;
+
+        const fetchProfile = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (mounted) {
+                    if (error) {
+                        console.error("Error fetching profile:", error);
+                    }
+                    setProfile(data);
+                }
+            } catch (err) {
+                console.error("Profile fetch failed:", err);
+            }
+        };
+
+        fetchProfile();
+
+        return () => {
+            mounted = false;
+        };
+    }, [user?.id]);
 
     const signInWithGoogle = async () => {
         // Use production URL if available, fallback to current origin

@@ -94,8 +94,9 @@ const AdminPage: React.FC = () => {
             setSelectedUser(u);
             setLoadingHistory(true);
             const history = await adminService.getUserHistory(u.id);
-            setUserHistory(history);
+            setUserHistory(history || []);
         } catch (error) {
+            console.error("Failed to load user history", error);
             alert("Failed to load user history");
         } finally {
             setLoadingHistory(false);
