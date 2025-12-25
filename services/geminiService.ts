@@ -183,6 +183,8 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     }
 
     textParts.push(`Camera Angle: ${settings.camera}`);
+    if (settings.lens) textParts.push(`Camera Lens characteristics: ${settings.lens}`);
+    if (settings.aperture) textParts.push(`Aperture setting: ${settings.aperture} (simulate appropriate depth of field depth).`);
   }
 
   // 3. Structural Constraints

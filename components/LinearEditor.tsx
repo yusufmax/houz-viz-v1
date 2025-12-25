@@ -12,7 +12,7 @@ import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import InteriorCustomization from './InteriorCustomization';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings } from '../types';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens } from '../types';
 import {
   generateImage, editImage,
   enhancePrompt
@@ -132,6 +132,55 @@ const ALL_ATMOSPHERES: Atmosphere[] = [
   Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter
 ];
 
+const CAMERA_CONFIGS = [
+  { val: CameraAngle.Default, icon: <LayoutTemplate size={14} />, label: 'Default' },
+  { val: CameraAngle.EyeLevel, icon: <Users size={14} />, label: 'Eye Level' },
+  { val: CameraAngle.LowAngle, icon: <ChevronDown size={14} />, label: 'HeroShot' },
+  { val: CameraAngle.WormEyeView, icon: <ChevronDown size={14} className="rotate-180" />, label: 'Worm Eye' },
+  { val: CameraAngle.BirdEyeView, icon: <Maximize size={14} />, label: 'Bird Eye' },
+  { val: CameraAngle.Drone, icon: <Cloud size={14} />, label: 'Aerial' },
+  { val: CameraAngle.StreetLevel, icon: <Car size={14} />, label: 'Street' },
+  { val: CameraAngle.ThreeQuarterView, icon: <Layers size={14} />, label: '3/4 View' },
+  { val: CameraAngle.FacadeView, icon: <Building2 size={14} />, label: 'Facade' },
+  { val: CameraAngle.InteriorWide, icon: <Maximize2 size={14} />, label: 'Int. Wide' },
+  { val: CameraAngle.ExteriorWide, icon: <ImageIcon size={14} />, label: 'Ext. Wide' },
+];
+
+const LENS_CONFIGS = [
+  { val: CameraLens.UltraWide, label: '14mm (Ultra)', desc: 'Dramatic' },
+  { val: CameraLens.Wide, label: '24mm (Wide)', desc: 'Context' },
+  { val: CameraLens.Standard, label: '50mm (Mid)', desc: 'Human' },
+  { val: CameraLens.Portrait, label: '85mm (Prime)', desc: 'Focus' },
+  { val: CameraLens.Telephoto, label: '200mm (Zoom)', desc: 'Detail' },
+];
+
+const QUICK_PRESETS = [
+  {
+    id: 'hero',
+    name: 'Hero Shot',
+    icon: <Sparkles size={14} />,
+    config: { camera: CameraAngle.LowAngle, lens: CameraLens.Wide, atmosphere: [Atmosphere.Sunset], scene: { people: true, cars: true } }
+  },
+  {
+    id: 'aerial',
+    name: 'Aerial View',
+    icon: <Cloud size={14} />,
+    config: { camera: CameraAngle.Drone, lens: CameraLens.Standard, atmosphere: [Atmosphere.Sunny], scene: { city: true, clouds: true } }
+  },
+  {
+    id: 'interior',
+    name: 'Int. Wide',
+    icon: <Maximize2 size={14} />,
+    config: { camera: CameraAngle.InteriorWide, lens: CameraLens.UltraWide, atmosphere: [Atmosphere.NaturalLight], scene: { vegetation: true } }
+  },
+  {
+    id: 'street',
+    name: 'Street Level',
+    icon: <Car size={14} />,
+    config: { camera: CameraAngle.StreetLevel, lens: CameraLens.Wide, atmosphere: [Atmosphere.Overcast], scene: { people: true, cars: true } }
+  },
+];
+
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -204,6 +253,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [resolution, setResolution] = useState<string>('4K');
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
+  const [lens, setLens] = useState<CameraLens | undefined>(undefined);
+  const [aperture, setAperture] = useState<string>('');
   const [lockInterior, setLockInterior] = useState(false);
 
   // Interior Settings State
@@ -439,6 +490,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setModel(item.metadata.model || 'gemini-2.5-flash-image');
       setResolution(item.metadata.resolution || '4K');
       setLockCamera(item.metadata.lockCamera || false);
+      setLens(item.metadata.lens as CameraLens);
+      setAperture(item.metadata.aperture || '');
       setLockInterior(item.metadata.lockInterior || false);
 
       if (item.metadata.styleReferenceImage) setStyleReferenceImage(item.metadata.styleReferenceImage);
@@ -484,6 +537,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           styleReferenceImage,
           resultImage,
           lockCamera,
+          lens,
+          aperture,
           lockInterior,
           interiorSettings: editorMode === 'interior' ? interiorSettings : undefined,
           editorMode // Save the current editor mode
@@ -734,6 +789,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         setStyleReferenceImage(state.styleReferenceImage);
         setResultImage(state.resultImage);
         if (state.lockCamera !== undefined) setLockCamera(state.lockCamera);
+        if (state.lens) setLens(state.lens as CameraLens);
+        if (state.aperture) setAperture(state.aperture);
         if (state.lockInterior !== undefined) setLockInterior(state.lockInterior);
         if (state.interiorSettings) setInteriorSettings(state.interiorSettings);
         if (state.editorMode) setEditorMode(state.editorMode);
@@ -782,6 +839,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       resolution,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false, // Only apply keepBuilding in exterior mode
       lockCamera,
+      lens,
+      aperture,
       lockInterior: editorMode === 'interior' ? lockInterior : false,
       interior: editorMode === 'interior' ? interiorSettings : undefined,
       ...settingsOverride
@@ -1369,8 +1428,38 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Cloud size={14} /> {t('atmosphere')}</label>
+              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
+                <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                  <Flame size={14} className="text-orange-400" /> Quick Presets
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {QUICK_PRESETS.map(preset => (
+                    <button
+                      key={preset.id}
+                      onClick={() => {
+                        setCamera(preset.config.camera);
+                        setLens(preset.config.lens);
+                        setAtmosphere(preset.config.atmosphere);
+                        setSceneElements(prev => ({ ...prev, ...preset.config.scene }));
+                      }}
+                      className="flex items-center gap-3 p-2.5 bg-slate-950/50 border border-slate-800 rounded-lg hover:border-indigo-500/50 hover:bg-slate-900 transition-all group"
+                    >
+                      <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-400/10 transition-colors">
+                        {preset.icon}
+                      </div>
+                      <div className="text-left">
+                        <div className="text-[11px] font-bold text-slate-200">{preset.name}</div>
+                        <div className="text-[9px] text-slate-500 truncate w-24">Pro Setup</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Sun size={14} className="text-amber-400" /> Atmosphere & Mood
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
@@ -1412,29 +1501,104 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
               {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Camera size={14} /> {t('camera')}</label>
-                <select value={camera} onChange={(e) => setCamera(e.target.value as CameraAngle)} disabled={lockCamera} className={`w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300 ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {Object.values(CameraAngle).map((c) => (<option key={c} value={c}>{c}</option>))}
-                </select>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}>{lockCamera ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}{lockCamera ? "Camera Locked" : "Lock Camera"}</button>
-                  {editorMode === 'interior' && <button onClick={() => setLockInterior(!lockInterior)} className={`flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-medium transition-all border ${lockInterior ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600'}`}>{lockInterior ? <Lock size={14} /> : <Lock size={14} className="opacity-50" />}{lockInterior ? "Interior Locked" : "Lock Interior"}</button>}
+              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                    <Aperture size={14} className="text-indigo-400" /> Optics & Perspective
+                  </label>
+                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                    {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
+                    {lockCamera ? "Locked" : "Lock"}
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="grid grid-cols-4 gap-2">
+                    {CAMERA_CONFIGS.slice(0, 8).map(opt => {
+                      const isSelected = camera === opt.val;
+                      return (
+                        <button
+                          key={opt.val}
+                          onClick={() => setCamera(opt.val)}
+                          disabled={lockCamera}
+                          className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          title={opt.val}
+                        >
+                          {opt.icon}
+                          <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                        </button>
+                      );
+                    })}
+                    <details className="col-span-4 group">
+                      <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-indigo-400 transition-colors">
+                        <ChevronDown size={12} className="group-open:rotate-180 transition-transform mr-1" />
+                        {camera.includes('Wide') || camera.includes('View') || camera.includes('Level') && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera) ? 'Custom Angle Selected' : 'Show More Angles'}
+                      </summary>
+                      <div className="grid grid-cols-4 gap-2 pt-2">
+                        {CAMERA_CONFIGS.slice(8).map(opt => {
+                          const isSelected = camera === opt.val;
+                          return (
+                            <button
+                              key={opt.val}
+                              onClick={() => setCamera(opt.val)}
+                              disabled={lockCamera}
+                              className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {opt.icon}
+                              <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                        <Maximize size={12} /> Lens (Optics)
+                      </label>
+                      <select
+                        value={lens || ''}
+                        onChange={(e) => setLens(e.target.value as CameraLens)}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"
+                      >
+                        <option value="">Default Lens</option>
+                        {LENS_CONFIGS.map(l => (
+                          <option key={l.val} value={l.val}>{l.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                        <Sparkles size={12} /> Aperture (f-stop)
+                      </label>
+                      <input
+                        type="text"
+                        value={aperture}
+                        onChange={(e) => setAperture(e.target.value)}
+                        placeholder="e.g. f/1.8"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase">{t('sceneElements')}</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.people ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Users size={14} /> {t('people')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.cars ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Car size={14} /> {t('cars')}</button>}
-                  <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.vegetation ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Trees size={14} /> {editorMode === 'interior' ? "Indoor Plants" : t('greenery')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.clouds ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Cloud size={14} /> {t('clouds')}</button>}
+              <div className="space-y-3">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <Layers size={14} className="text-emerald-400" /> Scene Elements
+                </label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Users size={12} /> {t('people')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Car size={12} /> {t('cars')}</button>}
+                  <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Cloud size={12} /> {t('clouds')}</button>}
                   {editorMode !== 'interior' && (
                     <>
-                      <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.city ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Building2 size={14} /> {t('city')}</button>
-                      <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.motionBlur ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Wind size={14} /> {t('motionBlur')}</button>
-                      <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 p-2 rounded border text-xs transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-900 border-slate-700 text-slate-400'}`}><Zap size={14} /> {t('enhanceFacade')}</button>
+                      <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Building2 size={12} /> {t('city')}</button>
+                      <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Wind size={12} /> {t('motionBlur')}</button>
+                      <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
                     </>
                   )}
                 </div>

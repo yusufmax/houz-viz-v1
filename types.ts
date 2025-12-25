@@ -168,7 +168,14 @@ export enum CameraAngle {
   Isometric = 'Isometric View',
   TopDown = 'Top Down Plan View',
   CloseUp = 'Close Up Detail',
-  WideAngle = 'Wide Angle / Interior'
+  WideAngle = 'Wide Angle / Interior',
+  ThreeQuarterView = 'Three Quarter View',
+  WormEyeView = 'Worm Eye View',
+  BirdEyeView = 'Bird Eye View',
+  StreetLevel = 'Street Level',
+  FacadeView = 'Facade View',
+  InteriorWide = 'Interior Wide Angle',
+  ExteriorWide = 'Exterior Wide Angle'
 }
 
 export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | 'Original';
@@ -193,6 +200,8 @@ export interface GenerationSettings {
   sceneElements: SceneElements;
   styleReferenceImage?: string | null;
   model?: string;
+  lens?: CameraLens;
+  aperture?: string;
   resolution?: string;
   keepBuilding?: boolean;
   lockCamera?: boolean;
