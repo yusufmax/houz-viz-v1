@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
-import { GenerationSettings, RenderStyle, Atmosphere, CameraAngle } from "../types";
+import { GenerationSettings, RenderStyle, Atmosphere, CameraAngle, ModelGenSettings } from "../types";
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
@@ -555,5 +555,49 @@ export const transcribeAudio = async (audioBase64: string, mimeType: string): Pr
   } catch (error) {
     console.error("Transcription failed:", error);
     throw new Error("Failed to transcribe audio");
+  }
+};
+
+/**
+ * Generates a custom AI model based on specified attributes.
+ */
+export const generateCustomModel = async (settings: ModelGenSettings): Promise<string> => {
+  try {
+    const prompt = `Highly photorealistic, professional fashion photography of a model.
+Attributes:
+- Nationality/Ethnicity: ${settings.nationality || 'Any'}
+- Age: ${settings.age || '20s'}
+- Skin Tone: ${settings.skinTone || 'Natural'}
+- Pose: ${settings.pose || 'Standing, facing camera'}
+
+Style: High-end magazine spread, 8k resolution, sharp focus, neutral studio background, flattering lighting.
+Task: The model should be clearly visible and centered, suitable for a virtual clothing try-on application.`;
+
+    const config: any = {
+      responseModalities: [Modality.IMAGE],
+      imageConfig: {
+        aspectRatio: '3:4', // Best for fashion/portraits
+        imageSize: '4K'
+      }
+    };
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: config
+    });
+
+    const candidates = response.candidates;
+    if (candidates && candidates[0]?.content?.parts) {
+      for (const part of candidates[0].content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          return `data:image/png;base64,${part.inlineData.data}`;
+        }
+      }
+    }
+    throw new Error("Failed to generate custom model image");
+  } catch (error) {
+    console.error("Model Generation Error:", error);
+    throw error;
   }
 };

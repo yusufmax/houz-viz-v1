@@ -18,7 +18,9 @@ import {
     Sun,
     Layout,
     Layers,
-    Sparkles
+    Sparkles,
+    Users,
+    UserCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
@@ -62,6 +64,15 @@ const STYLE_PREVIEWS: Record<SuperRenderStyle, string> = {
     [SuperRenderStyle.SurrealViz]: 'https://images.unsplash.com/photo-1550684847-75bdda21cc95?w=500&q=80'
 };
 
+const PRESET_MODELS = [
+    { id: 'm1', url: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=500&q=80', label: 'Female Studio' },
+    { id: 'm2', url: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500&q=80', label: 'Female Lifestyle' },
+    { id: 'm3', url: 'https://images.unsplash.com/photo-1488161628813-04466f872be2?w=500&q=80', label: 'Male Casual' },
+    { id: 'm4', url: 'https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?w=500&q=80', label: 'Male Suit' },
+    { id: 'm5', url: 'https://images.unsplash.com/photo-1529139513066-b209b4a995a4?w=500&q=80', label: 'Editorial' },
+    { id: 'm6', url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80', label: 'Minimalist' }
+];
+
 const SuperEditor: React.FC = () => {
     const { user } = useAuth();
     const { t } = useLanguage();
@@ -93,11 +104,19 @@ const SuperEditor: React.FC = () => {
         isMoodboard: false,
         generateMultiAngle: false,
         isVirtualTryOn: false,
-        garmentImage: null
+        garmentImage: null,
+        modelGen: {
+            age: '20s',
+            skinTone: 'Natural',
+            nationality: 'Any',
+            pose: 'Standing, facing camera'
+        }
     });
 
     // UI State
     const [showStyles, setShowStyles] = useState(true);
+    const [showModelGen, setShowModelGen] = useState(false);
+    const [isGeneratingModel, setIsGeneratingModel] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
     const [drawingTarget, setDrawingTarget] = useState<'source' | 'result' | null>(null);
     const [history, setHistory] = useState<any[]>([]);
@@ -128,6 +147,21 @@ const SuperEditor: React.FC = () => {
             setHistory(items);
         } catch (e) {
             console.error("Failed to load history", e);
+        }
+    };
+
+    const handleGenerateModel = async () => {
+        if (!user) return;
+        setIsGeneratingModel(true);
+        try {
+            const result = await geminiService.generateCustomModel(superSettings.modelGen!);
+            setSourceImage(result);
+            setShowModelGen(false);
+        } catch (e: any) {
+            console.error(e);
+            alert(e.message || "Model generation failed");
+        } finally {
+            setIsGeneratingModel(false);
         }
     };
 
@@ -287,6 +321,121 @@ const SuperEditor: React.FC = () => {
                                 </div>
                             )}
                         </div>
+
+                        {superSettings.isVirtualTryOn && (
+                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                        <Users size={12} className="text-indigo-400" /> Quick Model Library
+                                    </label>
+                                    <span className="text-[9px] text-slate-600 font-medium">Select a preset to begin</span>
+                                </div>
+                                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none mask-fade-right">
+                                    {PRESET_MODELS.map((m) => (
+                                        <button
+                                            key={m.id}
+                                            onClick={() => setSourceImage(m.url)}
+                                            className={`flex-shrink-0 group relative w-16 h-20 rounded-lg overflow-hidden border-2 transition-all ${sourceImage === m.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
+                                                }`}
+                                        >
+                                            <img src={m.url} alt={m.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                            <div className={`absolute inset-0 bg-indigo-600/20 border-2 border-indigo-500 transition-opacity ${sourceImage === m.url ? 'opacity-100' : 'opacity-0'}`} />
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {superSettings.isVirtualTryOn && (
+                            <div className="space-y-4 pt-2">
+                                <button
+                                    onClick={() => setShowModelGen(!showModelGen)}
+                                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${showModelGen ? 'bg-indigo-500/10 border-indigo-500/50 text-indigo-300' : 'bg-slate-900/50 border-slate-800 text-slate-400 hover:border-slate-700'}`}
+                                >
+                                    <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
+                                        <UserCircle size={14} /> AI Model Generator
+                                    </div>
+                                    <Sparkles size={14} className={showModelGen ? 'animate-pulse' : ''} />
+                                </button>
+
+                                {showModelGen && (
+                                    <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 space-y-5 animate-in slide-in-from-top-4 duration-300">
+                                        <div className="grid grid-cols-2 gap-4 text-left">
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Nationality</label>
+                                                <select
+                                                    value={superSettings.modelGen?.nationality}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, nationality: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Any</option>
+                                                    <option>European</option>
+                                                    <option>Asian</option>
+                                                    <option>African</option>
+                                                    <option>Middle Eastern</option>
+                                                    <option>Latin American</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Age Group</label>
+                                                <select
+                                                    value={superSettings.modelGen?.age}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, age: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Teen</option>
+                                                    <option>20s</option>
+                                                    <option>30s</option>
+                                                    <option>40s</option>
+                                                    <option>Senior</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Skin Tone</label>
+                                                <select
+                                                    value={superSettings.modelGen?.skinTone}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, skinTone: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Fair</option>
+                                                    <option>Tan</option>
+                                                    <option>Dark</option>
+                                                    <option>Golden</option>
+                                                    <option>Natural</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Pose</label>
+                                                <select
+                                                    value={superSettings.modelGen?.pose}
+                                                    onChange={(e) => setSuperSettings(prev => ({ ...prev, modelGen: { ...prev.modelGen, pose: e.target.value } }))}
+                                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500"
+                                                >
+                                                    <option>Standing, facing camera</option>
+                                                    <option>Side profile</option>
+                                                    <option>Seated</option>
+                                                    <option>Dynamic motion</option>
+                                                    <option>Fashion walk</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={handleGenerateModel}
+                                            disabled={isGeneratingModel}
+                                            className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-widest shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all disabled:bg-slate-800 disabled:text-slate-600"
+                                        >
+                                            {isGeneratingModel ? (
+                                                <><Loader2 size={16} className="animate-spin" /> Materializing...</>
+                                            ) : (
+                                                <><Sparkles size={16} /> Generate & Use Model</>
+                                            )}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {superSettings.isVirtualTryOn && (
                             <p className="text-[10px] text-slate-500 italic bg-indigo-500/5 p-2 rounded-lg border border-indigo-500/10">
                                 Tip: For best results, use a model facing forward and clear flat-lay or worn images of clothes.

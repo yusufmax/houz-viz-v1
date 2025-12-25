@@ -220,6 +220,14 @@ export interface SuperModeSettings {
   shutterSpeed?: string;
   isVirtualTryOn?: boolean;
   garmentImage?: string | null;
+  modelGen?: ModelGenSettings;
+}
+
+export interface ModelGenSettings {
+  age?: string;
+  skinTone?: string;
+  nationality?: string;
+  pose?: string;
 }
 
 export interface InteriorSettings {
