@@ -113,7 +113,7 @@ const InfinityCanvas: React.FC = () => {
     const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
 
     // Model Selection
-    const [selectedModel, setSelectedModel] = useState<string>('gemini-3-pro-image-preview');
+    const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash-image');
 
     // Quota
     const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);

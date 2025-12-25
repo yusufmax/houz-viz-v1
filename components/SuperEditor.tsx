@@ -300,46 +300,59 @@ const SuperEditor: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className={`grid gap-4 transition-all ${superSettings.isVirtualTryOn ? 'grid-cols-2 h-44' : 'grid-cols-1 h-48'}`}>
-                            <div className="relative">
+                        <div className={`grid gap-4 transition-all ${superSettings.isVirtualTryOn ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                            <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group">
                                 <ImageUpload
                                     selectedImage={sourceImage}
                                     onImageSelected={setSourceImage}
-                                    label={superSettings.isVirtualTryOn ? "Upload Model Image" : "Upload Raw Product"}
+                                    label={superSettings.isVirtualTryOn ? "Base Model" : "Product Image"}
                                 />
-                                {superSettings.isVirtualTryOn && <div className="absolute top-2 left-2 px-2 py-0.5 bg-indigo-600/80 backdrop-blur rounded text-[8px] font-bold uppercase">Base Model</div>}
+                                {sourceImage && superSettings.isVirtualTryOn && (
+                                    <div className="absolute top-3 left-3 px-2 py-1 bg-indigo-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
+                                        Base Model
+                                    </div>
+                                )}
                             </div>
 
                             {superSettings.isVirtualTryOn && (
-                                <div className="relative animate-in slide-in-from-right-4 duration-300">
+                                <div className="relative aspect-[3/4] bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden group animate-in zoom-in-95 duration-300">
                                     <ImageUpload
                                         selectedImage={superSettings.garmentImage || null}
                                         onImageSelected={(img) => setSuperSettings(prev => ({ ...prev, garmentImage: img }))}
-                                        label="Upload Clothing"
+                                        label="Clothing"
                                     />
-                                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-purple-600/80 backdrop-blur rounded text-[8px] font-bold uppercase">Garment</div>
+                                    {superSettings.garmentImage && (
+                                        <div className="absolute top-3 left-3 px-2 py-1 bg-purple-600/90 backdrop-blur-md rounded-lg text-[9px] font-black uppercase tracking-widest shadow-xl pointer-events-none">
+                                            Garment
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
 
                         {superSettings.isVirtualTryOn && (
-                            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                        <Users size={12} className="text-indigo-400" /> Quick Model Library
+                            <div className="space-y-4 pt-4 border-t border-slate-800/50 animate-in fade-in slide-in-from-top-4 duration-700 delay-150">
+                                <div className="flex items-center justify-between px-1">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <Users size={12} className="text-indigo-400" /> Model Library
                                     </label>
-                                    <span className="text-[9px] text-slate-600 font-medium">Select a preset to begin</span>
+                                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider">Quick Select</span>
                                 </div>
-                                <div className="flex gap-2.5 overflow-x-auto pb-2 scrollbar-none mask-fade-right">
+                                <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-800">
                                     {PRESET_MODELS.map((m) => (
                                         <button
                                             key={m.id}
                                             onClick={() => setSourceImage(m.url)}
-                                            className={`flex-shrink-0 group relative w-16 h-20 rounded-lg overflow-hidden border-2 transition-all ${sourceImage === m.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20 ring-2 ring-indigo-500/20' : 'border-slate-800 hover:border-slate-600'
+                                            className={`flex-shrink-0 group relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all duration-300 transform active:scale-95 ${sourceImage === m.url
+                                                ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.3)] ring-4 ring-indigo-500/10'
+                                                : 'border-slate-800 hover:border-slate-600 hover:shadow-lg'
                                                 }`}
                                         >
-                                            <img src={m.url} alt={m.label} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                            <div className={`absolute inset-0 bg-indigo-600/20 border-2 border-indigo-500 transition-opacity ${sourceImage === m.url ? 'opacity-100' : 'opacity-0'}`} />
+                                            <img src={m.url} alt={m.label} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                            <div className={`absolute inset-0 bg-indigo-600/10 transition-opacity ${sourceImage === m.url ? 'opacity-100' : 'opacity-0'}`} />
+                                            <div className="absolute bottom-0 inset-x-0 p-1 bg-slate-950/80 backdrop-blur-sm transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                                <p className="text-[8px] font-black uppercase text-center truncate">{m.label}</p>
+                                            </div>
                                         </button>
                                     ))}
                                 </div>
