@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film, Settings } from 'lucide-react';
+import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film, Settings, ShieldAlert } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
 import VideoEditor from './components/VideoEditor';
@@ -33,9 +33,9 @@ const Home: React.FC = () => {
   const [mode, setMode] = useState<Mode>(initialMode);
   const [showInstructions, setShowInstructions] = useState(false);
   const { lang, setLang, t } = useLanguage();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const isAdmin = profile?.is_admin || false;
 
   useEffect(() => {
     const handleAgentAction = (event: CustomEvent) => {
@@ -66,13 +66,6 @@ const Home: React.FC = () => {
       }
     };
     loadQuota();
-
-    const checkAdmin = async () => {
-      if (!user) return;
-      const isAdm = await adminService.checkIsAdmin(user.id);
-      setIsAdmin(isAdm);
-    };
-    checkAdmin();
 
     // Refresh quota every 10 seconds
     const interval = setInterval(loadQuota, 10000);
@@ -198,7 +191,7 @@ const Home: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { session, loading } = useAuth();
+  const { session, loading, profile } = useAuth();
 
   if (loading) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
@@ -206,6 +199,28 @@ const AppContent: React.FC = () => {
 
   if (!session) {
     return <LoginPage />;
+  }
+
+  if (profile?.is_banned) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
+        <div className="bg-slate-900 border border-red-500/30 p-12 rounded-3xl max-w-md shadow-2xl">
+          <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <ShieldAlert className="text-red-500" size={40} />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Access Restricted</h2>
+          <p className="text-slate-400 leading-relaxed mb-8">
+            Your account has been restricted by an administrator. If you believe this is a mistake, please contact support.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all shadow-lg"
+          >
+            Check Status
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

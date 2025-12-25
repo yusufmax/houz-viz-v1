@@ -70,5 +70,64 @@ export const adminService = {
         }
 
         return data?.is_admin || false;
+    },
+
+    /**
+     * Ban or unban a user
+     */
+    async banUser(userId: string, isBanned: boolean) {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ is_banned: isBanned })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error banning user:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Delete a user profile and their history (Auth remains unless Edge function used)
+     */
+    async deleteUser(userId: string) {
+        // We delete history first if cascade isn't set, although migration says 'on delete cascade'
+        const { error: historyError } = await supabase
+            .from('generation_history')
+            .delete()
+            .eq('user_id', userId);
+
+        if (historyError) {
+            console.error('Error deleting user history:', historyError);
+            throw historyError;
+        }
+
+        const { error: profileError } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId);
+
+        if (profileError) {
+            console.error('Error deleting user profile:', profileError);
+            throw profileError;
+        }
+    },
+
+    /**
+     * Get generation history for a specific user
+     */
+    async getUserHistory(userId: string) {
+        const { data, error } = await supabase
+            .from('generation_history')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching user history:', error);
+            throw error;
+        }
+
+        return data;
     }
 };

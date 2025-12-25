@@ -267,6 +267,7 @@ export interface Profile {
   generations_used: number;
   is_admin_visible?: boolean;
   is_admin?: boolean;
+  is_banned?: boolean;
 }
 export interface Project {
   id: string;

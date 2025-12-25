@@ -9,6 +9,7 @@ interface AuthContextType {
     error: Error | null
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
+    profile: any | null
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -16,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null)
     const [user, setUser] = useState<User | null>(null)
+    const [profile, setProfile] = useState<any | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
 
@@ -50,13 +52,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (mounted) setLoading(false)
             })
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (mounted) {
                 setSession(session)
                 setUser(session?.user ?? null)
+
+                if (session?.user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('*')
+                        .eq('id', session.user.id)
+                        .maybeSingle();
+                    setProfile(profile);
+                } else {
+                    setProfile(null);
+                }
+
                 setLoading(false)
             }
         })
+
+        const fetchProfile = async (userId: string) => {
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .maybeSingle();
+            if (mounted) setProfile(data);
+        }
+
+        // Initial fetch
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (mounted && session?.user) {
+                fetchProfile(session.user.id);
+            }
+        });
 
         return () => {
             mounted = false
@@ -85,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     return (
-        <AuthContext.Provider value={{ session, user, loading, error, signInWithGoogle, signOut }}>
+        <AuthContext.Provider value={{ session, user, loading, error, signInWithGoogle, signOut, profile }}>
             {children}
         </AuthContext.Provider>
     )
