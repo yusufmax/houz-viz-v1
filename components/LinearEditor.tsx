@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
-  Zap, Cloud, Camera, LayoutTemplate, Loader2, Mic, MicOff,
-  Users, Car, Wind, Building2, Trees, Wand2, Palette, Pencil, Sun, Moon, CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, ChevronRight, ChevronDown, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Lock, Sparkles, Layers, Film, X
+  X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees,
+  Building2, Wind, Zap, Loader2, Pencil, Pen, Lock, LayoutTemplate,
+  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -109,7 +109,8 @@ const STYLE_CATEGORIES: Record<EditorMode, RenderStyle[]> = {
     RenderStyle.Modernist, RenderStyle.Minimalist, RenderStyle.Brutalism, RenderStyle.Bauhaus,
     RenderStyle.Colonial, RenderStyle.Rustic, RenderStyle.Parametric, RenderStyle.IndustrialLoft,
     RenderStyle.PanArabic, RenderStyle.Asian, RenderStyle.Scandic, RenderStyle.Tropical,
-    RenderStyle.Biophilic, RenderStyle.GlassFacade, RenderStyle.Sustainable, RenderStyle.Cottage, RenderStyle.Alpine, RenderStyle.DesertModern
+    RenderStyle.Biophilic, RenderStyle.GlassFacade, RenderStyle.Sustainable, RenderStyle.Cottage, RenderStyle.Alpine, RenderStyle.DesertModern,
+    RenderStyle.Sketch
   ],
   interior: [
     RenderStyle.HomeScandi, RenderStyle.HomeJapandi, RenderStyle.HomeBoho, RenderStyle.HomeIndustrial,
@@ -118,7 +119,8 @@ const STYLE_CATEGORIES: Record<EditorMode, RenderStyle[]> = {
     RenderStyle.OfficeOpenPlan, RenderStyle.OfficeExecutive, RenderStyle.OfficeCreative, RenderStyle.OfficeTech, RenderStyle.OfficeBiophilic,
     RenderStyle.RetailBoutique, RenderStyle.RetailShowroom, RenderStyle.RetailMall, RenderStyle.RetailMinimal,
     RenderStyle.HospHotelLobby, RenderStyle.HospRestaurant, RenderStyle.HospCafe, RenderStyle.HospBar,
-    RenderStyle.SalesRealEstate, RenderStyle.SalesReception, RenderStyle.SalesGallery
+    RenderStyle.SalesRealEstate, RenderStyle.SalesReception, RenderStyle.SalesGallery,
+    RenderStyle.Sketch
   ]
 };
 
@@ -286,13 +288,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // Setup tool executor for Agentic Mode
   useEffect(() => {
     setToolExecutor((toolName: string, args: any) => {
-      console.log(`🔧 Executing tool: ${toolName}`, args);
+      console.log(`🔧 Executing tool: ${toolName} `, args);
 
       switch (toolName) {
         case 'selectStyle':
           if (args.style && Object.values(RenderStyle).includes(args.style)) {
             setStyle(args.style as RenderStyle);
-            console.log(`✅ Style changed to: ${args.style}`);
+            console.log(`✅ Style changed to: ${args.style} `);
           }
           break;
 
@@ -303,7 +305,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               .slice(0, 3); // Max 3 atmospheres
             if (validAtmospheres.length > 0) {
               setAtmosphere(validAtmospheres as Atmosphere[]);
-              console.log(`✅ Atmospheres changed to: ${validAtmospheres.join(', ')}`);
+              console.log(`✅ Atmospheres changed to: ${validAtmospheres.join(', ')} `);
             }
           }
           break;
@@ -311,28 +313,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         case 'setCameraAngle':
           if (args.angle && Object.values(CameraAngle).includes(args.angle)) {
             setCamera(args.angle as CameraAngle);
-            console.log(`✅ Camera angle changed to: ${args.angle}`);
+            console.log(`✅ Camera angle changed to: ${args.angle} `);
           }
           break;
 
         case 'setModel':
           if (args.model) {
             setModel(args.model);
-            console.log(`✅ Model changed to: ${args.model}`);
+            console.log(`✅ Model changed to: ${args.model} `);
           }
           break;
 
         case 'setResolution':
           if (args.resolution) {
             setResolution(args.resolution);
-            console.log(`✅ Resolution changed to: ${args.resolution}`);
+            console.log(`✅ Resolution changed to: ${args.resolution} `);
           }
           break;
 
         case 'setAspectRatio':
           if (args.aspectRatio) {
             setAspectRatio(args.aspectRatio);
-            console.log(`✅ Aspect ratio changed to: ${args.aspectRatio}`);
+            console.log(`✅ Aspect ratio changed to: ${args.aspectRatio} `);
           }
           break;
 
@@ -342,7 +344,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               ...prev,
               [args.element]: args.enabled
             }));
-            console.log(`✅ Scene element ${args.element} ${args.enabled ? 'enabled' : 'disabled'}`);
+            console.log(`✅ Scene element ${args.element} ${args.enabled ? 'enabled' : 'disabled'} `);
           }
           break;
 
@@ -353,9 +355,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               ...args.elements
             }));
             const changed = Object.entries(args.elements)
-              .map(([key, val]) => `${key}: ${val ? 'on' : 'off'}`)
+              .map(([key, val]) => `${key}: ${val ? 'on' : 'off'} `)
               .join(', ');
-            console.log(`✅ Scene elements updated: ${changed}`);
+            console.log(`✅ Scene elements updated: ${changed} `);
           }
           break;
 
@@ -364,7 +366,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             setPrompt(args.prompt);
             // Trigger generation after a short delay to let prompt update
             setTimeout(() => handleGenerate(), 100);
-            console.log(`✅ Generating image with prompt: ${args.prompt}`);
+            console.log(`✅ Generating image with prompt: ${args.prompt} `);
           }
           break;
 
@@ -373,7 +375,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           break;
 
         default:
-          console.warn(`⚠️ Unknown tool: ${toolName}`);
+          console.warn(`⚠️ Unknown tool: ${toolName} `);
       }
     });
   }, [sourceImage, setToolExecutor, setStyle, setAtmosphere, setCamera, setModel, setResolution, setAspectRatio, setSceneElements, setPrompt]);
@@ -811,7 +813,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       return;
     }
 
-    if (!prompt) {
+    if (!prompt && !settingsOverride?.prompt) {
       alert(t('enterPrompt'));
       return;
     }
@@ -819,7 +821,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     const cost = calculateCost();
     const currentQuota = await quotaService.getUserQuota(user.id);
     if (!currentQuota || currentQuota.remaining < cost) {
-      alert(`Not enough credits. This generation costs ${cost} credits.`);
+      alert(`Not enough credits.This generation costs ${cost} credits.`);
       return;
     }
 
@@ -874,6 +876,23 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
+
+  const handleSketchify = async () => {
+    if (!resultImage) return;
+
+    // Use current prompt if available, otherwise default to a high-quality sketch prompt
+    const sketchPrompt = prompt || "Highly detailed architectural sketch, technical line drawing, ink on paper, professional draft";
+
+    await executeGeneration(resultImage, {
+      prompt: sketchPrompt,
+      style: RenderStyle.Sketch,
+      atmosphere: [],
+      sceneElements: { ...sceneElements, people: false, cars: false },
+      lockCamera: true,
+      keepBuilding: true
+    });
+  };
+
   const processBatch = async () => {
     if (!user) {
       alert("Please sign in to generate images.");
@@ -897,7 +916,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     // Confirm with user
     const confirmed = window.confirm(
-      `This batch will process ${batchImages.length} image${batchImages.length > 1 ? 's' : ''} and use ${requiredCredits} credit${requiredCredits > 1 ? 's' : ''}.\n\nContinue?`
+      `This batch will process ${batchImages.length} image${batchImages.length > 1 ? 's' : ''} and use ${requiredCredits} credit${requiredCredits > 1 ? 's' : ''}.\n\nContinue ? `
     );
 
     if (!confirmed) return;
@@ -930,7 +949,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         results.push({ input: batchImages[i], output: result, index: i });
         await quotaService.incrementUsage(user.id);
       } catch (error) {
-        console.error(`Failed to process image ${i + 1}:`, error);
+        console.error(`Failed to process image ${i + 1}: `, error);
         results.push({ input: batchImages[i], output: null, index: i });
       }
     }
@@ -1089,7 +1108,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       saveToHistory(upscaled, "Upscaled: " + prompt);
     } catch (e: any) {
       console.error("Upscale failed", e);
-      alert(`Upscale failed: ${e.message}`);
+      alert(`Upscale failed: ${e.message} `);
     } finally {
       setIsUpscaling(false);
     }
@@ -1275,7 +1294,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
+                  } `}
               >
                 <Layers size={16} />
                 {batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}
@@ -1670,6 +1689,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               )}
               {resultImage && (
                 <button
+                  onClick={handleSketchify}
+                  className="flex items-center gap-2 text-xs bg-amber-600 hover:bg-amber-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 font-bold"
+                  title="Generate a sketch from this render"
+                >
+                  <Pen size={14} /> Sketchify
+                </button>
+              )}
+              {resultImage && (
+                <button
                   onClick={async () => {
                     try {
                       const response = await fetch(resultImage);
@@ -1684,7 +1712,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       window.URL.revokeObjectURL(url);
                     } catch (err: any) {
                       console.error("Download failed", err);
-                      alert(`Download failed: ${err.message}`);
+                      alert(`Download failed: ${err.message} `);
                     }
                   }}
                   className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"

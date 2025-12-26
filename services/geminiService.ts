@@ -177,6 +177,9 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
   } else {
     textParts.push(`Subject: ${settings.prompt}`);
     textParts.push(`Style: ${settings.style}`);
+    if (settings.style === RenderStyle.Sketch) {
+      textParts.push("STRICT STYLE INSTRUCTION: Generate a highly detailed architectural sketch. Use clean technical line work, technical ink on paper, and professional drafting aesthetics. Avoid photorealistic textures, instead focus on sharp outlines and technical hatching.");
+    }
 
     if (settings.atmosphere && settings.atmosphere.length > 0) {
       textParts.push(`Atmosphere/Mood: ${settings.atmosphere.join(', ')}`);

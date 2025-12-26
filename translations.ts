@@ -48,6 +48,7 @@ export const translations = {
     // Results
     upscale: "Upscale",
     edit: "Edit",
+    sketchify: "Sketchify",
     simulating: "Simulating photons...",
     // Infinity
     addNode: "Add Node",
@@ -123,6 +124,7 @@ export const translations = {
     "Pencil Drawing": "Pencil Drawing",
     "Blueprint": "Blueprint",
     "Chalk Sketch": "Chalk Sketch",
+    "Sketch / Drawing": "Sketch / Drawing",
 
     // Interior - Home
     "Interior Home: Scandinavian": "Home: Scandinavian",
@@ -239,6 +241,7 @@ export const translations = {
     // Results
     upscale: "Улучшить",
     edit: "Редакт.",
+    sketchify: "Эскиз",
     simulating: "Симуляция фотонов...",
     // Infinity
     addNode: "Добавить узел",
@@ -314,6 +317,7 @@ export const translations = {
     "Pencil Drawing": "Карандаш",
     "Blueprint": "Чертеж",
     "Chalk Sketch": "Мел",
+    "Sketch / Drawing": "Эскиз / Рисунок",
 
     // Interior - Home
     "Interior Home: Scandinavian": "Дом: Скандинавский",
@@ -430,6 +434,7 @@ export const translations = {
     // Results
     upscale: "Kattalashtirish",
     edit: "Tahrirlash",
+    sketchify: "Eskiz qilish",
     simulating: "Fotonlar simulyatsiyasi...",
     // Infinity
     addNode: "Tugun qo'shish",
@@ -509,6 +514,7 @@ export const translations = {
     "Pencil Drawing": "Qalam tasviri",
     "Blueprint": "Chizma",
     "Chalk Sketch": "Bo'r",
+    "Sketch / Drawing": "Eskiz / Chizish",
 
     // Interior - Home
     "Interior Home: Scandinavian": "Uy: Skandinaviya",
