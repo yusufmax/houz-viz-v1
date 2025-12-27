@@ -82,7 +82,7 @@ const PdfPageSelector: React.FC<PdfPageSelectorProps> = ({ file, onSelect, onCan
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-            <div className="bg-slate-900 w-full max-w-2xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-slate-900 w-full max-w-2xl rounded-2xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col h-[90dvh] max-h-[95vh]">
 
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50">
@@ -115,7 +115,7 @@ const PdfPageSelector: React.FC<PdfPageSelectorProps> = ({ file, onSelect, onCan
                 </div>
 
                 {/* Controls */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between gap-4">
+                <div className="p-4 pb-safe border-t border-slate-800 bg-slate-900/50 flex items-center justify-between gap-4">
 
                     {/* Pagination */}
                     <div className="flex items-center gap-2 bg-slate-800 rounded-lg p-1">

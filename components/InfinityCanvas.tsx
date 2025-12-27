@@ -608,13 +608,121 @@ const InfinityCanvas: React.FC = () => {
         return () => canvas.removeEventListener('wheel', onWheel);
     }, []);
 
-    const getMouseWorldPos = (e: React.MouseEvent) => {
+    const getMouseWorldPos = (e: React.MouseEvent | React.TouchEvent) => {
         if (!canvasRef.current) return { x: 0, y: 0 };
         const rect = canvasRef.current.getBoundingClientRect();
+
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = (e as React.MouseEvent).clientX;
+            clientY = (e as React.MouseEvent).clientY;
+        }
+
         return {
-            x: (e.clientX - rect.left - pan.x) / zoom,
-            y: (e.clientY - rect.top - pan.y) / zoom
+            x: (clientX - rect.left - pan.x) / zoom,
+            y: (clientY - rect.top - pan.y) / zoom
         };
+    };
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        setContextMenu(null);
+        if (e.touches.length === 1) {
+            setIsDraggingCanvas(true);
+            setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+        }
+    };
+
+    const handleNodeTouchStart = (e: React.TouchEvent, id: string) => {
+        e.stopPropagation();
+        bringToFront(id);
+        setDraggedNodeId(id);
+        const worldPos = getMouseWorldPos(e);
+        const node = nodes.find(n => n.id === id);
+        if (node) {
+            setDragNodeOffset({ x: worldPos.x - node.x, y: worldPos.y - node.y });
+        }
+    };
+
+    const handleResizeTouchStart = (e: React.TouchEvent, id: string) => {
+        e.stopPropagation();
+        setResizingNodeId(id);
+    };
+
+    const handlePortTouchStart = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output') => {
+        e.stopPropagation();
+        if (type === 'output') {
+            setConnectingNodeId(nodeId);
+        }
+    };
+
+    const handlePortTouchEnd = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output') => {
+        e.stopPropagation();
+        if (connectingNodeId && type === 'input' && connectingNodeId !== nodeId) {
+            if (!connections.find(c => c.from === connectingNodeId && c.to === nodeId)) {
+                setConnections(prev => [...prev, {
+                    id: `c-${Date.now()}`,
+                    from: connectingNodeId,
+                    to: nodeId
+                }]);
+                setNodes(prev => prev.map(n =>
+                    n.id === nodeId ? { ...n, inputs: [...n.inputs, connectingNodeId] } : n
+                ));
+            }
+            setConnectingNodeId(null);
+        }
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        if (e.touches.length === 1) {
+            const currentMousePos = getMouseWorldPos(e);
+            setMousePos(currentMousePos);
+
+            if (resizingNodeId) {
+                setNodes(prev => prev.map(n => {
+                    if (n.id === resizingNodeId) {
+                        const newWidth = Math.max(200, currentMousePos.x - n.x);
+                        const newHeight = Math.max(100, currentMousePos.y - n.y);
+                        return { ...n, width: newWidth, height: newHeight };
+                    }
+                    return n;
+                }));
+                return;
+            }
+
+            if (isDraggingCanvas) {
+                const dx = e.touches[0].clientX - dragStart.x;
+                const dy = e.touches[0].clientY - dragStart.y;
+                setPan(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+                setDragStart({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+            } else if (draggedNodeId) {
+                setNodes(prev => prev.map(n =>
+                    n.id === draggedNodeId
+                        ? { ...n, x: currentMousePos.x - dragNodeOffset.x, y: currentMousePos.y - dragNodeOffset.y }
+                        : n
+                ));
+            }
+        }
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (connectingNodeId) {
+            const rect = canvasRef.current!.getBoundingClientRect();
+            const touch = e.changedTouches[0];
+            setContextMenu({
+                x: touch.clientX - rect.left,
+                y: touch.clientY - rect.top,
+                show: true,
+                fromNodeId: connectingNodeId
+            });
+        }
+
+        setIsDraggingCanvas(false);
+        setDraggedNodeId(null);
+        setConnectingNodeId(null);
+        setResizingNodeId(null);
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -1222,6 +1330,9 @@ const InfinityCanvas: React.FC = () => {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
             onContextMenu={(e) => { e.preventDefault(); handleMouseDown(e); setContextMenu({ x: e.clientX - canvasRef.current!.getBoundingClientRect().left, y: e.clientY - canvasRef.current!.getBoundingClientRect().top, show: true }); }}
         >
 
@@ -1376,6 +1487,7 @@ const InfinityCanvas: React.FC = () => {
                                 height: isCollapsed ? 'auto' : (node.height ? `${node.height}px` : 'auto')
                             }}
                             onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
+                            onTouchStart={(e) => handleNodeTouchStart(e, node.id)}
                         >
                             {/* Node Header */}
                             <div className="h-8 border-b border-slate-800 px-3 flex items-center justify-between bg-slate-900/50 rounded-t-xl flex-none">
@@ -1793,6 +1905,8 @@ const InfinityCanvas: React.FC = () => {
                                     className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'input')}
                                     onMouseUp={(e) => handlePortMouseUp(e, node.id, 'input')}
+                                    onTouchStart={(e) => handlePortTouchStart(e, node.id, 'input')}
+                                    onTouchEnd={(e) => handlePortTouchEnd(e, node.id, 'input')}
                                     title="Input"
                                 >
                                     <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none"></div>
@@ -1804,6 +1918,7 @@ const InfinityCanvas: React.FC = () => {
                                 <div
                                     className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
+                                    onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Output"
                                 >
                                     <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none"></div>
@@ -1815,6 +1930,7 @@ const InfinityCanvas: React.FC = () => {
                                 <div
                                     className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-emerald-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
+                                    onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Text Output"
                                 >
                                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full pointer-events-none"></div>
@@ -1826,6 +1942,7 @@ const InfinityCanvas: React.FC = () => {
                                 <div
                                     className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
+                                    onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Chain Result"
                                 >
                                     <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none"></div>
@@ -1836,6 +1953,7 @@ const InfinityCanvas: React.FC = () => {
                             <div
                                 className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize z-20 flex items-center justify-center text-slate-600 hover:text-slate-400"
                                 onMouseDown={(e) => handleResizeMouseDown(e, node.id)}
+                                onTouchStart={(e) => handleResizeTouchStart(e, node.id)}
                             >
                                 <GripHorizontal size={12} className="-rotate-45" />
                             </div>

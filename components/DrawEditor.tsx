@@ -275,7 +275,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur flex flex-col items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden relative">
+      <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-6xl h-[90dvh] max-h-[95vh] flex flex-col overflow-hidden relative">
 
         {pdfFile && (
           <PdfPageSelector
@@ -401,7 +401,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
         </div>
 
         {/* Bottom Prompt Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 pointer-events-none flex justify-center z-30">
+        <div className="absolute bottom-0 left-0 right-0 p-6 pb-safe pointer-events-none flex justify-center z-30">
           <div className="w-full max-w-3xl bg-slate-900/95 backdrop-blur-lg border border-slate-600/50 rounded-2xl shadow-2xl pointer-events-auto flex items-center p-2 gap-2 ring-1 ring-white/10">
             {/* Icon */}
             <div className="p-2 bg-indigo-600/20 rounded-lg text-indigo-400">
