@@ -62,39 +62,72 @@ serve(async (req) => {
             // Start Processing
             await answerCallback(callbackId, `Processing ${action}...`)
 
-            // Update status
-            const status = action === "approve" ? "approved" : "declined"
-            const { error: updateError } = await supabase
-                .from("credit_requests")
-                .update({ status })
-                .eq("id", requestId)
+            // --- Handler for Credit Requests ---
+            if (action === "approve" || action === "decline") {
+                // Update status
+                const status = action === "approve" ? "approved" : "declined"
+                const { error: updateError } = await supabase
+                    .from("credit_requests")
+                    .update({ status })
+                    .eq("id", requestId)
 
-            if (updateError) throw updateError
+                if (updateError) throw updateError
 
-            if (action === "approve") {
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("generation_quota")
-                    .eq("id", request.user_id)
-                    .single()
+                if (action === "approve") {
+                    const { data: request } = await supabase
+                        .from("credit_requests")
+                        .select("*")
+                        .eq("id", requestId)
+                        .single()
 
-                const newQuota = (profile?.generation_quota || 0) + request.amount
-                await supabase.from("profiles").update({ generation_quota: newQuota }).eq("id", request.user_id)
+                    const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("generation_quota")
+                        .eq("id", request.user_id)
+                        .single()
+
+                    const newQuota = (profile?.generation_quota || 0) + request.amount
+                    await supabase.from("profiles").update({ generation_quota: newQuota }).eq("id", request.user_id)
+                }
+
+                // Update Message
+                const statusText = action === "approve" ? "✅ APPROVED" : "❌ DECLINED"
+                await editTelegramMessage(
+                    message.chat.id.toString(),
+                    message.message_id,
+                    `Credit Request Update:\n\nUser: ${requestId}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
+                )
             }
 
-            // Update Message
-            const statusText = action === "approve" ? "✅ APPROVED" : "❌ DECLINED"
-            await editTelegramMessage(
-                message.chat.id.toString(),
-                message.message_id,
-                `Credit Request Update:\n\nUser: ${request.user_id}\nAmount: ${request.amount}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
-            )
+            // --- Handler for User Approvals ---
+            if (action === "user_approve" || action === "user_decline") {
+                const isApproved = action === "user_approve"
+                const { error: updateError } = await supabase
+                    .from("profiles")
+                    .update({
+                        is_approved: isApproved,
+                        generation_quota: isApproved ? 200 : 0
+                    })
+                    .eq("id", requestId)
+
+                if (updateError) throw updateError
+
+                // Update Message
+                const statusText = isApproved ? "✅ USER APPROVED (+200 credits)" : "❌ USER DECLINED"
+                await editTelegramMessage(
+                    message.chat.id.toString(),
+                    message.message_id,
+                    `User Approval Update:\n\nUser ID: ${requestId}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
+                )
+            }
 
             return new Response("OK")
         }
 
-        // 2. Handle Supabase Webhook (New Request)
+        // 2. Handle Supabase Webhooks
         const { record, table, type } = body
+
+        // A) New Credit Request
         if (table === "credit_requests" && type === "INSERT") {
             const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", record.user_id).single()
             const userName = profile?.full_name || record.user_id
@@ -108,6 +141,26 @@ serve(async (req) => {
                         inline_keyboard: [[
                             { text: "✅ Approve", callback_data: `approve:${record.id}` },
                             { text: "❌ Decline", callback_data: `decline:${record.id}` }
+                        ]]
+                    }
+                })
+            }
+        }
+
+        // B) New User Registration
+        if (table === "profiles" && type === "INSERT") {
+            const userName = record.full_name || "New User"
+            const userEmail = record.email || "No email"
+
+            // Send notification to ALL configured admins
+            for (const chatId of ADMIN_CHAT_IDS) {
+                await sendTelegramMessage(chatId, {
+                    text: `👤 *New User Registration*\n\nName: ${userName}\nEmail: ${userEmail}\nID: ${record.id}\n\nApprove this user to grant 200 credits and site access?`,
+                    parse_mode: "Markdown",
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: "✅ Approve User", callback_data: `user_approve:${record.id}` },
+                            { text: "❌ Decline", callback_data: `user_decline:${record.id}` }
                         ]]
                     }
                 })

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film, Settings, ShieldAlert } from 'lucide-react';
+import { Hexagon, Layers, GitBranch, HelpCircle, Globe, Zap, Film, Settings, ShieldAlert, Clock } from 'lucide-react';
 import LinearEditor from './components/LinearEditor';
 import InfinityCanvas from './components/InfinityCanvas';
 import VideoEditor from './components/VideoEditor';
@@ -234,6 +234,34 @@ const AppContent: React.FC = () => {
           >
             Check Status
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (profile && !profile.is_approved) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
+        <div className="bg-slate-900 border border-indigo-500/30 p-12 rounded-3xl max-w-md shadow-2xl">
+          <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Clock className="text-indigo-500" size={40} />
+          </div>
+          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Approval Pending</h2>
+          <p className="text-slate-400 leading-relaxed mb-8">
+            Welcome to HOUZ.AI! Your account is currently pending administrator approval.
+            Once approved, you will receive 200 credits to start your first project.
+          </p>
+          <div className="space-y-4">
+            <div className="bg-slate-950 rounded-xl p-4 border border-slate-800 text-xs text-slate-500 text-left">
+              <strong>Why this?</strong> To ensure the best experience and prevent abuse, we manually review new registrations. This usually takes just a few minutes.
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-indigo-500/20 active:scale-95"
+            >
+              Refresh Status
+            </button>
+          </div>
         </div>
       </div>
     );
