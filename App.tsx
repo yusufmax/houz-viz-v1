@@ -217,22 +217,27 @@ const AppContent: React.FC = () => {
     return <LoginPage />;
   }
 
-  if (profile?.is_banned) {
+  if (profile?.is_banned || (profile && profile.is_rejected)) {
+    const isRejected = profile.is_rejected && !profile.is_banned;
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6 text-center">
         <div className="bg-slate-900 border border-red-500/30 p-12 rounded-3xl max-w-md shadow-2xl">
           <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShieldAlert className="text-red-500" size={40} />
           </div>
-          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">Access Restricted</h2>
+          <h2 className="text-2xl font-black text-white mb-4 uppercase tracking-tight">
+            {isRejected ? 'Approval Declined' : 'Access Restricted'}
+          </h2>
           <p className="text-slate-400 leading-relaxed mb-8">
-            Your account has been restricted by an administrator. If you believe this is a mistake, please contact support.
+            {isRejected
+              ? 'U WAS NOT APPROVED BY ADMIN. If you believe this is a mistake or would like to appeal, please contact support.'
+              : 'Your account has been restricted by an administrator. If you believe this is a mistake, please contact support.'}
           </p>
           <button
             onClick={() => window.location.reload()}
-            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all shadow-lg"
+            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all shadow-lg active:scale-95"
           >
-            Check Status
+            {isRejected ? 'Check Again' : 'Check Status'}
           </button>
         </div>
       </div>

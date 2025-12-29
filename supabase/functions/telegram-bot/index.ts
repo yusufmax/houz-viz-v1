@@ -114,6 +114,7 @@ serve(async (req) => {
                     .from("profiles")
                     .update({
                         is_approved: isApproved,
+                        is_rejected: !isApproved, // Explicitly set rejection
                         generation_quota: isApproved ? 200 : 0
                     })
                     .eq("id", requestId)
