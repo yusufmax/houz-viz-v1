@@ -9,7 +9,7 @@ import {
     Eraser, Pencil, Eye, Loader2, History, FileDown,
     ChevronUp, History as HistoryIcon, Camera, FolderOpen, Film, GripHorizontal, Building, Shirt, Scissors, Footprints, ShoppingBag, Sparkles, Package
 } from 'lucide-react';
-import { Node, Connection, RenderStyle, Atmosphere, GenerationSettings, AspectRatio, CameraAngle, Project, SceneElements, HistoryItem, SuperAtmosphere, SuperRenderStyle, CameraLens } from '../types';
+import { Node, Connection, RenderStyle, Atmosphere, GenerationSettings, AspectRatio, CameraAngle, Project, SceneElements, HistoryItem, SuperAtmosphere, SuperRenderStyle, CameraLens, Tag } from '../types';
 import ImageUpload from './ImageUpload';
 import DrawEditor from './DrawEditor';
 import FullScreenPreview from './FullScreenPreview';
@@ -1060,7 +1060,7 @@ const InfinityCanvas: React.FC = () => {
         }
     };
 
-    const handleDrawRender = async (img: string, prompt?: string, refImage?: string | null, ratio?: AspectRatio, model?: string) => {
+    const handleDrawRender = async (img: string, prompt?: string, refImage?: string | null, ratio?: AspectRatio, model?: string, tags?: Tag[]) => {
         if (!drawingNodeId) return;
         const originalNode = nodes.find(n => n.id === drawingNodeId);
         setDrawingNodeId(null);
@@ -1116,7 +1116,8 @@ const InfinityCanvas: React.FC = () => {
                 prompt: prompt || baseSettings.prompt || "High quality architectural render",
                 styleReferenceImage: refImage || baseSettings.styleReferenceImage,
                 aspectRatio: ratio || baseSettings.aspectRatio || '16:9', // Use passed ratio or base
-                model: model || selectedModel // Use passed model or current selection
+                model: model || selectedModel, // Use passed model or current selection
+                tags: tags || []
             };
 
             const result = await editImage(img, settings);

@@ -245,6 +245,24 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     await addSpec("Wall Color/Finish", settings.interior.wallColor.value, settings.interior.wallColor.image, "Use the following image as the reference for the WALL texture and color finish.");
   }
 
+  // 5.5 Tagged Reference Images
+  if (settings.tags && settings.tags.length > 0) {
+    const tagText: string[] = ["\n--- TAGGED REFERENCE IMAGES ---"];
+    tagText.push("The following images are localized references for specific locations on the primary source image. Each tag index corresponds to a numbered marker in the primary structural reference.");
+    parts.push({ text: tagText.join('\n') });
+
+    for (let i = 0; i < settings.tags.length; i++) {
+      const tag = settings.tags[i];
+      if (tag.image) {
+        const instruction = `TAG ${i + 1}: Reference image for the object/area located at coordinates [x: ${tag.x.toFixed(0)}, y: ${tag.y.toFixed(0)}] relative to the source image resolution.`;
+        const inlineData = await toInlineData(tag.image);
+        parts.push({ text: instruction });
+        parts.push({ inlineData });
+      }
+    }
+    parts.push({ text: "STRICT INSTRUCTION: Use the visual characteristics (texture, color, material) from the TAG images specifically for the areas indicated by their coordinates. Maintain coherence with the rest of the scene." });
+  }
+
   // 6. Final Quality Requirements
   parts.push({ text: "\nOutput Requirements: High quality, detailed architectural render, 8k resolution, photorealistic textures, physically based rendering." });
 

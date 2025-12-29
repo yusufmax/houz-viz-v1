@@ -12,7 +12,7 @@ import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import InteriorCustomization from './InteriorCustomization';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens } from '../types';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens, Tag } from '../types';
 import {
   generateImage, editImage,
   enhancePrompt
@@ -195,6 +195,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -845,6 +846,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       aperture,
       lockInterior: editorMode === 'interior' ? lockInterior : false,
       interior: editorMode === 'interior' ? interiorSettings : undefined,
+      tags,
       ...settingsOverride
     };
 
@@ -1124,7 +1126,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     setDrawingTarget(null);
   };
 
-  const handleDrawRender = (newImage: string, editPrompt?: string, refImage?: string | null, ratio?: AspectRatio, selectedModel?: string) => {
+  const handleDrawRender = (newImage: string, editPrompt?: string, refImage?: string | null, ratio?: AspectRatio, selectedModel?: string, newTags?: Tag[]) => {
     setSourceImage(newImage);
     if (drawingTarget === 'result') {
       setResultImage(null);
@@ -1135,13 +1137,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     if (refImage) setStyleReferenceImage(refImage);
     if (ratio) setAspectRatio(ratio);
     if (selectedModel) setModel(selectedModel);
+    if (newTags) setTags(newTags);
 
     // Execute generation with overrides to avoid race conditions
     executeGeneration(newImage, {
       prompt: editPrompt || prompt,
       styleReferenceImage: refImage || styleReferenceImage,
       aspectRatio: ratio || aspectRatio,
-      model: selectedModel || model
+      model: selectedModel || model,
+      tags: newTags || tags
     });
   };
 

@@ -190,6 +190,13 @@ export interface SceneElements {
   enhanceFacade: boolean;
 }
 
+export interface Tag {
+  id: number;
+  x: number;
+  y: number;
+  image: string;
+}
+
 export interface GenerationSettings {
   prompt: string;
   style: RenderStyle;
@@ -208,6 +215,7 @@ export interface GenerationSettings {
   lockInterior?: boolean;
   interior?: InteriorSettings;
   superMode?: SuperModeSettings;
+  tags?: Tag[];
 }
 
 export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';

@@ -2,22 +2,22 @@
 import React, { useRef, useState, useEffect } from 'react';
 import {
   Pencil, Move, Type, Image as ImageIcon, Undo, Download,
-  Save, X, Trash2, MousePointer2, Check, Zap, MessageSquare, Upload, LayoutTemplate
+  Save, X, Trash2, MousePointer2, Check, Zap, MessageSquare, Upload, LayoutTemplate, Tag as TagIcon
 } from 'lucide-react';
-import { AspectRatio } from '../types';
+import { AspectRatio, Tag } from '../types';
 import { useLanguage } from '../LanguageContext';
 import PdfPageSelector from './PdfPageSelector';
 
 interface DrawEditorProps {
   initialImage: string | null;
   onSave: (newImage: string) => void;
-  onRender?: (newImage: string, prompt: string, referenceImage: string | null, aspectRatio: AspectRatio, model?: string) => void;
+  onRender?: (newImage: string, prompt: string, referenceImage: string | null, aspectRatio: AspectRatio, model?: string, tags?: Tag[]) => void;
   onClose: () => void;
   selectedModel?: string;
   onModelChange?: (model: string) => void;
 }
 
-type Tool = 'brush' | 'arrow' | 'text' | 'image';
+type Tool = 'brush' | 'arrow' | 'text' | 'image' | 'tag';
 
 const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender, onClose, selectedModel = 'gemini-2.5-flash-image', onModelChange }) => {
   const { t } = useLanguage();
@@ -38,7 +38,12 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
   const [history, setHistory] = useState<string[]>([]);
   const [historyStep, setHistoryStep] = useState(-1);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [pdfMode, setPdfMode] = useState<'place' | 'reference' | null>(null);
+  const [pdfMode, setPdfMode] = useState<'place' | 'reference' | 'tag' | null>(null);
+
+  // Tagging State
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [pendingTagId, setPendingTagId] = useState<number | null>(null);
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
 
   useEffect(() => {
@@ -158,6 +163,21 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
         ctx.fillStyle = brushColor;
         ctx.fillText(text, endPos.x, endPos.y);
       }
+      saveToHistory();
+    } else if (tool === 'tag') {
+      const newTag: Tag = {
+        id: Date.now(),
+        x: endPos.x,
+        y: endPos.y,
+        image: ''
+      };
+      setTags(prev => [...prev, newTag]);
+      setPendingTagId(newTag.id);
+
+      // Trigger file upload for this tag
+      setTimeout(() => {
+        tagInputRef.current?.click();
+      }, 100);
     }
 
     saveToHistory();
@@ -209,6 +229,35 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     }
   };
 
+  const handleTagImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || pendingTagId === null) return;
+
+    if (file.type === 'application/pdf') {
+      setPdfFile(file);
+      setPdfMode('tag');
+      return;
+    }
+
+    try {
+      const imageSrc = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.readAsDataURL(file);
+      });
+
+      setTags(prev => prev.map(t => t.id === pendingTagId ? { ...t, image: imageSrc } : t));
+      setPendingTagId(null);
+    } catch (error) {
+      console.error("Failed to load tag reference", error);
+      alert("Failed to load file.");
+    }
+  };
+
+  const removeTag = (id: number) => {
+    setTags(prev => prev.filter(t => t.id !== id));
+  };
+
   const placeImageOnCanvas = (imageSrc: string) => {
     if (!ctx || !canvasRef.current) return;
 
@@ -249,6 +298,9 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
       placeImageOnCanvas(base64);
     } else if (pdfMode === 'reference') {
       setReferenceImage(base64);
+    } else if (pdfMode === 'tag' && pendingTagId !== null) {
+      setTags(prev => prev.map(t => t.id === pendingTagId ? { ...t, image: base64 } : t));
+      setPendingTagId(null);
     }
     setPdfFile(null);
     setPdfMode(null);
@@ -267,11 +319,11 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
 
   const handleRender = () => {
     if (canvasRef.current && onRender) {
-      // Pass the edited image, prompt, reference image, aspect ratio, AND model
-      onRender(canvasRef.current.toDataURL('image/png'), editPrompt, referenceImage, aspectRatio, selectedModel);
+      // Pass the edited image, prompt, reference image, aspect ratio, model, AND tags
+      onRender(canvasRef.current.toDataURL('image/png'), editPrompt, referenceImage, aspectRatio, selectedModel, tags);
       onClose();
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur flex flex-col items-center justify-center p-4">
@@ -306,7 +358,19 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                 <ImageIcon size={20} />
                 <input type="file" accept="image/*,application/pdf" className="hidden" onChange={handleImageUpload} />
               </label>
+              <button onClick={() => setTool('tag')} className={`p-2 rounded ${tool === 'tag' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`} title="Place Tag">
+                <TagIcon size={20} />
+              </button>
             </div>
+
+            {/* Hidden Input for Tags */}
+            <input
+              type="file"
+              ref={tagInputRef}
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleTagImageUpload}
+            />
 
             {/* Color & Size */}
             <div className="flex items-center gap-2 bg-slate-900 rounded-lg p-2 border border-slate-700 hidden sm:flex">
@@ -397,6 +461,65 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
               className="cursor-crosshair bg-slate-800 max-w-full max-h-[75vh] object-contain"
               style={{ touchAction: 'none' }}
             />
+
+            {/* Tags Overlay */}
+            {tags.map((tag, index) => {
+              const canvas = canvasRef.current;
+              if (!canvas) return null;
+
+              // Map canvas coordinates to display coordinates
+              const rect = canvas.getBoundingClientRect();
+              const scaleX = rect.width / canvas.width;
+              const scaleY = rect.height / canvas.height;
+
+              return (
+                <div
+                  key={tag.id}
+                  className="absolute pointer-events-auto group z-40"
+                  style={{
+                    left: tag.x * scaleX,
+                    top: tag.y * scaleY,
+                    transform: 'translate(-50%, -100%)'
+                  }}
+                >
+                  <div className="relative">
+                    {/* Tag Pin */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xl border-2 transition-all ${tag.image ? 'bg-indigo-600 text-white border-white scale-110' : 'bg-slate-800 text-slate-400 border-slate-600 animate-pulse'}`}>
+                      {index + 1}
+                    </div>
+                    <div className="w-0.5 h-3 bg-indigo-500 mx-auto -mt-0.5"></div>
+
+                    {/* Tag Popover on Hover */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+                      <div className="bg-slate-900 border border-slate-700 p-2 rounded-xl shadow-2xl min-w-[120px]">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-[10px] font-black text-slate-500 uppercase">Tag Reference {index + 1}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); removeTag(tag.id); }}
+                            className="p-1 hover:bg-red-500/20 text-red-500 rounded transition-colors"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                        {tag.image ? (
+                          <div className="relative aspect-video rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                            <img src={tag.image} alt={`Ref ${index + 1}`} className="w-full h-full object-cover" />
+                            <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                              <span className="text-[8px] font-bold text-white uppercase tracking-wider">Change</span>
+                              <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { setPendingTagId(tag.id); handleTagImageUpload(e); }} />
+                            </label>
+                          </div>
+                        ) : (
+                          <div className="text-[10px] text-slate-400 p-2 text-center italic">Uploading...</div>
+                        )}
+                      </div>
+                      {/* Triangle Arrow */}
+                      <div className="w-3 h-3 bg-slate-900 border-r border-b border-slate-700 rotate-45 mx-auto -mt-1.5"></div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
