@@ -42,28 +42,28 @@ serve(async (req) => {
 
             console.log(`Action: ${action}, Request: ${requestId}`)
 
-            // Fetch the request
-            const { data: request, error: fetchError } = await supabase
-                .from("credit_requests")
-                .select("*")
-                .eq("id", requestId)
-                .single()
-
-            if (fetchError || !request) {
-                await answerCallback(callbackId, "❌ Error: Request not found in database.")
-                return new Response("Not Found")
-            }
-
-            if (request.status !== "pending") {
-                await answerCallback(callbackId, "ℹ️ Already processed.")
-                return new Response("Already Processed")
-            }
-
             // Start Processing
             await answerCallback(callbackId, `Processing ${action}...`)
 
             // --- Handler for Credit Requests ---
             if (action === "approve" || action === "decline") {
+                // Fetch the request
+                const { data: request, error: fetchError } = await supabase
+                    .from("credit_requests")
+                    .select("*")
+                    .eq("id", requestId)
+                    .single()
+
+                if (fetchError || !request) {
+                    await answerCallback(callbackId, "❌ Error: Request not found.")
+                    return new Response("Not Found")
+                }
+
+                if (request.status !== "pending") {
+                    await answerCallback(callbackId, "ℹ️ Already processed.")
+                    return new Response("Already Processed")
+                }
+
                 // Update status
                 const status = action === "approve" ? "approved" : "declined"
                 const { error: updateError } = await supabase
@@ -74,12 +74,6 @@ serve(async (req) => {
                 if (updateError) throw updateError
 
                 if (action === "approve") {
-                    const { data: request } = await supabase
-                        .from("credit_requests")
-                        .select("*")
-                        .eq("id", requestId)
-                        .single()
-
                     const { data: profile } = await supabase
                         .from("profiles")
                         .select("generation_quota")
@@ -95,13 +89,27 @@ serve(async (req) => {
                 await editTelegramMessage(
                     message.chat.id.toString(),
                     message.message_id,
-                    `Credit Request Update:\n\nUser: ${requestId}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
+                    `Credit Request Update:\n\nUser: ${request.user_id}\nAmount: ${request.amount}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
                 )
             }
 
             // --- Handler for User Approvals ---
             if (action === "user_approve" || action === "user_decline") {
                 const isApproved = action === "user_approve"
+
+                // Fetch current user to check if already approved
+                const { data: profile, error: fetchError } = await supabase
+                    .from("profiles")
+                    .select("is_approved, full_name")
+                    .eq("id", requestId)
+                    .single()
+
+                if (fetchError || !profile) {
+                    await answerCallback(callbackId, "❌ Error: User not found.")
+                    return new Response("Not Found")
+                }
+
+                // Update status
                 const { error: updateError } = await supabase
                     .from("profiles")
                     .update({
@@ -117,7 +125,7 @@ serve(async (req) => {
                 await editTelegramMessage(
                     message.chat.id.toString(),
                     message.message_id,
-                    `User Approval Update:\n\nUser ID: ${requestId}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
+                    `User Approval Update:\n\nUser: ${profile.full_name || requestId}\nStatus: ${statusText}\nProcessed by: ${from.first_name}`
                 )
             }
 
