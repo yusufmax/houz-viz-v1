@@ -13,7 +13,6 @@ export const adminService = {
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
-            .eq('is_admin_visible', true)
             .order('updated_at', { ascending: false });
 
         if (error) {
