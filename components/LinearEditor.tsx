@@ -460,7 +460,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           lockCamera,
           lockInterior,
           interior: editorMode === 'interior' ? interiorSettings : undefined,
-          prompt: usedPrompt // Save the prompt used for this generation
+          prompt: usedPrompt, // Save the prompt used for this generation
+          tags
         }
       };
 
@@ -500,6 +501,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       if (item.metadata.styleReferenceImage) setStyleReferenceImage(item.metadata.styleReferenceImage);
       if (item.metadata.sourceImage) setSourceImage(item.metadata.sourceImage);
       if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
+      if (item.metadata.tags) setTags(item.metadata.tags);
 
       // Assuming these are not part of HistoryItem metadata directly, but if they were, they'd be set here.
       // setGeneratedImage(item.imageUrl);
@@ -544,7 +546,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           aperture,
           lockInterior,
           interiorSettings: editorMode === 'interior' ? interiorSettings : undefined,
-          editorMode // Save the current editor mode
+          editorMode, // Save the current editor mode
+          tags
         }
       };
 
@@ -797,6 +800,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         if (state.lockInterior !== undefined) setLockInterior(state.lockInterior);
         if (state.interiorSettings) setInteriorSettings(state.interiorSettings);
         if (state.editorMode) setEditorMode(state.editorMode);
+        if (state.tags) setTags(state.tags);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 

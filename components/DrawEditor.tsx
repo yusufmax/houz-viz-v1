@@ -229,9 +229,10 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
     }
   };
 
-  const handleTagImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTagImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, specificTagId?: number) => {
     const file = e.target.files?.[0];
-    if (!file || pendingTagId === null) return;
+    const targetId = specificTagId || pendingTagId;
+    if (!file || targetId === null) return;
 
     if (file.type === 'application/pdf') {
       setPdfFile(file);
@@ -246,12 +247,16 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
         reader.readAsDataURL(file);
       });
 
-      setTags(prev => prev.map(t => t.id === pendingTagId ? { ...t, image: imageSrc } : t));
-      setPendingTagId(null);
+      setTags(prev => prev.map(t => t.id === targetId ? { ...t, image: imageSrc } : t));
+      if (!specificTagId) setPendingTagId(null);
     } catch (error) {
       console.error("Failed to load tag reference", error);
       alert("Failed to load file.");
     }
+  };
+
+  const updateTagPrompt = (id: number, prompt: string) => {
+    setTags(prev => prev.map(t => t.id === id ? { ...t, prompt } : t));
   };
 
   const removeTag = (id: number) => {
@@ -484,15 +489,15 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                 >
                   <div className="relative">
                     {/* Tag Pin */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xl border-2 transition-all ${tag.image ? 'bg-indigo-600 text-white border-white scale-110' : 'bg-slate-800 text-slate-400 border-slate-600 animate-pulse'}`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shadow-xl border-2 transition-all cursor-pointer ${tag.image ? 'bg-indigo-600 text-white border-white scale-110' : 'bg-slate-800 text-slate-400 border-slate-600 animate-pulse'}`}>
                       {index + 1}
                     </div>
                     <div className="w-0.5 h-3 bg-indigo-500 mx-auto -mt-0.5"></div>
 
-                    {/* Tag Popover on Hover */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
-                      <div className="bg-slate-900 border border-slate-700 p-2 rounded-xl shadow-2xl min-w-[120px]">
-                        <div className="flex items-center justify-between mb-2">
+                    {/* Tag Popover on Hover/Focus */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
+                      <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-2xl min-w-[180px] space-y-3">
+                        <div className="flex items-center justify-between">
                           <span className="text-[10px] font-black text-slate-500 uppercase">Tag Reference {index + 1}</span>
                           <button
                             onClick={(e) => { e.stopPropagation(); removeTag(tag.id); }}
@@ -501,17 +506,31 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                             <Trash2 size={12} />
                           </button>
                         </div>
+
                         {tag.image ? (
                           <div className="relative aspect-video rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
                             <img src={tag.image} alt={`Ref ${index + 1}`} className="w-full h-full object-cover" />
                             <label className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
                               <span className="text-[8px] font-bold text-white uppercase tracking-wider">Change</span>
-                              <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => { setPendingTagId(tag.id); handleTagImageUpload(e); }} />
+                              <input type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => handleTagImageUpload(e, tag.id)} />
                             </label>
                           </div>
                         ) : (
-                          <div className="text-[10px] text-slate-400 p-2 text-center italic">Uploading...</div>
+                          <div className="text-[10px] text-slate-400 p-2 text-center italic border border-dashed border-slate-700 rounded-lg">Uploading...</div>
                         )}
+
+                        {/* per-tag prompt */}
+                        <div className="space-y-1">
+                          <label className="text-[9px] font-bold text-slate-500 uppercase block pl-1">Local Prompt (Opt)</label>
+                          <input
+                            type="text"
+                            value={tag.prompt || ''}
+                            onChange={(e) => updateTagPrompt(tag.id, e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()} // Prevent triggering global events
+                            placeholder="e.g. Modern wood texture"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[10px] text-slate-200 outline-none focus:border-indigo-500 transition-colors"
+                          />
+                        </div>
                       </div>
                       {/* Triangle Arrow */}
                       <div className="w-3 h-3 bg-slate-900 border-r border-b border-slate-700 rotate-45 mx-auto -mt-1.5"></div>

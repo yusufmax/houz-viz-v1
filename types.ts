@@ -195,6 +195,7 @@ export interface Tag {
   x: number;
   y: number;
   image: string;
+  prompt?: string;
 }
 
 export interface GenerationSettings {
@@ -334,6 +335,7 @@ export interface Project {
     lockInterior?: boolean;
     interiorSettings?: any;
     editorMode?: 'exterior' | 'interior' | 'general';
+    tags?: Tag[];
   };
 }
 

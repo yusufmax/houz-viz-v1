@@ -254,7 +254,10 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     for (let i = 0; i < settings.tags.length; i++) {
       const tag = settings.tags[i];
       if (tag.image) {
-        const instruction = `TAG ${i + 1}: Reference image for the object/area located at coordinates [x: ${tag.x.toFixed(0)}, y: ${tag.y.toFixed(0)}] relative to the source image resolution.`;
+        let instruction = `TAG ${i + 1}: Reference image for the object/area located at coordinates [x: ${tag.x.toFixed(0)}, y: ${tag.y.toFixed(0)}] relative to the source image resolution.`;
+        if (tag.prompt) {
+          instruction += ` Specifically follow this localized instruction for this tag: "${tag.prompt}".`;
+        }
         const inlineData = await toInlineData(tag.image);
         parts.push({ text: instruction });
         parts.push({ inlineData });
