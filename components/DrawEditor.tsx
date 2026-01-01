@@ -495,7 +495,12 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                     <div className="w-0.5 h-3 bg-indigo-500 mx-auto -mt-0.5"></div>
 
                     {/* Tag Popover on Hover/Focus */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto">
+                    <div
+                      className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto focus-within:pointer-events-auto"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="bg-slate-900 border border-slate-700 p-3 rounded-xl shadow-2xl min-w-[180px] space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-black text-slate-500 uppercase">Tag Reference {index + 1}</span>
@@ -526,9 +531,11 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
                             type="text"
                             value={tag.prompt || ''}
                             onChange={(e) => updateTagPrompt(tag.id, e.target.value)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
                             onKeyDown={(e) => e.stopPropagation()} // Prevent triggering global events
                             placeholder="e.g. Modern wood texture"
-                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[10px] text-slate-200 outline-none focus:border-indigo-500 transition-colors"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-[10px] text-slate-200 outline-none focus:border-indigo-500 transition-colors pointer-events-auto"
                           />
                         </div>
                       </div>
