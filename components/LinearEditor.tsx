@@ -318,8 +318,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setNewTemplateName('');
       setShowTemplateManager(false);
       alert('Template saved successfully!');
-    } catch (error) {
-      alert('Failed to save template');
+    } catch (error: any) {
+      console.error('Save template failed:', error);
+      alert(`Failed to save template: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSavingTemplate(false);
     }
