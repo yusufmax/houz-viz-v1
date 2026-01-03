@@ -29,6 +29,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
+import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
 
 const STYLE_LIBRARY = [
   // Living Complex / House
@@ -248,9 +249,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [style, setStyle] = useState<RenderStyle>(RenderStyle.None);
   const [atmosphere, setAtmosphere] = useState<Atmosphere[]>([]);
   const [camera, setCamera] = useState<CameraAngle>(CameraAngle.Default);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('Original');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
   const [sceneElements, setSceneElements] = useState<SceneElements>({
-    people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false
+    people: false,
+    cars: false,
+    clouds: true,
+    vegetation: true,
+    city: false,
+    motionBlur: false,
+    enhanceFacade: true
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
   const [resolution, setResolution] = useState<string>('4K');
@@ -267,6 +274,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     primaryColor: { value: '', image: null },
     wallColor: { value: '', image: null }
   });
+
+  // Prompt Templates
+  const [savedTemplates, setSavedTemplates] = useState<PromptTemplate[]>([]);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [showTemplateManager, setShowTemplateManager] = useState(false);
+  const [newTemplateName, setNewTemplateName] = useState('');
 
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
@@ -285,6 +298,43 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Ref for file input
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadSavedTemplates = async () => {
+    if (!user) return;
+    try {
+      const templates = await promptTemplateService.getTemplates(user.id);
+      setSavedTemplates(templates);
+    } catch (error) {
+      console.error('Failed to load templates:', error);
+    }
+  };
+
+  const handleSaveTemplate = async () => {
+    if (!user || !prompt || !newTemplateName) return;
+    setIsSavingTemplate(true);
+    try {
+      await promptTemplateService.saveTemplate(user.id, newTemplateName, prompt);
+      await loadSavedTemplates();
+      setNewTemplateName('');
+      setShowTemplateManager(false);
+      alert('Template saved successfully!');
+    } catch (error) {
+      alert('Failed to save template');
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this template?')) return;
+    try {
+      await promptTemplateService.deleteTemplate(id);
+      await loadSavedTemplates();
+    } catch (error) {
+      alert('Failed to delete template');
+    }
+  };
 
   // Setup tool executor for Agentic Mode
   useEffect(() => {
@@ -407,6 +457,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         console.error('Failed to load video quota:', err);
       });
     }
+  }, [user]);
+
+  // Load prompt templates
+  useEffect(() => {
+    loadSavedTemplates();
   }, [user]);
 
   // Auto-detect aspect ratio from result image
@@ -1375,9 +1430,64 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {showInstructions && <GuideTooltip text={t('guidePrompt')} className="-top-12 left-0" side="top" />}
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-medium text-slate-400 uppercase">{t('instructionsLabel')}</label>
-                  <button onClick={handleEnhancePrompt} disabled={isEnhancing || !prompt} className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 disabled:opacity-50">
-                    <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    {/* Template Selector */}
+                    <div className="relative group">
+                      <button
+                        onClick={() => setShowTemplateManager(!showTemplateManager)}
+                        className="text-[10px] flex items-center gap-1 text-emerald-400 hover:text-emerald-300"
+                      >
+                        <FileJson size={10} /> Templates
+                      </button>
+
+                      {showTemplateManager && (
+                        <div className="absolute top-full right-0 mt-1 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-50 overflow-hidden">
+                          <div className="p-2 border-b border-slate-700 bg-slate-800/50 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">My Templates</span>
+                            <button onClick={() => setShowTemplateManager(false)} className="text-slate-500 hover:text-white"><X size={10} /></button>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                            {savedTemplates.length === 0 && (
+                              <div className="p-4 text-center text-[10px] text-slate-500 italic">No templates saved yet</div>
+                            )}
+                            {savedTemplates.map(tpl => (
+                              <div key={tpl.id} className="p-2 hover:bg-slate-800 border-b border-slate-800/50 flex items-center justify-between group/tpl cursor-pointer" onClick={() => { setPrompt(tpl.prompt); setShowTemplateManager(false); }}>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[10px] text-slate-200 font-medium truncate">{tpl.name}</div>
+                                  <div className="text-[9px] text-slate-500 truncate">{tpl.prompt}</div>
+                                </div>
+                                <button onClick={(e) => handleDeleteTemplate(tpl.id, e)} className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover/tpl:opacity-100 transition-opacity">
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-2 bg-slate-950/50 border-t border-slate-700">
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                placeholder="Template Name"
+                                value={newTemplateName}
+                                onChange={(e) => setNewTemplateName(e.target.value)}
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[9px] text-slate-200 outline-none focus:border-indigo-500"
+                              />
+                              <button
+                                onClick={handleSaveTemplate}
+                                disabled={isSavingTemplate || !prompt || !newTemplateName}
+                                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white p-1 rounded transition-colors"
+                              >
+                                {isSavingTemplate ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <button onClick={handleEnhancePrompt} disabled={isEnhancing || !prompt} className="text-[10px] flex items-center gap-1 text-indigo-400 hover:text-indigo-300 disabled:opacity-50">
+                      <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
+                    </button>
+                  </div>
                 </div>
                 <div className="relative">
                   <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('instructionsPlaceholder')} className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none" />
