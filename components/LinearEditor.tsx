@@ -1496,6 +1496,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
                 </div>
+                {/* Quick Templates Buttons */}
+                {savedTemplates.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {savedTemplates.slice(0, 5).map(tpl => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => setPrompt(tpl.prompt)}
+                        className="px-2.5 py-1 bg-slate-800/80 border border-slate-700 rounded-lg text-[10px] text-slate-400 hover:text-indigo-400 hover:border-indigo-500/50 hover:bg-indigo-950/20 transition-all truncate max-w-[120px]"
+                        title={tpl.prompt}
+                      >
+                        {tpl.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
