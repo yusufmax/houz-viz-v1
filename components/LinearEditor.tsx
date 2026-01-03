@@ -281,6 +281,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
 
+  // Sketchify Enhancement
+  const [sketchStyle, setSketchStyle] = useState<'handdrawn' | 'pen' | 'pencil' | 'watercolor'>('pen');
+
   // Quota state
   const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
 
@@ -940,14 +943,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
 
   const handleSketchify = async () => {
-    if (!resultImage) return;
+    const targetImage = sourceImage || resultImage;
+    if (!targetImage) {
+      alert("Please upload an image first.");
+      return;
+    }
 
-    // Use current prompt if available, otherwise default to a high-quality sketch prompt
-    const sketchPrompt = prompt || "Highly detailed architectural sketch, technical line drawing, ink on paper, professional draft";
+    // Map sketchStyle to RenderStyle
+    const styleMap: Record<string, RenderStyle> = {
+      'handdrawn': RenderStyle.Sketch,
+      'pen': RenderStyle.Sketch,
+      'pencil': RenderStyle.PencilDrawing,
+      'watercolor': RenderStyle.Watercolor
+    };
 
-    await executeGeneration(resultImage, {
+    // Style-specific prompts
+    const stylePrompts: Record<string, string> = {
+      'handdrawn': "Rough architectural sketch, hand-drawn lines, artistic draft",
+      'pen': "Technical line drawing, black ink on paper, professional draft",
+      'pencil': "Soft pencil drawing, graphite texture, architectural shading",
+      'watercolor': "Architectural watercolor painting, soft colors, artistic wash"
+    };
+
+    const sketchPrompt = prompt || stylePrompts[sketchStyle];
+
+    await executeGeneration(targetImage, {
       prompt: sketchPrompt,
-      style: RenderStyle.Sketch,
+      style: styleMap[sketchStyle],
       atmosphere: [],
       sceneElements: { ...sceneElements, people: false, cars: false },
       lockCamera: true,
@@ -1767,15 +1789,41 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             </div>
 
-            <div className="relative pt-6">
-              {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-              <button
-                onClick={() => batchMode ? processBatch() : handleGenerate()}
-                disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
-              >
-                {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
-              </button>
+            <div className="pt-6 space-y-3">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Sketch Style</span>
+                  <div className="flex gap-1">
+                    {(['handdrawn', 'pen', 'pencil', 'watercolor'] as const).map((style) => (
+                      <button
+                        key={style}
+                        onClick={() => setSketchStyle(style)}
+                        className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                      >
+                        {style.charAt(0).toUpperCase() + style.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={handleSketchify}
+                  disabled={isGenerating || (!sourceImage && !resultImage)}
+                  className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
+                >
+                  <Pen size={14} /> Sketchify Current Image
+                </button>
+              </div>
+
+              <div className="relative">
+                {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+                <button
+                  onClick={() => batchMode ? processBatch() : handleGenerate()}
+                  disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                  className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
+                >
+                  {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
+                </button>
+              </div>
             </div>
           </section>
         </div>
@@ -1819,15 +1867,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
                 >
                   <Pencil size={14} /> {t('edit')}
-                </button>
-              )}
-              {resultImage && (
-                <button
-                  onClick={handleSketchify}
-                  className="flex items-center gap-2 text-xs bg-amber-600 hover:bg-amber-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 font-bold"
-                  title="Generate a sketch from this render"
-                >
-                  <Pen size={14} /> Sketchify
                 </button>
               )}
               {resultImage && (
