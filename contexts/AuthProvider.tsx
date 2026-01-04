@@ -9,7 +9,7 @@ interface AuthContextType {
     error: Error | null
     signInWithGoogle: () => Promise<void>
     signOut: () => Promise<void>
-    profile: any | null
+    profile: any | null | undefined
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -17,21 +17,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null)
     const [user, setUser] = useState<User | null>(null)
-    const [profile, setProfile] = useState<any | null>(null)
+    const [profile, setProfile] = useState<any | null | undefined>(undefined)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
 
     useEffect(() => {
         let mounted = true;
-        let initialLoadDone = false;
-
-        // Safety timeout: Never let the app hang on "Loading..." for more than 4 seconds
-        const safetyTimeout = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn("Auth loading safety timeout reached.");
-                setLoading(false);
-            }
-        }, 4000);
 
         const fetchProfile = async (userId: string) => {
             try {
@@ -43,59 +34,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
                 if (mounted) {
                     if (error) console.error("Error fetching profile:", error);
-                    setProfile(data);
+                    setProfile(data || null); // explicit null if not found
                 }
             } catch (err) {
                 console.error("Profile fetch failed:", err);
+                if (mounted) setProfile(null);
             } finally {
-                if (mounted) {
-                    setLoading(false);
-                    clearTimeout(safetyTimeout);
-                }
-            }
-        };
-
-        const initAuth = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!mounted) return;
-
-                setSession(session);
-                setUser(session?.user ?? null);
-
-                if (session) {
-                    await fetchProfile(session.user.id);
-                } else {
-                    setLoading(false);
-                }
-            } catch (err) {
-                console.error("Auth init failed:", err);
                 if (mounted) setLoading(false);
-            } finally {
-                initialLoadDone = true;
             }
         };
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const handleAuthChange = async (session: Session | null) => {
             if (!mounted) return;
+            setSession(session);
+            setUser(session?.user ?? null);
 
-            // Only act if this is a meaningful change after the initial load,
-            // or if the event is specifically SIGNED_IN/SIGNED_OUT.
-            if (initialLoadDone || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                setSession(session);
-                setUser(session?.user ?? null);
-
-                if (session) {
-                    await fetchProfile(session.user.id);
-                } else {
-                    setProfile(null);
-                    setLoading(false);
-                    clearTimeout(safetyTimeout);
-                }
+            if (session) {
+                await fetchProfile(session.user.id);
+            } else {
+                setProfile(null);
+                setLoading(false);
             }
+        };
+
+        // Get initial session and then listen for changes
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            handleAuthChange(session);
         });
 
-        initAuth();
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            handleAuthChange(session);
+        });
+
+        // Safety timeout to prevent infinite Loading...
+        const safetyTimeout = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn("Auth loading safety timeout reached.");
+                setLoading(false);
+            }
+        }, 5000);
 
         return () => {
             mounted = false;

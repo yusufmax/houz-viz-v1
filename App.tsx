@@ -214,16 +214,16 @@ const AppContent: React.FC = () => {
   const { session, loading, profile, signOut } = useAuth();
 
   useEffect(() => {
-    // If user is banned or the account was deleted (profile is null), 
-    // we want to ensure they are signed out from Auth as well.
+    // If user is banned or the account was rejected
     if (!loading && session && (profile?.is_banned || profile?.is_rejected)) {
       const timer = setTimeout(async () => {
         await signOut();
-      }, 5000); // Give them 5s to read the message
+      }, 5000);
       return () => clearTimeout(timer);
     }
 
-    // If session exists but profile is completely gone (possibly deleted from DB)
+    // If session exists but profile is EXPLICITLY null (deleted from DB)
+    // We check for null specifically because undefined means it's still loading.
     if (!loading && session && profile === null) {
       signOut();
     }
