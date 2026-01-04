@@ -24,11 +24,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         let mounted = true;
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const fetchProfile = async (userId: string) => {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', userId)
+                    .maybeSingle();
+
+                if (mounted) {
+                    if (error) console.error("Error fetching profile:", error);
+                    setProfile(data);
+                }
+            } catch (err) {
+                console.error("Profile fetch failed:", err);
+            } finally {
+                if (mounted) setLoading(false);
+            }
+        };
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             if (mounted) {
                 setSession(session);
                 setUser(session?.user ?? null);
-                if (!session) {
+
+                if (session) {
+                    await fetchProfile(session.user.id);
+                } else {
                     setProfile(null);
                     setLoading(false);
                 }
@@ -36,11 +58,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (mounted) {
                 setSession(session);
                 setUser(session?.user ?? null);
-                setLoading(false);
+
+                if (session) {
+                    await fetchProfile(session.user.id);
+                } else {
+                    setLoading(false);
+                }
             }
         });
 
@@ -50,33 +77,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    // Fetch profile whenever the user ID changes and listen for real-time updates
+    // Real-time listener for profile changes (Bans, Deletions)
     useEffect(() => {
         let mounted = true;
         if (!user) return;
 
-        const fetchProfile = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .maybeSingle();
-
-                if (mounted) {
-                    if (error) {
-                        console.error("Error fetching profile:", error);
-                    }
-                    setProfile(data);
-                }
-            } catch (err) {
-                console.error("Profile fetch failed:", err);
-            }
-        };
-
-        fetchProfile();
-
-        // Subscribe to real-time changes
         const channel = supabase
             .channel(`profile-${user.id}`)
             .on(

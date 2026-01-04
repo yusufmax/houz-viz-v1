@@ -217,17 +217,18 @@ const AppContent: React.FC = () => {
     // If user is banned or the account was deleted (profile is null), 
     // we want to ensure they are signed out from Auth as well.
     if (!loading && session && (profile?.is_banned || profile?.is_rejected)) {
-      const timer = setTimeout(() => {
-        signOut();
-        window.location.href = '/'; // Reset everything
+      const timer = setTimeout(async () => {
+        await signOut();
+        window.location.href = '/'; // Force clear state
       }, 5000); // Give them 5s to read the message
       return () => clearTimeout(timer);
     }
 
     // If session exists but profile is completely gone (possibly deleted from DB)
     if (!loading && session && profile === null) {
-      signOut();
-      window.location.href = '/';
+      signOut().then(() => {
+        window.location.href = '/';
+      });
     }
   }, [profile, session, loading, signOut]);
 
