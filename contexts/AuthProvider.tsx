@@ -23,6 +23,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     useEffect(() => {
         let mounted = true;
+        let initialLoadDone = false;
+
+        // Safety timeout: Never let the app hang on "Loading..." for more than 4 seconds
+        const safetyTimeout = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn("Auth loading safety timeout reached.");
+                setLoading(false);
+            }
+        }, 4000);
 
         const fetchProfile = async (userId: string) => {
             try {
@@ -39,12 +48,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } catch (err) {
                 console.error("Profile fetch failed:", err);
             } finally {
-                if (mounted) setLoading(false);
+                if (mounted) {
+                    setLoading(false);
+                    clearTimeout(safetyTimeout);
+                }
             }
         };
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            if (mounted) {
+        const initAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!mounted) return;
+
+                setSession(session);
+                setUser(session?.user ?? null);
+
+                if (session) {
+                    await fetchProfile(session.user.id);
+                } else {
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error("Auth init failed:", err);
+                if (mounted) setLoading(false);
+            } finally {
+                initialLoadDone = true;
+            }
+        };
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (!mounted) return;
+
+            // Only act if this is a meaningful change after the initial load,
+            // or if the event is specifically SIGNED_IN/SIGNED_OUT.
+            if (initialLoadDone || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
                 setSession(session);
                 setUser(session?.user ?? null);
 
@@ -53,27 +90,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 } else {
                     setProfile(null);
                     setLoading(false);
+                    clearTimeout(safetyTimeout);
                 }
             }
         });
 
-        // Get initial session
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (mounted) {
-                setSession(session);
-                setUser(session?.user ?? null);
-
-                if (session) {
-                    await fetchProfile(session.user.id);
-                } else {
-                    setLoading(false);
-                }
-            }
-        });
+        initAuth();
 
         return () => {
             mounted = false;
             subscription.unsubscribe();
+            clearTimeout(safetyTimeout);
         }
     }, []);
 
