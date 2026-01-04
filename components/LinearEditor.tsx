@@ -196,6 +196,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
+  const [multiResults, setMultiResults] = useState<string[]>([]);
+  const [generationCount, setGenerationCount] = useState<number>(1);
   const [tags, setTags] = useState<Tag[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
@@ -249,15 +251,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [style, setStyle] = useState<RenderStyle>(RenderStyle.None);
   const [atmosphere, setAtmosphere] = useState<Atmosphere[]>([]);
   const [camera, setCamera] = useState<CameraAngle>(CameraAngle.Default);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('Original');
   const [sceneElements, setSceneElements] = useState<SceneElements>({
     people: false,
     cars: false,
-    clouds: true,
-    vegetation: true,
+    clouds: false,
+    vegetation: false,
     city: false,
     motionBlur: false,
-    enhanceFacade: true
+    enhanceFacade: false
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
   const [resolution, setResolution] = useState<string>('4K');
@@ -891,7 +893,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     setIsGenerating(true);
     setResultImage(null);
-    setBatchProgress({ current: 0, total: 1 });
+    setMultiResults([]);
+    setBatchProgress({ current: 0, total: generationCount });
 
     const settings: GenerationSettings = {
       prompt: prompt || "High quality architecture render",
@@ -914,8 +917,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     };
 
     try {
-      await quotaService.incrementUsage(user.id, cost); // Deduct based on cost
-
       const src = overrideSource || sourceImage;
       if (!prompt && !src && !styleReferenceImage && !settingsOverride?.prompt) {
         alert("Please provide at least a text prompt, an image, or a style reference.");
@@ -923,16 +924,32 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         return;
       }
 
-      let resultUrl = '';
-      if (src || styleReferenceImage) {
-        resultUrl = await editImage(src, settings);
-      } else {
-        resultUrl = await generateImage(settings);
+      const results: string[] = [];
+      const totalToGenerate = generationCount;
+
+      for (let i = 0; i < totalToGenerate; i++) {
+        setBatchProgress({ current: i + 1, total: totalToGenerate });
+
+        // Deduct cost per image
+        await quotaService.incrementUsage(user.id, cost);
+
+        let resultUrl = '';
+        if (src || styleReferenceImage) {
+          resultUrl = await editImage(src, settings);
+        } else {
+          resultUrl = await generateImage(settings);
+        }
+
+        results.push(resultUrl);
+        setMultiResults([...results]); // Update UI incrementally
+
+        // Set first result as primary resultImage for compatibility
+        if (i === 0) setResultImage(resultUrl);
+
+        saveToHistory(resultUrl, settings.prompt);
       }
 
-      loadQuota(); // Refresh UI
-      setResultImage(resultUrl);
-      saveToHistory(resultUrl, settings.prompt);
+      loadQuota(); // Refresh UI after all generations
     } catch (error) {
       console.error("Generation failed:", error);
       alert("Failed to generate image. Please try again.");
@@ -1814,15 +1831,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </button>
               </div>
 
-              <div className="relative">
-                {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-                <button
-                  onClick={() => batchMode ? processBatch() : handleGenerate()}
-                  disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                  className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
-                >
-                  {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
-                </button>
+              <div className="relative pt-6 flex gap-2">
+                {!batchMode && (
+                  <div className="flex flex-col gap-1 justify-center pr-2 border-r border-slate-700">
+                    <span className="text-[9px] font-bold text-slate-500 uppercase text-center">Images</span>
+                    <div className="flex flex-col gap-1">
+                      {[1, 2, 3, 4].map(num => (
+                        <button
+                          key={num}
+                          onClick={() => setGenerationCount(num)}
+                          className={`w-7 h-6 flex items-center justify-center rounded text-[10px] font-bold transition-all ${generationCount === num ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                        >
+                          {num}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="relative flex-1">
+                  {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+                  <button
+                    onClick={() => batchMode ? processBatch() : handleGenerate()}
+                    disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                    className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
+                  >
+                    {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
+                  </button>
+                </div>
               </div>
             </div>
           </section>
@@ -1914,10 +1949,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               )
             ) : (
               isGenerating ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse">
+                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
                   <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
                   <p className="text-sm font-mono">{t('simulating')}</p>
+                  {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
                   {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
+                </div>
+              ) : multiResults.length > 1 ? (
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                  <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                    {multiResults.map((res, idx) => (
+                      <div
+                        key={idx}
+                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
+                        onClick={() => setResultImage(res)}
+                      >
+                        <img src={res} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <span className="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">{resultImage === res ? 'Active' : 'Select'}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : resultImage ? (
                 sourceImage ? (
