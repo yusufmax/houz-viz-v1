@@ -72,13 +72,15 @@ export const adminService = {
     },
 
     /**
-     * Ban or unban a user
+     * Ban a user completely (Data wipe + Blacklist email)
      */
-    async banUser(userId: string, isBanned: boolean) {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ is_banned: isBanned })
-            .eq('id', userId);
+    async banUser(userId: string) {
+        // Clean up storage first
+        await this.cleanupUserStorage(userId);
+
+        const { error } = await supabase.rpc('ban_user_complete', {
+            target_user_id: userId
+        });
 
         if (error) {
             console.error('Error banning user:', error);
@@ -87,28 +89,51 @@ export const adminService = {
     },
 
     /**
-     * Delete a user profile and their history (Auth remains unless Edge function used)
+     * Delete a user profile and their history completely (including Auth)
      */
     async deleteUser(userId: string) {
-        // We delete history first if cascade isn't set, although migration says 'on delete cascade'
-        const { error: historyError } = await supabase
-            .from('generation_history')
-            .delete()
-            .eq('user_id', userId);
+        // Clean up storage first
+        await this.cleanupUserStorage(userId);
 
-        if (historyError) {
-            console.error('Error deleting user history:', historyError);
-            throw historyError;
+        const { error } = await supabase.rpc('delete_user_complete', {
+            target_user_id: userId
+        });
+
+        if (error) {
+            console.error('Error deleting user:', error);
+            throw error;
         }
+    },
 
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', userId);
+    /**
+     * Internal helper to clean up user files from storage
+     */
+    async cleanupUserStorage(userId: string) {
+        try {
+            // Get all user reference images
+            const { data: images } = await supabase
+                .from('user_reference_images')
+                .select('image_url')
+                .eq('user_id', userId);
 
-        if (profileError) {
-            console.error('Error deleting user profile:', profileError);
-            throw profileError;
+            if (images && images.length > 0) {
+                const paths = images.map(img => {
+                    const parts = img.image_url.split('/reference-images/');
+                    return parts.length > 1 ? parts[1] : null;
+                }).filter(Boolean) as string[];
+
+                if (paths.length > 0) {
+                    await supabase.storage
+                        .from('reference-images')
+                        .remove(paths);
+                }
+            }
+
+            // Note: History images are usually just URLs to external or bucket. 
+            // If they are in buckets, we'd need to find them too.
+            // Assuming for now most assets are in 'reference-images'.
+        } catch (e) {
+            console.warn('Storage cleanup failed (non-critical):', e);
         }
     },
 

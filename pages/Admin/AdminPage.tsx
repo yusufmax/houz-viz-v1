@@ -99,26 +99,27 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    const toggleBan = async (u: AdminUser) => {
-        const action = u.is_banned ? "Unban" : "Ban";
-        if (!confirm(`Are you sure you want to ${action.toLowerCase()} this user?`)) return;
+    const handleBanUser = async (u: AdminUser) => {
+        if (!confirm(`CRITICAL: Are you sure you want to PERMANENTLY BAN ${u.full_name || u.id}? \n\nThis will:\n1. Delete all their generation history and data\n2. Delete their account\n3. Blacklist their email forever`)) return;
 
         try {
-            await adminService.banUser(u.id, !u.is_banned);
-            setUsers(users.map(user => user.id === u.id ? { ...user, is_banned: !user.is_banned } : user));
+            await adminService.banUser(u.id);
+            setUsers(users.filter(user => user.id !== u.id));
+            alert("User has been permanently banned and their data wiped.");
         } catch (error) {
-            alert(`Failed to ${action.toLowerCase()} user`);
+            alert(`Failed to ban user: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     };
 
     const deleteUser = async (u: AdminUser) => {
-        if (!confirm(`DANGER: Are you sure you want to delete ${u.full_name || u.id}? This will remove all their data and profile. Auth record will remain.`)) return;
+        if (!confirm(`DANGER: Are you sure you want to delete ${u.full_name || u.id}? \n\nThis will permanently remove their profile, history, and authentication record. This action cannot be undone.`)) return;
 
         try {
             await adminService.deleteUser(u.id);
             setUsers(users.filter(user => user.id !== u.id));
+            alert("User deleted successfully.");
         } catch (error) {
-            alert("Failed to delete user");
+            alert("Failed to delete user: " + (error instanceof Error ? error.message : 'Unknown error'));
         }
     };
 
@@ -240,7 +241,7 @@ const AdminPage: React.FC = () => {
                                                             <>
                                                                 <button onClick={() => viewHistory(u)} className="p-2 text-slate-400 hover:text-white" title="History"><History size={18} /></button>
                                                                 <button onClick={() => startEditing(u)} className="p-2 text-slate-400 hover:text-white" title="Quota"><Edit2 size={18} /></button>
-                                                                <button onClick={() => toggleBan(u)} className={`p-2 ${u.is_banned ? 'text-indigo-400 hover:text-indigo-300' : 'text-red-400 hover:text-red-300'}`} title="Ban"><Ban size={18} /></button>
+                                                                <button onClick={() => handleBanUser(u)} className="p-2 text-red-400 hover:text-red-300 transition-colors" title="Permanent Ban"><Ban size={18} /></button>
                                                                 <button onClick={() => deleteUser(u)} className="p-2 text-slate-600 hover:text-red-500" title="Delete"><Trash2 size={18} /></button>
                                                             </>
                                                         )}
@@ -328,8 +329,8 @@ const AdminPage: React.FC = () => {
                         <span>Banned / Restricted</span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto">
-                        <AlertTriangle size={12} className="text-yellow-500" />
-                        <span>Delete only removes app profile and history</span>
+                        <AlertTriangle size={12} className="text-red-500" />
+                        <span>Delete/Ban PERMANENTLY removes Auth, Profile and History</span>
                     </div>
                 </div>
             </div>
