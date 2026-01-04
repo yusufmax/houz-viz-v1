@@ -211,7 +211,25 @@ const Home: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { session, loading, profile } = useAuth();
+  const { session, loading, profile, signOut } = useAuth();
+
+  useEffect(() => {
+    // If user is banned or the account was deleted (profile is null), 
+    // we want to ensure they are signed out from Auth as well.
+    if (!loading && session && (profile?.is_banned || profile?.is_rejected)) {
+      const timer = setTimeout(() => {
+        signOut();
+        window.location.href = '/'; // Reset everything
+      }, 5000); // Give them 5s to read the message
+      return () => clearTimeout(timer);
+    }
+
+    // If session exists but profile is completely gone (possibly deleted from DB)
+    if (!loading && session && profile === null) {
+      signOut();
+      window.location.href = '/';
+    }
+  }, [profile, session, loading, signOut]);
 
   if (loading) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">Loading...</div>;
@@ -234,14 +252,17 @@ const AppContent: React.FC = () => {
           </h2>
           <p className="text-slate-400 leading-relaxed mb-8">
             {isRejected
-              ? 'U WAS NOT APPROVED BY ADMIN. If you believe this is a mistake or would like to appeal, please contact support.'
-              : 'Your account has been restricted by an administrator. If you believe this is a mistake, please contact support.'}
+              ? 'Your account was not approved by an administrator. If you believe this is a mistake, please contact support.'
+              : 'Your account has been permanently restricted. You will be redirected to the login screen shortly.'}
           </p>
           <button
-            onClick={() => window.location.reload()}
-            className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all shadow-lg active:scale-95"
+            onClick={() => {
+              signOut();
+              window.location.href = '/';
+            }}
+            className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl font-bold transition-all shadow-lg active:scale-95 shadow-red-900/20"
           >
-            {isRejected ? 'Check Again' : 'Check Status'}
+            Sign Out Now
           </button>
         </div>
       </div>

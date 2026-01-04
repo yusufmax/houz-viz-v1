@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }, []);
 
-    // Fetch profile whenever the user ID changes
+    // Fetch profile whenever the user ID changes and listen for real-time updates
     useEffect(() => {
         let mounted = true;
         if (!user) return;
@@ -76,8 +76,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         fetchProfile();
 
+        // Subscribe to real-time changes
+        const channel = supabase
+            .channel(`profile-${user.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'profiles',
+                    filter: `id=eq.${user.id}`
+                },
+                (payload) => {
+                    if (mounted) {
+                        if (payload.eventType === 'DELETE') {
+                            setProfile(null);
+                        } else {
+                            setProfile(payload.new);
+                        }
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             mounted = false;
+            supabase.removeChannel(channel);
         };
     }, [user?.id]);
 
