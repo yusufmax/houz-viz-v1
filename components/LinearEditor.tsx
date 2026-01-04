@@ -1831,32 +1831,34 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </button>
               </div>
 
-              <div className="relative pt-6 flex gap-2">
-                {!batchMode && (
-                  <div className="flex flex-col gap-1 justify-center pr-2 border-r border-slate-700">
-                    <span className="text-[9px] font-bold text-slate-500 uppercase text-center">Images</span>
-                    <div className="flex flex-col gap-1">
-                      {[1, 2, 3, 4].map(num => (
-                        <button
-                          key={num}
-                          onClick={() => setGenerationCount(num)}
-                          className={`w-7 h-6 flex items-center justify-center rounded text-[10px] font-bold transition-all ${generationCount === num ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
-                        >
-                          {num}
-                        </button>
-                      ))}
-                    </div>
+              <div className="relative pt-6 flex flex-col gap-2">
+                <div className="relative flex items-stretch gap-2">
+                  <div className="relative flex-1">
+                    {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+                    <button
+                      onClick={() => batchMode ? processBatch() : handleGenerate()}
+                      disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                      className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
+                    >
+                      {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
+                    </button>
                   </div>
-                )}
-                <div className="relative flex-1">
-                  {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-                  <button
-                    onClick={() => batchMode ? processBatch() : handleGenerate()}
-                    disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                    className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
-                  >
-                    {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
-                  </button>
+
+                  {!batchMode && (
+                    <div className="flex flex-col gap-1 min-w-[80px]">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase text-center">Amount</span>
+                      <select
+                        value={generationCount}
+                        onChange={(e) => setGenerationCount(parseInt(e.target.value))}
+                        className="h-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 text-slate-200 font-bold focus:border-indigo-500 transition-colors cursor-pointer appearance-none text-center outline-none"
+                        style={{ height: 'calc(100% - 14px)' }}
+                      >
+                        {[1, 2, 3, 4].map(num => (
+                          <option key={num} value={num}>{num} {num === 1 ? 'Image' : 'Images'}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
