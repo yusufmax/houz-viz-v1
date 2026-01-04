@@ -3,7 +3,7 @@ import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees,
   Building2, Wind, Zap, Loader2, Pencil, Pen, Lock, LayoutTemplate,
-  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon
+  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -196,7 +196,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [sourceImage, setSourceImage] = useState<string | null>(null);
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
-  const [multiResults, setMultiResults] = useState<string[]>([]);
+  const [multiResults, setMultiResults] = useState<{ url: string; settings: GenerationSettings }[]>([]);
   const [generationCount, setGenerationCount] = useState<number>(1);
   const [tags, setTags] = useState<Tag[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -924,7 +924,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         return;
       }
 
-      const results: string[] = [];
+      const results: { url: string; settings: GenerationSettings }[] = [];
       const totalToGenerate = generationCount;
 
       for (let i = 0; i < totalToGenerate; i++) {
@@ -940,7 +940,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           resultUrl = await generateImage(settings);
         }
 
-        results.push(resultUrl);
+        results.push({ url: resultUrl, settings });
         setMultiResults([...results]); // Update UI incrementally
 
         // Set first result as primary resultImage for compatibility
@@ -1963,12 +1963,25 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     {multiResults.map((res, idx) => (
                       <div
                         key={idx}
-                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
-                        onClick={() => setResultImage(res)}
+                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
+                        onClick={() => setResultImage(res.url)}
                       >
-                        <img src={res} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-xs font-bold bg-indigo-600 px-3 py-1 rounded-full">{resultImage === res ? 'Active' : 'Select'}</span>
+                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                        <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
+                          <div className="space-y-2 overflow-hidden">
+                            <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
+                              <span>SETTINGS</span>
+                              {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
+                            </div>
+                            <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
+                            <div className="flex flex-wrap gap-1">
+                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
+                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
+                            </div>
+                          </div>
+                          <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
+                            {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
+                          </button>
                         </div>
                       </div>
                     ))}
