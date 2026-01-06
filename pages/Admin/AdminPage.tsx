@@ -542,18 +542,19 @@ const AdminPage: React.FC = () => {
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Generation Volume (Daily)</h4>
                                                 <span className="text-xs font-bold text-indigo-400">{stats.daily.reduce((sum, d) => sum + d.count, 0)} Total</span>
                                             </div>
-                                            <div className="h-48 w-full flex items-end gap-1 px-2 border-b border-l border-slate-800 pb-2">
+                                            <div className="h-48 w-full flex items-end gap-1 px-2 border-b border-l border-slate-800 pb-2 bg-slate-950/20 rounded-bl-lg">
                                                 {stats.daily.slice().reverse().map((day, idx) => {
                                                     const maxCount = Math.max(...stats.daily.map(d => d.count), 1);
                                                     const height = (day.count / maxCount) * 100;
                                                     return (
-                                                        <div key={day.date} className="flex-1 group relative flex flex-col items-center">
+                                                        <div key={day.date} className="flex-1 group relative flex flex-col items-center min-w-[12px]">
                                                             <div
-                                                                className="w-full bg-indigo-500/40 group-hover:bg-indigo-400 transition-all rounded-t-sm"
-                                                                style={{ height: `${height}%` }}
+                                                                className="w-full bg-indigo-500 group-hover:bg-indigo-400 transition-all rounded-t-sm shadow-[0_0_10px_rgba(99,102,241,0.2)]"
+                                                                style={{ height: `${Math.max(height, day.count > 0 ? 2 : 0)}%` }}
                                                             ></div>
-                                                            <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-[9px] font-bold px-1.5 py-0.5 rounded text-white whitespace-nowrap z-10">
-                                                                {day.date}: {day.count}
+                                                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 border border-slate-700 text-[10px] font-bold px-2 py-1 rounded-lg text-white shadow-2xl pointer-events-none z-50 whitespace-nowrap">
+                                                                <div className="text-slate-500 text-[8px] uppercase tracking-widest">{day.date}</div>
+                                                                <div className="text-indigo-400">{day.count} Generations</div>
                                                             </div>
                                                         </div>
                                                     );
@@ -567,58 +568,71 @@ const AdminPage: React.FC = () => {
                                                 <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cost Flow Trend (USD)</h4>
                                                 <span className="text-xs font-bold text-emerald-400">${stats.daily.reduce((sum, d) => sum + d.cost, 0).toFixed(2)} Period Total</span>
                                             </div>
-                                            <div className="h-48 w-full relative group">
-                                                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                            <div className="h-56 w-full relative group bg-slate-950/20 border-b border-l border-slate-800 rounded-bl-lg">
+                                                <svg
+                                                    viewBox="0 0 100 100"
+                                                    className="w-full h-full overflow-visible"
+                                                    preserveAspectRatio="none"
+                                                >
                                                     <defs>
                                                         <linearGradient id="costFlowGradient" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
                                                             <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                                                         </linearGradient>
                                                     </defs>
                                                     {(() => {
                                                         const daily = stats.daily.slice().reverse();
                                                         const maxCost = Math.max(...daily.map(d => d.cost), 0.1);
-                                                        const width = 100 / (daily.length - 1 || 1);
+                                                        const widthStep = 100 / (daily.length - 1 || 1);
 
                                                         // Generate path points
-                                                        const points = daily.map((d, i) => {
-                                                            const x = i * width;
-                                                            const y = 100 - (d.cost / maxCost) * 100;
-                                                            return `${x},${y}`;
-                                                        }).join(' ');
+                                                        const pointsArr = daily.map((d, i) => ({
+                                                            x: i * widthStep,
+                                                            y: 100 - (d.cost / maxCost) * 90 - 5 // Leave 5% padding
+                                                        }));
 
-                                                        const areaPath = `0,100 ${points} 100,100`;
-                                                        const linePath = points;
+                                                        const pointsStr = pointsArr.map(p => `${p.x},${p.y}`).join(' ');
+                                                        const areaPath = `0,100 ${pointsStr} 100,100`;
 
                                                         return (
                                                             <>
                                                                 {/* Grid Lines */}
-                                                                <line x1="0" y1="25" x2="100%" y2="25" stroke="#1e293b" strokeDasharray="4" />
-                                                                <line x1="0" y1="50" x2="100%" y2="50" stroke="#1e293b" strokeDasharray="4" />
-                                                                <line x1="0" y1="75" x2="100%" y2="75" stroke="#1e293b" strokeDasharray="4" />
+                                                                {[25, 50, 75].map(v => (
+                                                                    <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />
+                                                                ))}
 
                                                                 {/* Area Fill */}
                                                                 <polygon points={areaPath} fill="url(#costFlowGradient)" />
 
                                                                 {/* Trend Line */}
                                                                 <polyline
-                                                                    points={linePath}
+                                                                    points={pointsStr}
                                                                     fill="none"
                                                                     stroke="#10b981"
                                                                     strokeWidth="2"
                                                                     vectorEffect="non-scaling-stroke"
+                                                                    strokeLinejoin="round"
+                                                                    strokeLinecap="round"
                                                                 />
 
                                                                 {/* Data Points on Hover */}
-                                                                {daily.map((d, i) => (
-                                                                    <circle
-                                                                        key={i}
-                                                                        cx={`${i * width}%`}
-                                                                        cy={`${100 - (d.cost / maxCost) * 100}%`}
-                                                                        r="3"
-                                                                        fill="#10b981"
-                                                                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    />
+                                                                {pointsArr.map((p, i) => (
+                                                                    <g key={i} className="group/dot cursor-crosshair">
+                                                                        <circle
+                                                                            cx={p.x}
+                                                                            cy={p.y}
+                                                                            r="1.5"
+                                                                            fill="#10b981"
+                                                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                        />
+                                                                        <rect
+                                                                            x={p.x - 1}
+                                                                            y="0"
+                                                                            width="2"
+                                                                            height="100"
+                                                                            className="fill-white/0 hover:fill-white/5 transition-colors"
+                                                                        />
+                                                                    </g>
                                                                 ))}
                                                             </>
                                                         );
