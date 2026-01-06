@@ -85,14 +85,15 @@ const Home: React.FC = () => {
       {/* Header */}
       <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 flex items-center justify-between flex-none">
         <div
-          className="flex items-center gap-3 cursor-pointer select-none active:scale-95 transition-transform"
+          className="flex items-center h-full cursor-pointer select-none active:scale-95 transition-transform"
           onClick={() => window.location.href = '/'}
           title="Reload HOUZ.AI"
         >
-          <div className="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Hexagon fill="white" size={20} className="text-white" />
-          </div>
-          <h1 className="font-bold text-lg tracking-tight text-white hidden sm:block">HOUZ.AI</h1>
+          <img
+            src="/logo.png"
+            alt="HOUZ.AI Logo"
+            className="h-10 w-auto object-contain brightness-110 contrast-110"
+          />
         </div>
 
         {/* Mode Switcher */}

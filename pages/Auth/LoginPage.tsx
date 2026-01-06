@@ -9,10 +9,11 @@ const LoginPage: React.FC = () => {
         <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md bg-slate-900/50 border border-slate-800 rounded-2xl p-8 shadow-xl backdrop-blur-sm">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="w-12 h-12 bg-gradient-to-tr from-indigo-600 to-purple-500 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 mb-4">
-                        <Hexagon fill="white" size={28} className="text-white" />
-                    </div>
-                    <h1 className="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
+                    <img
+                        src="/logo.png"
+                        alt="HOUZ.AI Logo"
+                        className="h-16 w-auto object-contain mb-4 brightness-110"
+                    />
                     <p className="text-slate-400 mt-2">Sign in to continue to HOUZ.AI</p>
                 </div>
 
