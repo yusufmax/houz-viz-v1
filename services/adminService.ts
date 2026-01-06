@@ -128,10 +128,6 @@ export const adminService = {
                         .remove(paths);
                 }
             }
-
-            // Note: History images are usually just URLs to external or bucket. 
-            // If they are in buckets, we'd need to find them too.
-            // Assuming for now most assets are in 'reference-images'.
         } catch (e) {
             console.warn('Storage cleanup failed (non-critical):', e);
         }
@@ -156,49 +152,79 @@ export const adminService = {
     },
 
     /**
-     * Get overall system stats
+     * Get overall system stats including estimated cost
      */
     async getSystemStats() {
         const now = new Date();
         const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-        const [totalGens, activeUsers, gensLast24h] = await Promise.all([
+        const [totalGens, activeUsers, gensLast24h, totalCost] = await Promise.all([
             supabase.from('generation_history').select('*', { count: 'exact', head: true }),
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
-            supabase.from('generation_history').select('*', { count: 'exact', head: true }).gt('created_at', last24h)
+            supabase.from('generation_history').select('*', { count: 'exact', head: true }).gt('created_at', last24h),
+            supabase.from('generation_history').select('estimated_cost')
         ]);
+
+        const totalCostUSD = totalCost.data?.reduce((sum, item) => sum + (Number(item.estimated_cost) || 0), 0) || 0;
 
         return {
             totalGenerations: totalGens.count || 0,
             totalUsers: activeUsers.count || 0,
-            generationsLast24h: gensLast24h.count || 0
+            generationsLast24h: gensLast24h.count || 0,
+            totalCostUSD
         };
     },
 
     /**
-     * Get daily generation stats for the last 30 days
+     * Get daily generation stats and cost for the last 30 days
      */
     async getDailyStats() {
-        // Since we don't have a complex group-by in standard Supabase JS client without RPC,
-        // we'll fetch the last 1000 records and group in JS for simplicity, 
-        // or we could use an RPC if performance becomes an issue.
+        // Fetch last 2000 records and group in JS
         const { data, error } = await supabase
             .from('generation_history')
-            .select('created_at')
+            .select('created_at, estimated_cost')
             .order('created_at', { ascending: false })
             .limit(2000);
 
         if (error) throw error;
 
-        const groups: Record<string, number> = {};
+        const groups: Record<string, { count: number, cost: number }> = {};
         data?.forEach(item => {
             const date = item.created_at.split('T')[0];
-            groups[date] = (groups[date] || 0) + 1;
+            if (!groups[date]) groups[date] = { count: 0, cost: 0 };
+            groups[date].count += 1;
+            groups[date].cost += (Number(item.estimated_cost) || 0);
         });
 
         return Object.entries(groups)
-            .map(([date, count]) => ({ date, count }))
+            .map(([date, stats]) => ({ date, count: stats.count, cost: stats.cost }))
             .sort((a, b) => b.date.localeCompare(a.date));
+    },
+
+    /**
+     * Get detailed usage report for a specific date
+     */
+    async getDailyReport(date: string) {
+        const startOfDay = `${date}T00:00:00Z`;
+        const endOfDay = `${date}T23:59:59Z`;
+
+        const { data, error } = await supabase
+            .from('generation_history')
+            .select(`
+                *,
+                profiles (
+                    full_name
+                )
+            `)
+            .gte('created_at', startOfDay)
+            .lte('created_at', endOfDay)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching daily report:', error);
+            throw error;
+        }
+        return data;
     },
 
     /**

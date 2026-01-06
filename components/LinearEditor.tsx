@@ -564,7 +564,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   }, [resultImage]);
 
 
-  const saveToHistory = async (url: string, usedPrompt: string) => {
+  const saveToHistory = async (url: string, usedPrompt: string, modelName?: string, estimatedCost?: number) => {
     if (!user) return;
     try {
       const newItem: HistoryItem = {
@@ -573,6 +573,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         prompt: usedPrompt,
         timestamp: Date.now(),
         style,
+        modelName: modelName || model,
+        estimatedCost: estimatedCost || calculateUSDCost(modelName || model, resolution),
         metadata: {
           style,
           atmosphere,
@@ -741,6 +743,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       if (resolution === '4K') return 5;
     }
     return 1;
+  };
+
+  const calculateUSDCost = (modelName: string, res: string) => {
+    if (modelName === 'gemini-2.5-flash-image' || modelName === 'gemini-2.5-flash') {
+      return 0.0401;
+    }
+    if (modelName === 'gemini-3-pro-image-preview') {
+      if (res === '4K') return 0.2411;
+      return 0.1351; // 1K, 2K, Original
+    }
+    return 0.0401; // Fallback to Flash price
   };
 
   const exportHistory = () => {
@@ -1011,7 +1024,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         // Set first result as primary resultImage for compatibility
         if (i === 0) setResultImage(resultUrl);
 
-        saveToHistory(resultUrl, settings.prompt);
+        const usdCost = calculateUSDCost(settings.model || model, settings.resolution || resolution);
+        saveToHistory(resultUrl, settings.prompt, settings.model || model, usdCost);
       }
 
       loadQuota(); // Refresh UI after all generations
@@ -1117,6 +1131,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         await quotaService.incrementUsage(user.id, costPerImage);
         const result = await editImage(batchImages[i], settings);
         results.push({ input: batchImages[i], output: result, index: i });
+        if (result) {
+          const usdCost = calculateUSDCost(settings.model || model, settings.resolution || resolution);
+          saveToHistory(result, settings.prompt, settings.model || model, usdCost);
+        }
       } catch (error) {
         console.error(`Failed to process image ${i + 1}: `, error);
         results.push({ input: batchImages[i], output: null, index: i });

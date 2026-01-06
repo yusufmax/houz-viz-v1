@@ -28,7 +28,9 @@ export const historyService = {
             prompt: item.prompt,
             style: item.style as RenderStyle,
             timestamp: new Date(item.created_at).getTime(),
-            metadata: item.metadata // Return full metadata
+            metadata: item.metadata, // Return full metadata
+            modelName: item.model_name,
+            estimatedCost: item.estimated_cost
         }));
     },
 
@@ -77,7 +79,9 @@ export const historyService = {
                 project_id: projectId,
                 user_display_name: userDisplayName, // Save display name
                 created_at: new Date(item.timestamp).toISOString(),
-                metadata: item.metadata
+                metadata: item.metadata,
+                model_name: item.modelName,
+                estimated_cost: item.estimatedCost
             });
 
         if (error) {

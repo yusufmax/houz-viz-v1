@@ -346,6 +346,8 @@ export interface HistoryItem {
   timestamp: number;
   style: RenderStyle;
   metadata?: any;
+  modelName?: string;
+  estimatedCost?: number;
 }
 
 // Video Generation Types

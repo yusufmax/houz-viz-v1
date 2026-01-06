@@ -14,10 +14,13 @@ const AdminPage: React.FC = () => {
     const [creditRequests, setCreditRequests] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats'>('users');
     const [stats, setStats] = useState<{
-        system: { totalGenerations: number, totalUsers: number, generationsLast24h: number },
-        daily: { date: string, count: number }[],
+        system: { totalGenerations: number, totalUsers: number, generationsLast24h: number, totalCostUSD: number },
+        daily: { date: string, count: number, cost: number }[],
         leaderboard: any[]
     } | null>(null);
+    const [reportDate, setReportDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const [dailyReport, setDailyReport] = useState<any[] | null>(null);
+    const [loadingReport, setLoadingReport] = useState(false);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -145,6 +148,18 @@ const AdminPage: React.FC = () => {
             alert("Failed to load user history");
         } finally {
             setLoadingHistory(false);
+        }
+    };
+
+    const handleGenerateReport = async () => {
+        try {
+            setLoadingReport(true);
+            const report = await adminService.getDailyReport(reportDate);
+            setDailyReport(report);
+        } catch (error) {
+            alert("Failed to generate report");
+        } finally {
+            setLoadingReport(false);
         }
     };
 
@@ -358,12 +373,12 @@ const AdminPage: React.FC = () => {
                             </div>
                             <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
                                 <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-2 bg-orange-900/20 rounded-lg text-orange-400">
-                                        <TrendingUp size={20} />
+                                    <div className="p-2 bg-amber-900/20 rounded-lg text-amber-400">
+                                        <ShieldAlert size={20} />
                                     </div>
-                                    <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Last 24 Hours</span>
+                                    <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Est. Total Cost (USD)</span>
                                 </div>
-                                <div className="text-3xl font-black text-white">{stats?.system.generationsLast24h.toLocaleString()}</div>
+                                <div className="text-3xl font-black text-white">${stats?.system.totalCostUSD.toFixed(2)}</div>
                             </div>
                         </div>
 
@@ -373,17 +388,20 @@ const AdminPage: React.FC = () => {
                                 <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Calendar className="text-indigo-400" size={18} />
-                                        <h3 className="font-bold text-white uppercase tracking-tight">Daily Activity</h3>
+                                        <h3 className="font-bold text-white uppercase tracking-tight">Daily Activity & Cost</h3>
                                     </div>
                                 </div>
                                 <div className="p-4 flex-1">
                                     <div className="space-y-2">
                                         {stats?.daily.slice(0, 10).map((day) => (
                                             <div key={day.date} className="flex items-center justify-between p-3 rounded-lg bg-slate-950/50 border border-slate-800/50">
-                                                <span className="font-mono text-xs text-slate-400">{day.date}</span>
+                                                <div className="flex flex-col">
+                                                    <span className="font-mono text-xs text-slate-400">{day.date}</span>
+                                                    <span className="text-[10px] font-black text-emerald-500 uppercase mt-0.5">${day.cost.toFixed(3)}</span>
+                                                </div>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(day.count * 2, 200)}px` }}></div>
-                                                    <span className="font-black text-white text-sm">{day.count}</span>
+                                                    <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(day.count * 2, 120)}px` }}></div>
+                                                    <span className="font-black text-white text-sm">{day.count} gens</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -428,6 +446,84 @@ const AdminPage: React.FC = () => {
                                         ))}
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Daily Report Generator */}
+                        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mt-6">
+                            <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <BarChart3 className="text-indigo-400" size={18} />
+                                    <h3 className="font-bold text-white uppercase tracking-tight">Daily Usage Report</h3>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="date"
+                                        value={reportDate}
+                                        onChange={(e) => setReportDate(e.target.value)}
+                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-indigo-500"
+                                    />
+                                    <button
+                                        onClick={handleGenerateReport}
+                                        disabled={loadingReport}
+                                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-black transition-all flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {loadingReport ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                        GENERATE
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="p-6">
+                                {!dailyReport ? (
+                                    <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
+                                        Select a date and click generate to view detailed usage logs
+                                    </div>
+                                ) : dailyReport.length === 0 ? (
+                                    <div className="text-center py-12 text-slate-400 font-bold">
+                                        No generations recorded for {reportDate}
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left text-xs">
+                                            <thead className="text-slate-500 uppercase font-black text-[10px] tracking-widest border-b border-slate-800">
+                                                <tr>
+                                                    <th className="px-4 py-3">Time</th>
+                                                    <th className="px-4 py-3">User</th>
+                                                    <th className="px-4 py-3">Model</th>
+                                                    <th className="px-4 py-3">Style</th>
+                                                    <th className="px-4 py-3 text-right">Cost</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-800/50">
+                                                {dailyReport.map((item: any) => (
+                                                    <tr key={item.id} className="hover:bg-slate-800/30">
+                                                        <td className="px-4 py-2 text-slate-400 font-mono">
+                                                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </td>
+                                                        <td className="px-4 py-2 font-bold text-white">
+                                                            {item.profiles?.full_name || 'Anonymous'}
+                                                        </td>
+                                                        <td className="px-4 py-2">
+                                                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px] font-mono">
+                                                                {item.model_name || 'unknown'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-2 italic text-slate-500">{item.style}</td>
+                                                        <td className="px-4 py-2 text-right font-black text-emerald-500">
+                                                            ${Number(item.estimated_cost).toFixed(3)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                <tr className="bg-slate-950/50 font-black text-white">
+                                                    <td colSpan={4} className="px-4 py-3 text-right uppercase tracking-widest text-[10px]">Total Daily Cost:</td>
+                                                    <td className="px-4 py-3 text-right text-emerald-400 text-sm">
+                                                        ${dailyReport.reduce((sum: number, i: any) => sum + (Number(i.estimated_cost) || 0), 0).toFixed(3)}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
