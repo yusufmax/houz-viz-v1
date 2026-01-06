@@ -302,7 +302,9 @@ const SuperEditor: React.FC = () => {
                 metadata: {
                     model: settings.model,
                     aspectRatio: settings.aspectRatio,
-                    superMode: true
+                    superMode: true,
+                    styleReferenceImage: (styleReferenceImage && !styleReferenceImage.startsWith('data:')) ? styleReferenceImage : undefined,
+                    sourceImage: (sourceImage && !sourceImage.startsWith('data:')) ? sourceImage : undefined,
                 }
             });
             loadHistory();
