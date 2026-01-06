@@ -1020,6 +1020,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       alert("Failed to generate image. Please try again.");
     } finally {
       setIsGenerating(false);
+      setGenerationCount(1);
     }
   };
 
@@ -1071,11 +1072,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
 
     // Check quota
-    const requiredCredits = batchImages.length;
+    const costPerImage = calculateCost();
+    const requiredCredits = batchImages.length * costPerImage;
     const quotaData = await quotaService.getUserQuota(user.id);
 
-    if (!quotaData || (quotaData.quota - quotaData.used) < requiredCredits) {
-      const remaining = quotaData ? (quotaData.quota - quotaData.used) : 0;
+    if (!quotaData || (quotaData.remaining) < requiredCredits) {
+      const remaining = quotaData ? quotaData.remaining : 0;
       alert(`🚫 Not enough credits! Need ${requiredCredits}, have ${remaining}.\n\nPlease upgrade your plan or contact support.`);
       return;
     }
@@ -1111,9 +1113,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setBatchProgress({ current: i + 1, total: batchImages.length });
 
       try {
+        // Deduct cost before API call
+        await quotaService.incrementUsage(user.id, costPerImage);
         const result = await editImage(batchImages[i], settings);
         results.push({ input: batchImages[i], output: result, index: i });
-        await quotaService.incrementUsage(user.id);
       } catch (error) {
         console.error(`Failed to process image ${i + 1}: `, error);
         results.push({ input: batchImages[i], output: null, index: i });

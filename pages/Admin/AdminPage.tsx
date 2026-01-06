@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService, AdminUser } from '../../services/adminService';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthProvider';
-import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap } from 'lucide-react';
+import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap, BarChart3, TrendingUp, Trophy, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import HistoryModal from '../../components/Admin/HistoryModal';
 
@@ -12,7 +12,12 @@ const AdminPage: React.FC = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [creditRequests, setCreditRequests] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'users' | 'requests'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats'>('users');
+    const [stats, setStats] = useState<{
+        system: { totalGenerations: number, totalUsers: number, generationsLast24h: number },
+        daily: { date: string, count: number }[],
+        leaderboard: any[]
+    } | null>(null);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -41,12 +46,18 @@ const AdminPage: React.FC = () => {
     const loadData = async () => {
         try {
             setLoading(true);
-            const [usersData, requestsData] = await Promise.all([
+            const [usersData, requestsData, statsData] = await Promise.all([
                 adminService.getVisibleUsers(),
-                supabase.from('credit_requests').select('*, profiles(full_name)').order('created_at', { ascending: false })
+                supabase.from('credit_requests').select('*, profiles(full_name)').order('created_at', { ascending: false }),
+                adminService.getSystemStats().then(async (system) => ({
+                    system,
+                    daily: await adminService.getDailyStats(),
+                    leaderboard: await adminService.getUserLeaderboard()
+                }))
             ]);
             setUsers(usersData);
             setCreditRequests(requestsData.data || []);
+            setStats(statsData);
         } catch (error) {
             console.error("Failed to load admin data", error);
         } finally {
@@ -174,6 +185,12 @@ const AdminPage: React.FC = () => {
                                 <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                             )}
                         </button>
+                        <button
+                            onClick={() => setActiveTab('stats')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            <BarChart3 size={16} /> Stats
+                        </button>
                     </div>
                 </header>
 
@@ -254,7 +271,7 @@ const AdminPage: React.FC = () => {
                             </table>
                         </div>
                     </div>
-                ) : (
+                ) : activeTab === 'requests' ? (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
                             <table className="w-full text-left text-sm">
@@ -315,6 +332,103 @@ const AdminPage: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
+                        {/* KPI Dashboard */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <div className="p-2 bg-indigo-900/20 rounded-lg text-indigo-400">
+                                        <Zap size={20} />
+                                    </div>
+                                    <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Total Generations</span>
+                                </div>
+                                <div className="text-3xl font-black text-white">{stats?.system.totalGenerations.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <div className="p-2 bg-emerald-900/20 rounded-lg text-emerald-400">
+                                        <Users size={20} />
+                                    </div>
+                                    <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Total Users</span>
+                                </div>
+                                <div className="text-3xl font-black text-white">{stats?.system.totalUsers.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                                <div className="flex items-center gap-4 mb-2">
+                                    <div className="p-2 bg-orange-900/20 rounded-lg text-orange-400">
+                                        <TrendingUp size={20} />
+                                    </div>
+                                    <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Last 24 Hours</span>
+                                </div>
+                                <div className="text-3xl font-black text-white">{stats?.system.generationsLast24h.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Daily Usage */}
+                            <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
+                                <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Calendar className="text-indigo-400" size={18} />
+                                        <h3 className="font-bold text-white uppercase tracking-tight">Daily Activity</h3>
+                                    </div>
+                                </div>
+                                <div className="p-4 flex-1">
+                                    <div className="space-y-2">
+                                        {stats?.daily.slice(0, 10).map((day) => (
+                                            <div key={day.date} className="flex items-center justify-between p-3 rounded-lg bg-slate-950/50 border border-slate-800/50">
+                                                <span className="font-mono text-xs text-slate-400">{day.date}</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(day.count * 2, 200)}px` }}></div>
+                                                    <span className="font-black text-white text-sm">{day.count}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Leaderboard */}
+                            <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
+                                <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Trophy className="text-yellow-400" size={18} />
+                                        <h3 className="font-bold text-white uppercase tracking-tight">Top Active Users</h3>
+                                    </div>
+                                </div>
+                                <div className="p-4 flex-1">
+                                    <div className="space-y-2">
+                                        {stats?.leaderboard.map((u, i) => (
+                                            <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-950/50 border border-slate-800/50">
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-slate-300 text-black' : i === 2 ? 'bg-amber-700 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                                        {i + 1}
+                                                    </span>
+                                                    <span className="font-bold text-white text-sm truncate max-w-[150px]">{u.full_name || 'Anonymous'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-8">
+                                                    <div className="text-right">
+                                                        <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Generations</div>
+                                                        <div className="font-black text-indigo-400">{u.generations_used}</div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            const userObj = users.find(user => user.id === u.id);
+                                                            if (userObj) viewHistory(userObj);
+                                                        }}
+                                                        className="p-2 text-slate-500 hover:text-white transition-colors"
+                                                    >
+                                                        <History size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
