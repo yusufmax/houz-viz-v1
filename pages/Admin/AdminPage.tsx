@@ -18,9 +18,6 @@ const AdminPage: React.FC = () => {
         daily: { date: string, count: number, cost: number }[],
         leaderboard: any[]
     } | null>(null);
-    const [reportDate, setReportDate] = useState<string>(new Date().toISOString().split('T')[0]);
-    const [dailyReport, setDailyReport] = useState<any[] | null>(null);
-    const [loadingReport, setLoadingReport] = useState(false);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -172,17 +169,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    const handleGenerateReport = async () => {
-        try {
-            setLoadingReport(true);
-            const report = await adminService.getDailyReport(reportDate);
-            setDailyReport(report);
-        } catch (error) {
-            alert("Failed to generate report");
-        } finally {
-            setLoadingReport(false);
-        }
-    };
 
     if (loading) {
         return (
@@ -510,79 +496,140 @@ const AdminPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Daily Report Generator */}
+                        {/* Usage Analytics Charts */}
                         <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mt-6">
                             <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <BarChart3 className="text-indigo-400" size={18} />
-                                    <h3 className="font-bold text-white uppercase tracking-tight">Daily Usage Report</h3>
+                                    <h3 className="font-bold text-white uppercase tracking-tight">Usage Analytics</h3>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <input
-                                        type="date"
-                                        value={reportDate}
-                                        onChange={(e) => setReportDate(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-sm font-bold text-white outline-none focus:border-indigo-500"
-                                    />
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Range</span>
+                                        <input
+                                            type="date"
+                                            value={startDate}
+                                            onChange={(e) => setStartDate(e.target.value)}
+                                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                        />
+                                        <span className="text-slate-600">—</span>
+                                        <input
+                                            type="date"
+                                            value={endDate}
+                                            onChange={(e) => setEndDate(e.target.value)}
+                                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                        />
+                                    </div>
                                     <button
-                                        onClick={handleGenerateReport}
-                                        disabled={loadingReport}
-                                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-black transition-all flex items-center gap-2 disabled:opacity-50"
+                                        onClick={loadStats}
+                                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-black transition-all flex items-center gap-2"
                                     >
-                                        {loadingReport ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                        GENERATE
+                                        <TrendingUp size={14} />
+                                        ANALYZE
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-6">
-                                {!dailyReport ? (
-                                    <div className="text-center py-12 text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
-                                        Select a date and click generate to view detailed usage logs
-                                    </div>
-                                ) : dailyReport.length === 0 ? (
-                                    <div className="text-center py-12 text-slate-400 font-bold">
-                                        No generations recorded for {reportDate}
+                            <div className="p-8">
+                                {!stats?.daily || stats.daily.length === 0 ? (
+                                    <div className="text-center py-24 text-slate-500 border-2 border-dashed border-slate-800 rounded-2xl">
+                                        No data available for the selected period
                                     </div>
                                 ) : (
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left text-xs">
-                                            <thead className="text-slate-500 uppercase font-black text-[10px] tracking-widest border-b border-slate-800">
-                                                <tr>
-                                                    <th className="px-4 py-3">Time</th>
-                                                    <th className="px-4 py-3">User</th>
-                                                    <th className="px-4 py-3">Model</th>
-                                                    <th className="px-4 py-3">Style</th>
-                                                    <th className="px-4 py-3 text-right">Cost</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-800/50">
-                                                {dailyReport.map((item: any) => (
-                                                    <tr key={item.id} className="hover:bg-slate-800/30">
-                                                        <td className="px-4 py-2 text-slate-400 font-mono">
-                                                            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </td>
-                                                        <td className="px-4 py-2 font-bold text-white">
-                                                            {item.profiles?.full_name || 'Anonymous'}
-                                                        </td>
-                                                        <td className="px-4 py-2">
-                                                            <span className="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px] font-mono">
-                                                                {item.model_name || 'unknown'}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-2 italic text-slate-500">{item.style}</td>
-                                                        <td className="px-4 py-2 text-right font-black text-emerald-500">
-                                                            ${Number(item.estimated_cost).toFixed(3)}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                                <tr className="bg-slate-950/50 font-black text-white">
-                                                    <td colSpan={4} className="px-4 py-3 text-right uppercase tracking-widest text-[10px]">Total Daily Cost:</td>
-                                                    <td className="px-4 py-3 text-right text-emerald-400 text-sm">
-                                                        ${dailyReport.reduce((sum: number, i: any) => sum + (Number(i.estimated_cost) || 0), 0).toFixed(3)}
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
+                                    <div className="space-y-12">
+                                        {/* Volume Bar Chart */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Generation Volume (Daily)</h4>
+                                                <span className="text-xs font-bold text-indigo-400">{stats.daily.reduce((sum, d) => sum + d.count, 0)} Total</span>
+                                            </div>
+                                            <div className="h-48 w-full flex items-end gap-1 px-2 border-b border-l border-slate-800 pb-2">
+                                                {stats.daily.slice().reverse().map((day, idx) => {
+                                                    const maxCount = Math.max(...stats.daily.map(d => d.count), 1);
+                                                    const height = (day.count / maxCount) * 100;
+                                                    return (
+                                                        <div key={day.date} className="flex-1 group relative flex flex-col items-center">
+                                                            <div
+                                                                className="w-full bg-indigo-500/40 group-hover:bg-indigo-400 transition-all rounded-t-sm"
+                                                                style={{ height: `${height}%` }}
+                                                            ></div>
+                                                            <div className="absolute -top-6 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 text-[9px] font-bold px-1.5 py-0.5 rounded text-white whitespace-nowrap z-10">
+                                                                {day.date}: {day.count}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Cost Flow Chart (SVG Area) */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cost Flow Trend (USD)</h4>
+                                                <span className="text-xs font-bold text-emerald-400">${stats.daily.reduce((sum, d) => sum + d.cost, 0).toFixed(2)} Period Total</span>
+                                            </div>
+                                            <div className="h-48 w-full relative group">
+                                                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                                    <defs>
+                                                        <linearGradient id="costFlowGradient" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                                                            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    {(() => {
+                                                        const daily = stats.daily.slice().reverse();
+                                                        const maxCost = Math.max(...daily.map(d => d.cost), 0.1);
+                                                        const width = 100 / (daily.length - 1 || 1);
+
+                                                        // Generate path points
+                                                        const points = daily.map((d, i) => {
+                                                            const x = i * width;
+                                                            const y = 100 - (d.cost / maxCost) * 100;
+                                                            return `${x},${y}`;
+                                                        }).join(' ');
+
+                                                        const areaPath = `0,100 ${points} 100,100`;
+                                                        const linePath = points;
+
+                                                        return (
+                                                            <>
+                                                                {/* Grid Lines */}
+                                                                <line x1="0" y1="25" x2="100%" y2="25" stroke="#1e293b" strokeDasharray="4" />
+                                                                <line x1="0" y1="50" x2="100%" y2="50" stroke="#1e293b" strokeDasharray="4" />
+                                                                <line x1="0" y1="75" x2="100%" y2="75" stroke="#1e293b" strokeDasharray="4" />
+
+                                                                {/* Area Fill */}
+                                                                <polygon points={areaPath} fill="url(#costFlowGradient)" />
+
+                                                                {/* Trend Line */}
+                                                                <polyline
+                                                                    points={linePath}
+                                                                    fill="none"
+                                                                    stroke="#10b981"
+                                                                    strokeWidth="2"
+                                                                    vectorEffect="non-scaling-stroke"
+                                                                />
+
+                                                                {/* Data Points on Hover */}
+                                                                {daily.map((d, i) => (
+                                                                    <circle
+                                                                        key={i}
+                                                                        cx={`${i * width}%`}
+                                                                        cy={`${100 - (d.cost / maxCost) * 100}%`}
+                                                                        r="3"
+                                                                        fill="#10b981"
+                                                                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    />
+                                                                ))}
+                                                            </>
+                                                        );
+                                                    })()}
+                                                </svg>
+                                            </div>
+                                            <div className="flex justify-between px-1">
+                                                <span className="text-[8px] font-black text-slate-600 uppercase">{stats.daily[stats.daily.length - 1].date}</span>
+                                                <span className="text-[8px] font-black text-slate-600 uppercase">{stats.daily[0].date}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
