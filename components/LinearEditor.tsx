@@ -54,22 +54,61 @@ interface LinearEditorProps {
 const STYLE_PREVIEWS: Partial<Record<RenderStyle, string>> = {
   // General
   [RenderStyle.Photorealistic]: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80',
+  [RenderStyle.PanArabic]: 'https://images.unsplash.com/photo-1544211210-082b71d0630c?w=200&q=80',
+  [RenderStyle.Asian]: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=200&q=80',
+  [RenderStyle.Scandic]: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&q=80',
+  [RenderStyle.Tropical]: 'https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=200&q=80',
   [RenderStyle.cinematic]: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?w=200&q=80',
   [RenderStyle.Sketch]: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=200&q=80',
   [RenderStyle.Watercolor]: 'https://images.unsplash.com/photo-1525909002-1b05e0c869d8?w=200&q=80',
   [RenderStyle.Blueprint]: 'https://images.unsplash.com/photo-1503387762-592dea58ef23?w=200&q=80',
   [RenderStyle.PencilDrawing]: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=200&q=80',
-  [RenderStyle.Chalk]: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=200&q=80',
+  [RenderStyle.Chalk]: 'https://images.unsplash.com/photo-1511250269035-188b030fc497?w=200&q=80',
   [RenderStyle.Cyberpunk]: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&q=80',
 
-  // Exterior
+  // Office Building
+  [RenderStyle.OfficeGlass]: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80',
+  [RenderStyle.OfficeACM]: 'https://images.unsplash.com/photo-1564069114553-7215e1ff1890?w=200&q=80',
+  [RenderStyle.OfficeNeoclassic]: 'https://images.unsplash.com/photo-1503594384566-461fe158e797?w=200&q=80',
+  [RenderStyle.OfficeConcrete]: 'https://images.unsplash.com/photo-1515263487990-61b07816b324?w=200&q=80',
+  [RenderStyle.OfficeBrick]: 'https://images.unsplash.com/photo-1551000624-9b8eb6a2468f?w=200&q=80',
+
+  // Mixed Use
+  [RenderStyle.MixedGlassSteel]: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80',
+  [RenderStyle.MixedBrickLoft]: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?w=200&q=80',
+  [RenderStyle.MixedNeoclassic]: 'https://images.unsplash.com/photo-1521747116042-5a810fda9664?w=200&q=80',
+  [RenderStyle.MixedModern]: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=200&q=80',
+  [RenderStyle.MixedFuturistic]: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=200&q=80',
+
+  // Apartment
+  [RenderStyle.AptModern]: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=200&q=80',
+  [RenderStyle.AptNeoclassic]: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=200&q=80',
+  [RenderStyle.AptBrick]: 'https://images.unsplash.com/photo-1515263487990-61b07816b324?w=200&q=80',
+  [RenderStyle.AptMinimal]: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=200&q=80',
+  [RenderStyle.AptHiTech]: 'https://images.unsplash.com/photo-1564069114553-7215e1ff1890?w=200&q=80',
+
+  // Home
+  [RenderStyle.HomeModern]: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&q=80',
+  [RenderStyle.HomeNeoclassic]: 'https://images.unsplash.com/photo-1600596542815-3ad196bb8700?w=200&q=80',
+  [RenderStyle.HomeHiTech]: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=200&q=80',
+  [RenderStyle.HomeMinimal]: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=200&q=80',
+  [RenderStyle.HomeClassic]: 'https://images.unsplash.com/photo-1500315331616-db4f707c24d1?w=200&q=80',
+
+  // Exterior Additional
   [RenderStyle.Modernist]: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=200&q=80',
   [RenderStyle.Minimalist]: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=200&q=80',
-  [RenderStyle.Brutalism]: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&q=80',
+  [RenderStyle.Brutalism]: 'https://images.unsplash.com/photo-1534237710431-e2fc698436d0?w=200&q=80',
   [RenderStyle.Bauhaus]: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=200&q=80',
   [RenderStyle.Rustic]: 'https://images.unsplash.com/photo-1500315331616-db4f707c24d1?w=200&q=80',
   [RenderStyle.GlassFacade]: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80',
   [RenderStyle.Alpine]: 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=200&q=80',
+  [RenderStyle.Cottage]: 'https://images.unsplash.com/photo-1500315331616-db4f707c24d1?w=200&q=80',
+  [RenderStyle.Sustainable]: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=200&q=80',
+  [RenderStyle.Colonial]: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=200&q=80',
+  [RenderStyle.Parametric]: 'https://images.unsplash.com/photo-1503387762-592dea58ef23?w=200&q=80',
+  [RenderStyle.IndustrialLoft]: 'https://images.unsplash.com/photo-1531835551805-16d864c8d311?w=200&q=80',
+  [RenderStyle.Biophilic]: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&q=80',
+  [RenderStyle.DesertModern]: 'https://images.unsplash.com/photo-1551000624-9b8eb6a2468f?w=200&q=80',
 
   // Interior
   [RenderStyle.HomeScandi]: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&q=80',
@@ -78,9 +117,35 @@ const STYLE_PREVIEWS: Partial<Record<RenderStyle, string>> = {
   [RenderStyle.HomeIndustrial]: 'https://images.unsplash.com/photo-1505691938895-1758d7eaa511?w=200&q=80',
   [RenderStyle.HomeLuxury]: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=200&q=80',
   [RenderStyle.HomeMidCentury]: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5ea?w=200&q=80',
+  [RenderStyle.HomeCoastal]: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=200&q=80',
+  [RenderStyle.HomeFarmhouse]: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5ea?w=200&q=80',
+  [RenderStyle.HomeWabiSabi]: 'https://images.unsplash.com/photo-1615529328331-f8917597711f?w=200&q=80',
+  [RenderStyle.HomeMaximalist]: 'https://images.unsplash.com/photo-1615876234886-fd9a39faa97f?w=200&q=80',
+  [RenderStyle.HomeArtDeco]: 'https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=200&q=80',
+
+  // Office Interior
   [RenderStyle.OfficeOpenPlan]: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=200&q=80',
   [RenderStyle.OfficeExecutive]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=80',
+  [RenderStyle.OfficeCreative]: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=200&q=80',
+  [RenderStyle.OfficeTech]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=80',
+  [RenderStyle.OfficeBiophilic]: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=200&q=80',
+
+  // Retail
+  [RenderStyle.RetailBoutique]: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=200&q=80',
+  [RenderStyle.RetailShowroom]: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&q=80',
+  [RenderStyle.RetailMall]: 'https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?w=200&q=80',
+  [RenderStyle.RetailMinimal]: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=200&q=80',
+
+  // Hospitality
+  [RenderStyle.HospHotelLobby]: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=200&q=80',
+  [RenderStyle.HospRestaurant]: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200&q=80',
+  [RenderStyle.HospCafe]: 'https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=200&q=80',
+  [RenderStyle.HospBar]: 'https://images.unsplash.com/photo-1514315384763-ba401779410f?w=200&q=80',
+
+  // Sales
   [RenderStyle.SalesRealEstate]: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=200&q=80',
+  [RenderStyle.SalesReception]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=80',
+  [RenderStyle.SalesGallery]: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=200&q=80',
 };
 
 const GuideTooltip = ({ text, className, side = 'left' }: { text: string, className?: string, side?: 'left' | 'right' | 'top' | 'bottom' }) => {
