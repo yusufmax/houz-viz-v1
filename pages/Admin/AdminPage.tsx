@@ -24,6 +24,7 @@ const AdminPage: React.FC = () => {
     const [editQuota, setEditQuota] = useState<number>(0);
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
     // History Modal State
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -57,16 +58,50 @@ const AdminPage: React.FC = () => {
                 startDate ? `${startDate}T00:00:00Z` : undefined,
                 endDate ? `${endDate}T23:59:59Z` : undefined
             );
-            const daily = await adminService.getDailyStats(
+            const rawDaily = await adminService.getDailyStats(
                 startDate ? `${startDate}T00:00:00Z` : undefined,
                 endDate ? `${endDate}T23:59:59Z` : undefined
             );
             const leaderboard = await adminService.getUserLeaderboard();
 
-            setStats({ system, daily, leaderboard });
+            // Fill gaps in daily stats
+            const filledDaily = fillGapDays(
+                rawDaily,
+                startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                endDate || new Date().toISOString().split('T')[0]
+            );
+
+            setStats({ system, daily: filledDaily, leaderboard });
         } catch (error) {
             console.error("Failed to load stats", error);
         }
+    };
+
+    /**
+     * Fills missing dates in a sequence with zero values
+     */
+    const fillGapDays = (data: { date: string, count: number, cost: number }[], start: string, end: string) => {
+        const result = [];
+        const startDt = new Date(start);
+        const endDt = new Date(end);
+
+        const current = new Date(startDt);
+        const dataMap = new Map(data.map(d => [d.date, d]));
+
+        while (current <= endDt) {
+            const dateStr = current.toISOString().split('T')[0];
+            const existing = dataMap.get(dateStr);
+
+            result.push(existing || {
+                date: dateStr,
+                count: 0,
+                cost: 0
+            });
+
+            current.setDate(current.getDate() + 1);
+        }
+
+        return result; // Returning chronological order for easier SVG drawing
     };
 
     const loadData = async () => {
@@ -497,151 +532,209 @@ const AdminPage: React.FC = () => {
                         </div>
 
                         {/* Usage Analytics Charts */}
-                        <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mt-6">
-                            <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
+                        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl mt-6 backdrop-blur-sm">
+                            <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between gap-4 flex-wrap">
                                 <div className="flex items-center gap-3">
-                                    <BarChart3 className="text-indigo-400" size={18} />
-                                    <h3 className="font-bold text-white uppercase tracking-tight">Usage Analytics</h3>
+                                    <div className="p-2 bg-indigo-500/10 rounded-lg">
+                                        <BarChart3 className="text-indigo-400" size={18} />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white uppercase tracking-tight leading-none text-sm md:text-base">Usage & Cost Analytics</h3>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-1">Growth Trends • {stats?.daily.length} Days Period</p>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Range</span>
+                                <div className="flex items-center gap-3 ml-auto">
+                                    <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
+                                        <Calendar size={14} className="text-slate-500" />
                                         <input
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
-                                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-28"
                                         />
-                                        <span className="text-slate-600">—</span>
+                                        <span className="text-slate-700 mx-1">/</span>
                                         <input
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
-                                            className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-28"
                                         />
                                     </div>
                                     <button
                                         onClick={loadStats}
-                                        className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-black transition-all flex items-center gap-2"
+                                        className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2"
                                     >
                                         <TrendingUp size={14} />
-                                        ANALYZE
+                                        REFRESH
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-8">
+
+                            <div className="p-8 space-y-12">
                                 {!stats?.daily || stats.daily.length === 0 ? (
-                                    <div className="text-center py-24 text-slate-500 border-2 border-dashed border-slate-800 rounded-2xl">
-                                        No data available for the selected period
+                                    <div className="text-center py-32 text-slate-600 border-2 border-dashed border-slate-800/50 rounded-3xl bg-slate-950/20">
+                                        <div className="flex justify-center mb-4 opacity-20"><BarChart3 size={48} /></div>
+                                        <p className="text-sm font-bold uppercase tracking-widest">Awaiting System Data</p>
+                                        <p className="text-xs mt-2 opacity-50">Select a date range and click refresh to populate analytics</p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-12">
-                                        {/* Volume Bar Chart */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Generation Volume (Daily)</h4>
-                                                <span className="text-xs font-bold text-indigo-400">{stats.daily.reduce((sum, d) => sum + d.count, 0)} Total</span>
-                                            </div>
-                                            <div className="h-48 w-full flex items-end gap-1 px-2 border-b border-l border-slate-800 pb-2 bg-slate-950/20 rounded-bl-lg">
-                                                {stats.daily.slice().reverse().map((day, idx) => {
-                                                    const maxCount = Math.max(...stats.daily.map(d => d.count), 1);
-                                                    const height = (day.count / maxCount) * 100;
-                                                    return (
-                                                        <div key={day.date} className="flex-1 group relative flex flex-col items-center min-w-[12px]">
-                                                            <div
-                                                                className="w-full bg-indigo-500 group-hover:bg-indigo-400 transition-all rounded-t-sm shadow-[0_0_10px_rgba(99,102,241,0.2)]"
-                                                                style={{ height: `${Math.max(height, day.count > 0 ? 2 : 0)}%` }}
-                                                            ></div>
-                                                            <div className="absolute -top-10 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-800 border border-slate-700 text-[10px] font-bold px-2 py-1 rounded-lg text-white shadow-2xl pointer-events-none z-50 whitespace-nowrap">
-                                                                <div className="text-slate-500 text-[8px] uppercase tracking-widest">{day.date}</div>
-                                                                <div className="text-indigo-400">{day.count} Generations</div>
-                                                            </div>
+                                    <div className="flex flex-col gap-16 relative">
+                                        {/* SHARED TOOLTIP OVERLAY */}
+                                        {hoveredIndex !== null && stats.daily[hoveredIndex] && (
+                                            <div
+                                                className="absolute top-0 bottom-0 pointer-events-none z-50 flex flex-col items-center"
+                                                style={{
+                                                    left: `${(hoveredIndex / (stats.daily.length - 1 || 1)) * 100}%`,
+                                                    transform: 'translateX(-50%)'
+                                                }}
+                                            >
+                                                <div className="w-[1px] h-full bg-slate-700/50 absolute top-0"></div>
+                                                <div className="bg-slate-800/95 border border-slate-700 p-3 rounded-xl shadow-2xl backdrop-blur-md mb-4 -translate-y-full absolute top-[50%]">
+                                                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 border-b border-slate-700 pb-1 whitespace-nowrap">
+                                                        {new Date(stats.daily[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                    </div>
+                                                    <div className="flex flex-col gap-1 whitespace-nowrap">
+                                                        <div className="flex items-center justify-between gap-8">
+                                                            <span className="text-[11px] text-slate-400 font-bold uppercase">Volume</span>
+                                                            <span className="text-xs text-indigo-400 font-black">{stats.daily[hoveredIndex].count} Gens</span>
                                                         </div>
-                                                    );
-                                                })}
+                                                        <div className="flex items-center justify-between gap-8">
+                                                            <span className="text-[11px] text-slate-400 font-bold uppercase">Budget</span>
+                                                            <span className="text-xs text-emerald-400 font-black">${stats.daily[hoveredIndex].cost.toFixed(3)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Chart 1: Volume */}
+                                        <div className="space-y-6">
+                                            <div className="flex items-end justify-between px-2">
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Generations</h4>
+                                                    <div className="text-xl md:text-2xl font-black text-white italic">Activity Volume</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peak Volume</div>
+                                                    <div className="text-xl font-black text-indigo-400">{Math.max(...stats.daily.map(d => d.count))}</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="h-64 w-full relative group/chart">
+                                                {/* Y-Axis Labels */}
+                                                <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-2 pointer-events-none">
+                                                    <span>{Math.max(...stats.daily.map(d => d.count))} —</span>
+                                                    <span>{Math.round(Math.max(...stats.daily.map(d => d.count)) / 2)} —</span>
+                                                    <span>0 —</span>
+                                                </div>
+
+                                                <div className="h-full w-full flex items-end gap-[1px] border-b border-slate-800 pb-2 relative z-10" onMouseLeave={() => setHoveredIndex(null)}>
+                                                    {stats.daily.map((day, idx) => {
+                                                        const maxCount = Math.max(...stats.daily.map(d => d.count), 1);
+                                                        const height = (day.count / maxCount) * 100;
+                                                        return (
+                                                            <div
+                                                                key={day.date}
+                                                                className="flex-1 h-full flex flex-end group/bar relative cursor-crosshair"
+                                                                onMouseEnter={() => setHoveredIndex(idx)}
+                                                            >
+                                                                <div
+                                                                    className={`w-full bg-gradient-to-t from-indigo-600/60 to-indigo-400 transition-all rounded-t-lg shadow-[0_0_15px_rgba(99,102,241,0.15)] self-end ${hoveredIndex === idx ? 'opacity-100 scale-x-110 shadow-indigo-500/30' : 'opacity-40'}`}
+                                                                    style={{ height: `${Math.max(height, day.count > 0 ? 3 : 0)}%` }}
+                                                                ></div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Cost Flow Chart (SVG Area) */}
-                                        <div className="space-y-4">
-                                            <div className="flex items-center justify-between">
-                                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Cost Flow Trend (USD)</h4>
-                                                <span className="text-xs font-bold text-emerald-400">${stats.daily.reduce((sum, d) => sum + d.cost, 0).toFixed(2)} Period Total</span>
+                                        {/* Chart 2: Cost Flow */}
+                                        <div className="space-y-6 px-0">
+                                            <div className="flex items-end justify-between px-2">
+                                                <div>
+                                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Dollars (USD)</h4>
+                                                    <div className="text-xl md:text-2xl font-black text-white italic">Financial Flow</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Max Spend</div>
+                                                    <div className="text-xl font-black text-emerald-400">${Math.max(...stats.daily.map(d => d.cost)).toFixed(2)}</div>
+                                                </div>
                                             </div>
-                                            <div className="h-56 w-full relative group bg-slate-950/20 border-b border-l border-slate-800 rounded-bl-lg">
-                                                <svg
-                                                    viewBox="0 0 100 100"
-                                                    className="w-full h-full overflow-visible"
-                                                    preserveAspectRatio="none"
-                                                >
-                                                    <defs>
-                                                        <linearGradient id="costFlowGradient" x1="0" y1="0" x2="0" y2="1">
-                                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.4" />
-                                                            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    {(() => {
-                                                        const daily = stats.daily.slice().reverse();
-                                                        const maxCost = Math.max(...daily.map(d => d.cost), 0.1);
-                                                        const widthStep = 100 / (daily.length - 1 || 1);
 
-                                                        // Generate path points
-                                                        const pointsArr = daily.map((d, i) => ({
-                                                            x: i * widthStep,
-                                                            y: 100 - (d.cost / maxCost) * 90 - 5 // Leave 5% padding
-                                                        }));
+                                            <div className="h-72 w-full relative">
+                                                {/* Y-Axis Labels */}
+                                                <div className="absolute -left-10 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-4 pointer-events-none">
+                                                    <span>${Math.max(...stats.daily.map(d => d.cost)).toFixed(2)} —</span>
+                                                    <span>${(Math.max(...stats.daily.map(d => d.cost)) / 2).toFixed(2)} —</span>
+                                                    <span>$0 —</span>
+                                                </div>
 
-                                                        const pointsStr = pointsArr.map(p => `${p.x},${p.y}`).join(' ');
-                                                        const areaPath = `0,100 ${pointsStr} 100,100`;
+                                                <div className="h-full w-full relative group/area" onMouseLeave={() => setHoveredIndex(null)}>
+                                                    <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                                        <defs>
+                                                            <linearGradient id="premiumFlow" x1="0" y1="0" x2="0" y2="1">
+                                                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.5" />
+                                                                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                                                            </linearGradient>
+                                                        </defs>
+                                                        {(() => {
+                                                            const maxCost = Math.max(...stats.daily.map(d => d.cost), 0.1);
+                                                            const widthStep = 100 / (stats.daily.length - 1 || 1);
 
-                                                        return (
-                                                            <>
-                                                                {/* Grid Lines */}
-                                                                {[25, 50, 75].map(v => (
-                                                                    <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="#1e293b" strokeWidth="0.5" strokeDasharray="2,2" />
-                                                                ))}
+                                                            const points = stats.daily.map((d, i) => ({
+                                                                x: i * widthStep,
+                                                                y: 100 - (d.cost / maxCost) * 85 - 5
+                                                            }));
 
-                                                                {/* Area Fill */}
-                                                                <polygon points={areaPath} fill="url(#costFlowGradient)" />
+                                                            const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                                                            const areaPath = `0,100 ${linePath} 100,100`;
 
-                                                                {/* Trend Line */}
-                                                                <polyline
-                                                                    points={pointsStr}
-                                                                    fill="none"
-                                                                    stroke="#10b981"
-                                                                    strokeWidth="2"
-                                                                    vectorEffect="non-scaling-stroke"
-                                                                    strokeLinejoin="round"
-                                                                    strokeLinecap="round"
-                                                                />
+                                                            return (
+                                                                <>
+                                                                    {/* Horizontal Guidelines */}
+                                                                    {[10, 30, 50, 70, 90].map(v => (
+                                                                        <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="#1e293b" strokeWidth="0.2" strokeDasharray="1,2" />
+                                                                    ))}
 
-                                                                {/* Data Points on Hover */}
-                                                                {pointsArr.map((p, i) => (
-                                                                    <g key={i} className="group/dot cursor-crosshair">
-                                                                        <circle
-                                                                            cx={p.x}
-                                                                            cy={p.y}
-                                                                            r="1.5"
-                                                                            fill="#10b981"
-                                                                            className="opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                        />
+                                                                    <polygon points={areaPath} fill="url(#premiumFlow)" className="transition-all duration-700 ease-out" />
+                                                                    <polyline
+                                                                        points={linePath}
+                                                                        fill="none"
+                                                                        stroke="#10b981"
+                                                                        strokeWidth="1.5"
+                                                                        vectorEffect="non-scaling-stroke"
+                                                                        strokeLinejoin="round"
+                                                                        strokeLinecap="round"
+                                                                        style={{ filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))' }}
+                                                                        className="transition-all duration-700 ease-out"
+                                                                    />
+
+                                                                    {points.map((p, i) => (
                                                                         <rect
-                                                                            x={p.x - 1}
+                                                                            key={i}
+                                                                            x={p.x - widthStep / 2}
                                                                             y="0"
-                                                                            width="2"
+                                                                            width={widthStep}
                                                                             height="100"
-                                                                            className="fill-white/0 hover:fill-white/5 transition-colors"
+                                                                            className="fill-transparent cursor-crosshair pointer-events-auto"
+                                                                            onMouseEnter={() => setHoveredIndex(i)}
                                                                         />
-                                                                    </g>
-                                                                ))}
-                                                            </>
-                                                        );
-                                                    })()}
-                                                </svg>
+                                                                    ))}
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </svg>
+                                                </div>
                                             </div>
-                                            <div className="flex justify-between px-1">
-                                                <span className="text-[8px] font-black text-slate-600 uppercase">{stats.daily[stats.daily.length - 1].date}</span>
-                                                <span className="text-[8px] font-black text-slate-600 uppercase">{stats.daily[0].date}</span>
+
+                                            {/* X-AXIS TIMELINE */}
+                                            <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[0].date).toLocaleDateString('en-GB')}</span>
+                                                <div className="flex-1 flex justify-center gap-1 opacity-10">
+                                                    {Array.from({ length: 15 }).map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-slate-500"></div>)}
+                                                </div>
+                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[stats.daily.length - 1].date).toLocaleDateString('en-GB')}</span>
                                             </div>
                                         </div>
                                     </div>
