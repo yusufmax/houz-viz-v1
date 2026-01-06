@@ -154,15 +154,23 @@ export const adminService = {
     /**
      * Get overall system stats including estimated cost
      */
-    async getSystemStats() {
-        const now = new Date();
-        const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
+    async getSystemStats(startDate?: string, endDate?: string) {
+        let genQuery = supabase.from('generation_history').select('*', { count: 'exact', head: true });
+        let costQuery = supabase.from('generation_history').select('estimated_cost');
 
-        const [totalGens, activeUsers, gensLast24h, totalCost] = await Promise.all([
-            supabase.from('generation_history').select('*', { count: 'exact', head: true }),
+        if (startDate) {
+            genQuery = genQuery.gte('created_at', startDate);
+            costQuery = costQuery.gte('created_at', startDate);
+        }
+        if (endDate) {
+            genQuery = genQuery.lte('created_at', endDate);
+            costQuery = costQuery.lte('created_at', endDate);
+        }
+
+        const [totalGens, activeUsers, totalCost] = await Promise.all([
+            genQuery,
             supabase.from('profiles').select('*', { count: 'exact', head: true }),
-            supabase.from('generation_history').select('*', { count: 'exact', head: true }).gt('created_at', last24h),
-            supabase.from('generation_history').select('estimated_cost')
+            costQuery
         ]);
 
         const totalCostUSD = totalCost.data?.reduce((sum, item) => sum + (Number(item.estimated_cost) || 0), 0) || 0;
@@ -170,21 +178,28 @@ export const adminService = {
         return {
             totalGenerations: totalGens.count || 0,
             totalUsers: activeUsers.count || 0,
-            generationsLast24h: gensLast24h.count || 0,
             totalCostUSD
         };
     },
 
     /**
-     * Get daily generation stats and cost for the last 30 days
+     * Get daily generation stats and cost for a given range
      */
-    async getDailyStats() {
-        // Fetch last 2000 records and group in JS
-        const { data, error } = await supabase
+    async getDailyStats(startDate?: string, endDate?: string) {
+        let query = supabase
             .from('generation_history')
             .select('created_at, estimated_cost')
-            .order('created_at', { ascending: false })
-            .limit(2000);
+            .order('created_at', { ascending: false });
+
+        if (startDate) query = query.gte('created_at', startDate);
+        if (endDate) query = query.lte('created_at', endDate);
+
+        // Remove hard limit if filtering, or keep a larger one for safety
+        if (!startDate && !endDate) {
+            query = query.limit(2000);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 

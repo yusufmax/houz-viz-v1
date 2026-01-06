@@ -25,6 +25,8 @@ const AdminPage: React.FC = () => {
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editQuota, setEditQuota] = useState<number>(0);
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
 
     // History Modal State
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -46,21 +48,40 @@ const AdminPage: React.FC = () => {
         init();
     }, [user]);
 
+    useEffect(() => {
+        if (activeTab === 'stats') {
+            loadStats();
+        }
+    }, [startDate, endDate]);
+
+    const loadStats = async () => {
+        try {
+            const system = await adminService.getSystemStats(
+                startDate ? `${startDate}T00:00:00Z` : undefined,
+                endDate ? `${endDate}T23:59:59Z` : undefined
+            );
+            const daily = await adminService.getDailyStats(
+                startDate ? `${startDate}T00:00:00Z` : undefined,
+                endDate ? `${endDate}T23:59:59Z` : undefined
+            );
+            const leaderboard = await adminService.getUserLeaderboard();
+
+            setStats({ system, daily, leaderboard });
+        } catch (error) {
+            console.error("Failed to load stats", error);
+        }
+    };
+
     const loadData = async () => {
         try {
             setLoading(true);
-            const [usersData, requestsData, statsData] = await Promise.all([
+            const [usersData, requestsData] = await Promise.all([
                 adminService.getVisibleUsers(),
-                supabase.from('credit_requests').select('*, profiles(full_name)').order('created_at', { ascending: false }),
-                adminService.getSystemStats().then(async (system) => ({
-                    system,
-                    daily: await adminService.getDailyStats(),
-                    leaderboard: await adminService.getUserLeaderboard()
-                }))
+                supabase.from('credit_requests').select('*, profiles(full_name)').order('created_at', { ascending: false })
             ]);
             setUsers(usersData);
             setCreditRequests(requestsData.data || []);
-            setStats(statsData);
+            await loadStats();
         } catch (error) {
             console.error("Failed to load admin data", error);
         } finally {
@@ -351,6 +372,46 @@ const AdminPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
+                        {/* Filters & Header */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                            <div>
+                                <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2">
+                                    <BarChart3 className="text-indigo-400" size={18} />
+                                    Analytics Overview
+                                </h3>
+                                <p className="text-xs text-slate-500 font-medium">System performance and usage metrics</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">From</span>
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)}
+                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">To</span>
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)}
+                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+                                {(startDate || endDate) && (
+                                    <button
+                                        onClick={() => { setStartDate(''); setEndDate(''); }}
+                                        className="p-2 text-slate-500 hover:text-white transition-colors"
+                                        title="Clear Filters"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         {/* KPI Dashboard */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
