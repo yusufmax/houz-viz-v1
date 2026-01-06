@@ -413,13 +413,49 @@ const VideoEditor: React.FC = () => {
                                 loop
                                 className="max-w-full max-h-[70vh] rounded-lg shadow-2xl"
                             />
-                            <div className="mt-6 flex gap-4">
+                            <div className="mt-6 flex flex-col sm:flex-row gap-4 w-full justify-center">
                                 <button
-                                    onClick={() => window.open(generatedVideoUrl, '_blank')}
-                                    className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-indigo-500/20"
+                                    onClick={async () => {
+                                        if (!generatedVideoUrl) return;
+                                        try {
+                                            const button = document.activeElement as HTMLButtonElement;
+                                            if (button) button.disabled = true;
+
+                                            const downloadUrl = `/.netlify/functions/video-download?url=${encodeURIComponent(generatedVideoUrl)}`;
+                                            const response = await fetch(downloadUrl);
+                                            if (!response.ok) throw new Error('Download failed');
+
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const a = document.createElement('a');
+                                            a.href = url;
+                                            // Extract filename or use timestamp
+                                            a.download = `houz-video-${Date.now()}.mp4`;
+                                            document.body.appendChild(a);
+                                            a.click();
+                                            document.body.removeChild(a);
+                                            window.URL.revokeObjectURL(url);
+                                        } catch (err: any) {
+                                            console.error('Download prompt failed:', err);
+                                            // Fallback to window.open if proxy fails
+                                            window.open(generatedVideoUrl, '_blank');
+                                        } finally {
+                                            const button = document.activeElement as HTMLButtonElement;
+                                            if (button) button.disabled = false;
+                                        }
+                                    }}
+                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-medium transition-colors shadow-lg shadow-indigo-500/20 active:scale-95"
                                 >
                                     <Download size={18} />
                                     Download Video
+                                </button>
+
+                                <button
+                                    onClick={() => window.open(generatedVideoUrl, '_blank')}
+                                    className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-medium transition-colors active:scale-95"
+                                >
+                                    <Eye size={18} />
+                                    Watch in Fullscreen
                                 </button>
                             </div>
                         </div>
