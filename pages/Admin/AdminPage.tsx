@@ -57,7 +57,8 @@ const AdminPage: React.FC = () => {
     }, [user]);
 
     useEffect(() => {
-        if (activeTab === 'stats') {
+        const isValidDate = (d: string) => !d || /^\d{4}-\d{2}-\d{2}$/.test(d);
+        if (activeTab === 'stats' && isValidDate(startDate) && isValidDate(endDate)) {
             loadStats();
         }
     }, [startDate, endDate, activeTab]);
@@ -579,7 +580,7 @@ const AdminPage: React.FC = () => {
                                         type="date"
                                         value={startDate}
                                         onChange={(e) => setStartDate(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500 cursor-pointer [color-scheme:dark]"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -588,7 +589,7 @@ const AdminPage: React.FC = () => {
                                         type="date"
                                         value={endDate}
                                         onChange={(e) => setEndDate(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500"
+                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500 cursor-pointer [color-scheme:dark]"
                                     />
                                 </div>
                                 {(startDate || endDate) && (
@@ -720,14 +721,14 @@ const AdminPage: React.FC = () => {
                                             type="date"
                                             value={startDate}
                                             onChange={(e) => setStartDate(e.target.value)}
-                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-28"
+                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-[130px] cursor-pointer [color-scheme:dark]"
                                         />
                                         <span className="text-slate-700 mx-1">/</span>
                                         <input
                                             type="date"
                                             value={endDate}
                                             onChange={(e) => setEndDate(e.target.value)}
-                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-28"
+                                            className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-[130px] cursor-pointer [color-scheme:dark]"
                                         />
                                     </div>
                                     <button
