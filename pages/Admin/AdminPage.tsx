@@ -28,6 +28,7 @@ const AdminPage: React.FC = () => {
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const [loadingStats, setLoadingStats] = useState(false);
 
     // History Modal State
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
@@ -65,6 +66,7 @@ const AdminPage: React.FC = () => {
 
     const loadStats = async () => {
         try {
+            setLoadingStats(true);
             const system = await adminService.getSystemStats(
                 startDate ? `${startDate}T00:00:00Z` : undefined,
                 endDate ? `${endDate}T23:59:59Z` : undefined
@@ -85,6 +87,8 @@ const AdminPage: React.FC = () => {
             setStats({ system, daily: filledDaily, leaderboard });
         } catch (error) {
             console.error("Failed to load stats", error);
+        } finally {
+            setLoadingStats(false);
         }
     };
 
@@ -92,14 +96,21 @@ const AdminPage: React.FC = () => {
      * Fills missing dates in a sequence with zero values
      */
     const fillGapDays = (data: { date: string, count: number, cost: number }[], start: string, end: string) => {
+        if (!start || !end) return data;
         const result = [];
         const startDt = new Date(start);
         const endDt = new Date(end);
 
+        // Safety check for invalid dates
+        if (isNaN(startDt.getTime()) || isNaN(endDt.getTime())) return data;
+
         const current = new Date(startDt);
         const dataMap = new Map(data.map(d => [d.date, d]));
 
-        while (current <= endDt) {
+        // Limit loop to prevent potential infinite loops or extreme ranges
+        let safetyCounter = 0;
+        while (current <= endDt && safetyCounter < 366) {
+            safetyCounter++;
             const dateStr = current.toISOString().split('T')[0];
             const existing = dataMap.get(dateStr);
 
@@ -112,7 +123,7 @@ const AdminPage: React.FC = () => {
             current.setDate(current.getDate() + 1);
         }
 
-        return result; // Returning chronological order for easier SVG drawing
+        return result;
     };
 
     const loadData = async () => {
@@ -228,6 +239,19 @@ const AdminPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-8">
+            <style>
+                {`
+                    input[type="date"]::-webkit-calendar-picker-indicator {
+                        filter: invert(1);
+                        cursor: pointer;
+                        opacity: 0.6;
+                        transition: opacity 0.2s;
+                    }
+                    input[type="date"]::-webkit-calendar-picker-indicator:hover {
+                        opacity: 1;
+                    }
+                `}
+            </style>
             <div className="max-w-6xl mx-auto">
                 <header className="mb-8 flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-6 gap-4">
                     <div className="flex items-center gap-3">
@@ -564,7 +588,6 @@ const AdminPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-6">
-                        {/* Filters & Header */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
                             <div>
                                 <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2">
@@ -574,24 +597,9 @@ const AdminPage: React.FC = () => {
                                 <p className="text-xs text-slate-500 font-medium">System performance and usage metrics</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">From</span>
-                                    <input
-                                        type="date"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500 cursor-pointer [color-scheme:dark]"
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">To</span>
-                                    <input
-                                        type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs font-bold text-white outline-none focus:border-indigo-500 cursor-pointer [color-scheme:dark]"
-                                    />
-                                </div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
+                                    Filters controlled at Chart level below
+                                </span>
                                 {(startDate || endDate) && (
                                     <button
                                         onClick={() => { setStartDate(''); setEndDate(''); }}
@@ -733,10 +741,11 @@ const AdminPage: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={loadStats}
-                                        className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2"
+                                        disabled={loadingStats}
+                                        className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2 disabled:opacity-50"
                                     >
-                                        <TrendingUp size={14} />
-                                        REFRESH
+                                        {loadingStats ? <Loader2 size={14} className="animate-spin" /> : <TrendingUp size={14} />}
+                                        {loadingStats ? 'LOADING...' : 'REFRESH'}
                                     </button>
                                 </div>
                             </div>
