@@ -6,13 +6,16 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap, BarChart3, TrendingUp, Trophy, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import HistoryModal from '../../components/Admin/HistoryModal';
+import { fetchDefaultReferenceImages, uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
+import ImageUpload from '../../components/ImageUpload';
 
 const AdminPage: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [creditRequests, setCreditRequests] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats' | 'defaults'>('users');
+    const [defaults, setDefaults] = useState<ReferenceImage[]>([]);
     const [stats, setStats] = useState<{
         system: { totalGenerations: number, totalUsers: number, generationsLast24h: number, totalCostUSD: number },
         daily: { date: string, count: number, cost: number }[],
@@ -30,6 +33,13 @@ const AdminPage: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [userHistory, setUserHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // Default Images Management State
+    const [isUploadingDefault, setIsUploadingDefault] = useState(false);
+    const [newDefaultName, setNewDefaultName] = useState('');
+    const [newDefaultCategory, setNewDefaultCategory] = useState<'exterior' | 'interior' | 'general'>('general');
+    const [newDefaultImage, setNewDefaultImage] = useState<string | null>(null);
+    const [uploadFile, setUploadFile] = useState<File | null>(null);
 
     useEffect(() => {
         const init = async () => {
@@ -50,7 +60,7 @@ const AdminPage: React.FC = () => {
         if (activeTab === 'stats') {
             loadStats();
         }
-    }, [startDate, endDate]);
+    }, [startDate, endDate, activeTab]);
 
     const loadStats = async () => {
         try {
@@ -113,6 +123,8 @@ const AdminPage: React.FC = () => {
             ]);
             setUsers(usersData);
             setCreditRequests(requestsData.data || []);
+            const defaultsData = await fetchDefaultReferenceImages();
+            setDefaults(defaultsData);
             await loadStats();
         } catch (error) {
             console.error("Failed to load admin data", error);
@@ -247,6 +259,12 @@ const AdminPage: React.FC = () => {
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'}`}
                         >
                             <BarChart3 size={16} /> Stats
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('defaults')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'defaults' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            <History size={16} /> Defaults
                         </button>
                     </div>
                 </header>
@@ -389,6 +407,158 @@ const AdminPage: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                ) : activeTab === 'defaults' ? (
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-8">
+                        {/* Global Defaults Management */}
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* Upload Form */}
+                            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-2xl h-fit">
+                                <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2 mb-6 text-sm">
+                                    <Zap className="text-yellow-400" size={16} />
+                                    Upload Global Default
+                                </h3>
+
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Reference Name</label>
+                                        <input
+                                            type="text"
+                                            value={newDefaultName}
+                                            onChange={(e) => setNewDefaultName(e.target.value)}
+                                            placeholder="e.g. Modern Villa"
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
+                                        />
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Category</label>
+                                        <select
+                                            value={newDefaultCategory}
+                                            onChange={(e) => setNewDefaultCategory(e.target.value as any)}
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
+                                        >
+                                            <option value="general">General</option>
+                                            <option value="exterior">Exterior</option>
+                                            <option value="interior">Interior</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Reference Image</label>
+                                        <div className="relative group">
+                                            <ImageUpload
+                                                selectedImage={newDefaultImage}
+                                                onImageSelected={(img) => {
+                                                    setNewDefaultImage(img);
+                                                }}
+                                                compact={true}
+                                            />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                id="admin-file-upload"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setUploadFile(file);
+                                                        const reader = new FileReader();
+                                                        reader.onload = (re) => setNewDefaultImage(re.target?.result as string);
+                                                        reader.readAsDataURL(file);
+                                                    }
+                                                }}
+                                            />
+                                            {!newDefaultImage && (
+                                                <label
+                                                    htmlFor="admin-file-upload"
+                                                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
+                                                >
+                                                    <span className="text-[10px] text-slate-400 font-bold uppercase hover:text-indigo-400 transition-colors">Select System File</span>
+                                                </label>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        onClick={async () => {
+                                            if (!user || !uploadFile || !newDefaultName) {
+                                                alert("Missing name or image");
+                                                return;
+                                            }
+                                            setIsUploadingDefault(true);
+                                            try {
+                                                await uploadReferenceImage(user.id, uploadFile, newDefaultName, newDefaultCategory, true);
+                                                setNewDefaultName('');
+                                                setNewDefaultImage(null);
+                                                setUploadFile(null);
+                                                const renewed = await fetchDefaultReferenceImages();
+                                                setDefaults(renewed);
+                                                alert("Global default uploaded successfully");
+                                            } catch (err) {
+                                                alert("Upload failed");
+                                            } finally {
+                                                setIsUploadingDefault(false);
+                                            }
+                                        }}
+                                        disabled={isUploadingDefault || !uploadFile || !newDefaultName}
+                                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
+                                    >
+                                        {isUploadingDefault ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                        SAVE GLOBAL DEFAULT
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* List View */}
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+                                    <div className="p-6 border-b border-slate-800 bg-slate-950/50">
+                                        <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2 text-sm">
+                                            <BarChart3 className="text-indigo-400" size={16} />
+                                            Active System Defaults ({defaults.length})
+                                        </h3>
+                                    </div>
+                                    <div className="divide-y divide-slate-800">
+                                        {defaults.length === 0 ? (
+                                            <div className="p-12 text-center text-slate-500 italic">No global defaults configured.</div>
+                                        ) : (
+                                            defaults.map((ref) => (
+                                                <div key={ref.id} className="flex items-center gap-4 p-4 hover:bg-slate-800/30 transition-colors group">
+                                                    <img src={ref.image_url} alt={ref.name} className="w-16 h-16 rounded-lg object-cover border border-slate-700" />
+                                                    <div className="flex-1">
+                                                        <div className="font-bold text-white">{ref.name}</div>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${ref.category === 'exterior' ? 'bg-indigo-900/30 text-indigo-400 border-indigo-500/20' :
+                                                                ref.category === 'interior' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-500/20' :
+                                                                    'bg-amber-900/30 text-amber-400 border-amber-500/20'
+                                                                }`}>
+                                                                {ref.category}
+                                                            </span>
+                                                            <span className="text-[10px] text-slate-500 font-mono italic">is_default</span>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (!confirm("Delete this global default? This will affect all users.")) return;
+                                                            try {
+                                                                await deleteReferenceImage(ref.id);
+                                                                setDefaults(defaults.filter(d => d.id !== ref.id));
+                                                            } catch (err) {
+                                                                alert("Failed to delete");
+                                                            }
+                                                        }}
+                                                        className="p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-red-500"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -607,136 +777,151 @@ const AdminPage: React.FC = () => {
                                             </div>
                                         )}
 
-                                        {/* Chart 1: Volume */}
-                                        <div className="space-y-6">
-                                            <div className="flex items-end justify-between px-2">
-                                                <div>
-                                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Generations</h4>
-                                                    <div className="text-xl md:text-2xl font-black text-white italic">Activity Volume</div>
+                                        {(() => {
+                                            if (!stats?.daily || stats.daily.length === 0) return (
+                                                <div className="bg-slate-900 rounded-3xl border border-slate-800 p-8 shadow-2xl">
+                                                    <div className="p-12 text-center text-slate-500 italic">No activity data available for this range.</div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peak Volume</div>
-                                                    <div className="text-xl font-black text-indigo-400">{Math.max(...stats.daily.map(d => d.count))}</div>
-                                                </div>
-                                            </div>
+                                            );
 
-                                            <div className="h-64 w-full relative group/chart">
-                                                {/* Y-Axis Labels */}
-                                                <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-2 pointer-events-none">
-                                                    <span>{Math.max(...stats.daily.map(d => d.count))} —</span>
-                                                    <span>{Math.round(Math.max(...stats.daily.map(d => d.count)) / 2)} —</span>
-                                                    <span>0 —</span>
-                                                </div>
+                                            const maxCount = stats.daily.reduce((max, d) => Math.max(max, d.count), 0);
+                                            const maxCost = stats.daily.reduce((max, d) => Math.max(max, d.cost), 0);
+                                            const dMaxCount = Math.max(maxCount, 1);
+                                            const dMaxCost = Math.max(maxCost, 0.1);
 
-                                                <div className="h-full w-full flex items-end gap-[1px] border-b border-slate-800 pb-2 relative z-10" onMouseLeave={() => setHoveredIndex(null)}>
-                                                    {stats.daily.map((day, idx) => {
-                                                        const maxCount = Math.max(...stats.daily.map(d => d.count), 1);
-                                                        const height = (day.count / maxCount) * 100;
-                                                        return (
-                                                            <div
-                                                                key={day.date}
-                                                                className="flex-1 h-full flex flex-end group/bar relative cursor-crosshair"
-                                                                onMouseEnter={() => setHoveredIndex(idx)}
-                                                            >
-                                                                <div
-                                                                    className={`w-full bg-gradient-to-t from-indigo-600/60 to-indigo-400 transition-all rounded-t-lg shadow-[0_0_15px_rgba(99,102,241,0.15)] self-end ${hoveredIndex === idx ? 'opacity-100 scale-x-110 shadow-indigo-500/30' : 'opacity-40'}`}
-                                                                    style={{ height: `${Math.max(height, day.count > 0 ? 3 : 0)}%` }}
-                                                                ></div>
+                                            return (
+                                                <div className="bg-slate-900 rounded-3xl border border-slate-800 p-8 shadow-2xl space-y-12">
+                                                    {/* Chart 1: Volume */}
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-end justify-between px-2">
+                                                            <div>
+                                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Generations</h4>
+                                                                <div className="text-xl md:text-2xl font-black text-white italic">Activity Volume</div>
                                                             </div>
-                                                        );
-                                                    })}
+                                                            <div className="text-right">
+                                                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Peak Volume</div>
+                                                                <div className="text-xl font-black text-indigo-400">{maxCount}</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="h-64 w-full relative group/chart">
+                                                            {/* Y-Axis Labels */}
+                                                            <div className="absolute -left-8 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-2 pointer-events-none">
+                                                                <span>{maxCount} —</span>
+                                                                <span>{Math.round(maxCount / 2)} —</span>
+                                                                <span>0 —</span>
+                                                            </div>
+
+                                                            <div className="h-full w-full flex items-end gap-[1px] border-b border-slate-800 pb-2 relative z-10" onMouseLeave={() => setHoveredIndex(null)}>
+                                                                {stats.daily.map((day, idx) => {
+                                                                    const height = (day.count / dMaxCount) * 100;
+                                                                    return (
+                                                                        <div
+                                                                            key={day.date}
+                                                                            className="flex-1 h-full flex flex-end group/bar relative cursor-crosshair"
+                                                                            onMouseEnter={() => setHoveredIndex(idx)}
+                                                                        >
+                                                                            <div
+                                                                                className={`w-full bg-gradient-to-t from-indigo-600/60 to-indigo-400 transition-all rounded-t-lg shadow-[0_0_15px_rgba(99,102,241,0.15)] self-end ${hoveredIndex === idx ? 'opacity-100 scale-x-110 shadow-indigo-500/30' : 'opacity-40'}`}
+                                                                                style={{ height: `${Math.max(height, day.count > 0 ? 3 : 0)}%` }}
+                                                                            ></div>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Chart 2: Cost Flow */}
+                                                    <div className="space-y-6 px-0">
+                                                        <div className="flex items-end justify-between px-2">
+                                                            <div>
+                                                                <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Dollars (USD)</h4>
+                                                                <div className="text-xl md:text-2xl font-black text-white italic">Financial Flow</div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Max Spend</div>
+                                                                <div className="text-xl font-black text-emerald-400">${maxCost.toFixed(2)}</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="h-72 w-full relative">
+                                                            {/* Y-Axis Labels */}
+                                                            <div className="absolute -left-10 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-4 pointer-events-none">
+                                                                <span>${maxCost.toFixed(2)} —</span>
+                                                                <span>${(maxCost / 2).toFixed(2)} —</span>
+                                                                <span>$0 —</span>
+                                                            </div>
+
+                                                            <div className="h-full w-full relative group/area" onMouseLeave={() => setHoveredIndex(null)}>
+                                                                <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                                                                    <defs>
+                                                                        <linearGradient id="premiumFlow" x1="0" y1="0" x2="0" y2="1">
+                                                                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.5" />
+                                                                            <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
+                                                                        </linearGradient>
+                                                                    </defs>
+                                                                    {(() => {
+                                                                        const widthStep = 100 / (stats.daily.length - 1 || 1);
+
+                                                                        const points = stats.daily.map((d, i) => ({
+                                                                            x: i * widthStep,
+                                                                            y: 100 - (d.cost / dMaxCost) * 85 - 5
+                                                                        }));
+
+                                                                        const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
+                                                                        const areaPath = `0,100 ${linePath} 100,100`;
+
+                                                                        return (
+                                                                            <>
+                                                                                {/* Horizontal Guidelines */}
+                                                                                {[10, 30, 50, 70, 90].map(v => (
+                                                                                    <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="#1e293b" strokeWidth="0.2" strokeDasharray="1,2" />
+                                                                                ))}
+
+                                                                                <polygon points={areaPath} fill="url(#premiumFlow)" className="transition-all duration-700 ease-out" />
+                                                                                <polyline
+                                                                                    points={linePath}
+                                                                                    fill="none"
+                                                                                    stroke="#10b981"
+                                                                                    strokeWidth="1.5"
+                                                                                    vectorEffect="non-scaling-stroke"
+                                                                                    strokeLinejoin="round"
+                                                                                    strokeLinecap="round"
+                                                                                    style={{ filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))' }}
+                                                                                    className="transition-all duration-700 ease-out"
+                                                                                />
+
+                                                                                {points.map((p, i) => (
+                                                                                    <rect
+                                                                                        key={i}
+                                                                                        x={p.x - widthStep / 2}
+                                                                                        y="0"
+                                                                                        width={widthStep}
+                                                                                        height="100"
+                                                                                        className="fill-transparent cursor-crosshair pointer-events-auto"
+                                                                                        onMouseEnter={() => setHoveredIndex(i)}
+                                                                                    />
+                                                                                ))}
+                                                                            </>
+                                                                        );
+                                                                    })()}
+                                                                </svg>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* X-AXIS TIMELINE */}
+                                                        <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[0].date).toLocaleDateString('en-GB')}</span>
+                                                            <div className="flex-1 flex justify-center gap-1 opacity-10">
+                                                                {Array.from({ length: 15 }).map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-slate-500"></div>)}
+                                                            </div>
+                                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[stats.daily.length - 1].date).toLocaleDateString('en-GB')}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Chart 2: Cost Flow */}
-                                        <div className="space-y-6 px-0">
-                                            <div className="flex items-end justify-between px-2">
-                                                <div>
-                                                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Scale: Dollars (USD)</h4>
-                                                    <div className="text-xl md:text-2xl font-black text-white italic">Financial Flow</div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Max Spend</div>
-                                                    <div className="text-xl font-black text-emerald-400">${Math.max(...stats.daily.map(d => d.cost)).toFixed(2)}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="h-72 w-full relative">
-                                                {/* Y-Axis Labels */}
-                                                <div className="absolute -left-10 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-4 pointer-events-none">
-                                                    <span>${Math.max(...stats.daily.map(d => d.cost)).toFixed(2)} —</span>
-                                                    <span>${(Math.max(...stats.daily.map(d => d.cost)) / 2).toFixed(2)} —</span>
-                                                    <span>$0 —</span>
-                                                </div>
-
-                                                <div className="h-full w-full relative group/area" onMouseLeave={() => setHoveredIndex(null)}>
-                                                    <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                                                        <defs>
-                                                            <linearGradient id="premiumFlow" x1="0" y1="0" x2="0" y2="1">
-                                                                <stop offset="0%" stopColor="#10b981" stopOpacity="0.5" />
-                                                                <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                                                            </linearGradient>
-                                                        </defs>
-                                                        {(() => {
-                                                            const maxCost = Math.max(...stats.daily.map(d => d.cost), 0.1);
-                                                            const widthStep = 100 / (stats.daily.length - 1 || 1);
-
-                                                            const points = stats.daily.map((d, i) => ({
-                                                                x: i * widthStep,
-                                                                y: 100 - (d.cost / maxCost) * 85 - 5
-                                                            }));
-
-                                                            const linePath = points.map(p => `${p.x},${p.y}`).join(' ');
-                                                            const areaPath = `0,100 ${linePath} 100,100`;
-
-                                                            return (
-                                                                <>
-                                                                    {/* Horizontal Guidelines */}
-                                                                    {[10, 30, 50, 70, 90].map(v => (
-                                                                        <line key={v} x1="0" y1={v} x2="100" y2={v} stroke="#1e293b" strokeWidth="0.2" strokeDasharray="1,2" />
-                                                                    ))}
-
-                                                                    <polygon points={areaPath} fill="url(#premiumFlow)" className="transition-all duration-700 ease-out" />
-                                                                    <polyline
-                                                                        points={linePath}
-                                                                        fill="none"
-                                                                        stroke="#10b981"
-                                                                        strokeWidth="1.5"
-                                                                        vectorEffect="non-scaling-stroke"
-                                                                        strokeLinejoin="round"
-                                                                        strokeLinecap="round"
-                                                                        style={{ filter: 'drop-shadow(0 0 8px rgba(16, 185, 129, 0.4))' }}
-                                                                        className="transition-all duration-700 ease-out"
-                                                                    />
-
-                                                                    {points.map((p, i) => (
-                                                                        <rect
-                                                                            key={i}
-                                                                            x={p.x - widthStep / 2}
-                                                                            y="0"
-                                                                            width={widthStep}
-                                                                            height="100"
-                                                                            className="fill-transparent cursor-crosshair pointer-events-auto"
-                                                                            onMouseEnter={() => setHoveredIndex(i)}
-                                                                        />
-                                                                    ))}
-                                                                </>
-                                                            );
-                                                        })()}
-                                                    </svg>
-                                                </div>
-                                            </div>
-
-                                            {/* X-AXIS TIMELINE */}
-                                            <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[0].date).toLocaleDateString('en-GB')}</span>
-                                                <div className="flex-1 flex justify-center gap-1 opacity-10">
-                                                    {Array.from({ length: 15 }).map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-slate-500"></div>)}
-                                                </div>
-                                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[stats.daily.length - 1].date).toLocaleDateString('en-GB')}</span>
-                                            </div>
-                                        </div>
+                                            );
+                                        })()}
                                     </div>
                                 )}
                             </div>
