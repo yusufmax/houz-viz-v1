@@ -762,32 +762,39 @@ const AdminPage: React.FC = () => {
                                 ) : (
                                     <div className="flex flex-col gap-16 relative">
                                         {/* SHARED TOOLTIP OVERLAY */}
-                                        {hoveredIndex !== null && stats.daily[hoveredIndex] && (
-                                            <div
-                                                className="absolute top-0 bottom-0 pointer-events-none z-50 flex flex-col items-center"
-                                                style={{
-                                                    left: `${(hoveredIndex / (stats.daily.length - 1 || 1)) * 100}%`,
-                                                    transform: 'translateX(-50%)'
-                                                }}
-                                            >
-                                                <div className="w-[1px] h-full bg-slate-700/50 absolute top-0"></div>
-                                                <div className="bg-slate-800/95 border border-slate-700 p-3 rounded-xl shadow-2xl backdrop-blur-md mb-4 -translate-y-full absolute top-[50%]">
-                                                    <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 border-b border-slate-700 pb-1 whitespace-nowrap">
-                                                        {new Date(stats.daily[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                                    </div>
-                                                    <div className="flex flex-col gap-1 whitespace-nowrap">
-                                                        <div className="flex items-center justify-between gap-8">
-                                                            <span className="text-[11px] text-slate-400 font-bold uppercase">Volume</span>
-                                                            <span className="text-xs text-indigo-400 font-black">{stats.daily[hoveredIndex].count} Gens</span>
+                                        {hoveredIndex !== null && stats.daily[hoveredIndex] && (() => {
+                                            const pct = (hoveredIndex / (stats.daily.length - 1 || 1)) * 100;
+                                            let translateX = '-50%';
+                                            if (pct < 15) translateX = '0%';
+                                            else if (pct > 85) translateX = '-100%';
+
+                                            return (
+                                                <div
+                                                    className="absolute top-0 bottom-0 pointer-events-none z-50 transition-all duration-200 ease-out"
+                                                    style={{ left: `${pct}%` }}
+                                                >
+                                                    <div className="w-[1px] h-full bg-slate-700/50 absolute top-0 left-0"></div>
+                                                    <div
+                                                        className="bg-slate-800/95 border border-slate-700 p-3 rounded-xl shadow-2xl backdrop-blur-md whitespace-nowrap absolute top-[50%] -translate-y-full mb-4"
+                                                        style={{ transform: `translateX(${translateX})` }}
+                                                    >
+                                                        <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5 border-b border-slate-700 pb-1">
+                                                            {new Date(stats.daily[hoveredIndex].date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                                         </div>
-                                                        <div className="flex items-center justify-between gap-8">
-                                                            <span className="text-[11px] text-slate-400 font-bold uppercase">Budget</span>
-                                                            <span className="text-xs text-emerald-400 font-black">${stats.daily[hoveredIndex].cost.toFixed(3)}</span>
+                                                        <div className="flex flex-col gap-1">
+                                                            <div className="flex items-center justify-between gap-12">
+                                                                <span className="text-[11px] text-slate-400 font-bold uppercase">Volume</span>
+                                                                <span className="text-xs text-indigo-400 font-black">{stats.daily[hoveredIndex].count} Gens</span>
+                                                            </div>
+                                                            <div className="flex items-center justify-between gap-12">
+                                                                <span className="text-[11px] text-slate-400 font-bold uppercase">Budget</span>
+                                                                <span className="text-xs text-emerald-400 font-black">${stats.daily[hoveredIndex].cost.toFixed(3)}</span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
+                                            );
+                                        })()}
 
                                         {(() => {
                                             if (!stats?.daily || stats.daily.length === 0) return (
