@@ -43,6 +43,7 @@ export const convertPdfPageToImage = async (pdf: pdfjsLib.PDFDocumentProxy, page
         const renderContext = {
             canvasContext: context,
             viewport: viewport,
+            canvas: canvas,
         };
 
         await page.render(renderContext).promise;
