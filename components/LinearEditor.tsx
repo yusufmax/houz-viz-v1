@@ -20,6 +20,8 @@ import {
 import { upscaleImageReplicate } from '../services/replicateService';
 import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
+import { useNavigate } from 'react-router-dom';
+import { getHouzaiFilename } from '../utils/filenameUtils';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
 import { quotaService } from '../services/quotaService';
@@ -2011,7 +2013,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       const url = window.URL.createObjectURL(blob);
                       const link = document.createElement('a');
                       link.href = url;
-                      link.download = `arch-render-${Date.now()}.png`;
+                      link.download = getHouzaiFilename('png');
                       document.body.appendChild(link);
                       link.click();
                       document.body.removeChild(link);

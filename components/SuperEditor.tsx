@@ -29,6 +29,8 @@ import {
     GitBranch
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import JSZip from 'jszip';
+import { getHouzaiFilename } from '../utils/filenameUtils';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
 import {
@@ -848,7 +850,7 @@ const SuperEditor: React.FC = () => {
                                                 const url = window.URL.createObjectURL(blob);
                                                 const link = document.createElement('a');
                                                 link.href = url;
-                                                link.download = `product-campaign-${Date.now()}.png`;
+                                                link.download = getHouzaiFilename('png');
                                                 link.click();
                                             }}
                                             className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"

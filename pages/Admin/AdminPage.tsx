@@ -300,6 +300,7 @@ const AdminPage: React.FC = () => {
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-slate-950 text-slate-500 uppercase font-black text-[10px] tracking-widest">
                                     <tr>
+                                        <th className="px-6 py-5 w-16 text-center">#</th>
                                         <th className="px-6 py-5">User Identity</th>
                                         <th className="px-6 py-5 text-center">Standing</th>
                                         <th className="px-6 py-5 text-center">Usage</th>
@@ -310,11 +311,12 @@ const AdminPage: React.FC = () => {
                                 <tbody className="divide-y divide-slate-800">
                                     {users.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">No users found.</td>
+                                            <td colSpan={6} className="px-6 py-12 text-center text-slate-500 italic">No users found.</td>
                                         </tr>
                                     ) : (
-                                        users.map((u) => (
+                                        users.map((u, index) => (
                                             <tr key={u.id} className={`hover:bg-slate-800/30 transition-colors ${u.is_banned ? 'bg-red-900/5' : ''}`}>
+                                                <td className="px-6 py-4 text-center font-bold text-slate-500 text-xs">{index + 1}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700">

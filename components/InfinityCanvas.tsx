@@ -21,6 +21,7 @@ import { useLanguage } from '../LanguageContext';
 import { useSearchParams } from 'react-router-dom';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { quotaService } from '../services/quotaService';
+import { getHouzaiFilename } from '../utils/filenameUtils';
 
 const STYLE_LIBRARY = [
     // Living Complex / House
@@ -1565,7 +1566,7 @@ const InfinityCanvas: React.FC = () => {
 
                                                                 const link = document.createElement('a');
                                                                 link.href = pngUrl;
-                                                                link.download = `image-${node.id}.png`;
+                                                                link.download = getHouzaiFilename('png');
                                                                 document.body.appendChild(link);
                                                                 link.click();
                                                                 document.body.removeChild(link);

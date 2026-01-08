@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Film, Loader2, Download, Zap, Maximize2, Eye, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthProvider';
+import { getHouzaiFilename } from '../utils/filenameUtils';
 import { videoQuotaService } from '../services/quotaService';
 import { KlingModel, VideoGenerationSettings } from '../types';
 import ImageUpload from './ImageUpload';
@@ -430,7 +431,7 @@ const VideoEditor: React.FC = () => {
                                             const a = document.createElement('a');
                                             a.href = url;
                                             // Extract filename or use timestamp
-                                            a.download = `houz-video-${Date.now()}.mp4`;
+                                            a.download = getHouzaiFilename('mp4');
                                             document.body.appendChild(a);
                                             a.click();
                                             document.body.removeChild(a);
