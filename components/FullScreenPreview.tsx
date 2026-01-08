@@ -1,7 +1,4 @@
-
-import React, { useEffect } from 'react';
-import { X, Download } from 'lucide-react';
-import BeforeAfter from './BeforeAfter';
+import { getHouzaiFilename } from '../utils/filenameUtils';
 
 interface FullScreenPreviewProps {
   image: string | null;
@@ -26,14 +23,14 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({ image, beforeImag
       <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800 bg-slate-900/50">
         <h3 className="text-slate-400 font-medium">Preview</h3>
         <div className="flex items-center gap-4">
-          <a 
-            href={image} 
-            download="render-full.png" 
+          <a
+            href={image}
+            download={getHouzaiFilename('png')}
             className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
             <Download size={16} /> Download
           </a>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 bg-slate-800 hover:bg-red-500/20 hover:text-red-400 text-slate-400 rounded-full transition-colors"
           >
@@ -45,15 +42,15 @@ const FullScreenPreview: React.FC<FullScreenPreviewProps> = ({ image, beforeImag
       {/* Image Container */}
       <div className="flex-1 overflow-hidden p-4 flex items-center justify-center">
         {beforeImage ? (
-             <div className="w-full h-full max-w-6xl">
-                <BeforeAfter beforeImage={beforeImage} afterImage={image} />
-             </div>
+          <div className="w-full h-full max-w-6xl">
+            <BeforeAfter beforeImage={beforeImage} afterImage={image} />
+          </div>
         ) : (
-             <img 
-                src={image} 
-                alt="Full Screen Preview" 
-                className="max-w-full max-h-full object-contain shadow-2xl shadow-black rounded-sm" 
-             />
+          <img
+            src={image}
+            alt="Full Screen Preview"
+            className="max-w-full max-h-full object-contain shadow-2xl shadow-black rounded-sm"
+          />
         )}
       </div>
     </div>
