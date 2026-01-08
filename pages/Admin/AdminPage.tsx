@@ -30,6 +30,12 @@ const AdminPage: React.FC = () => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
 
+    // Format cost to 22,8 style (1 decimal, comma separator)
+    const formatCost = (val: number | undefined | null) => {
+        if (val === undefined || val === null) return '0,0';
+        return val.toFixed(1).replace('.', ',');
+    };
+
     // History Modal State
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [userHistory, setUserHistory] = useState<any[]>([]);
@@ -788,7 +794,7 @@ const AdminPage: React.FC = () => {
                                                             </div>
                                                             <div className="flex items-center justify-between gap-12">
                                                                 <span className="text-[11px] text-slate-400 font-bold uppercase">Budget</span>
-                                                                <span className="text-xs text-emerald-400 font-black">${stats.daily[hoveredIndex].cost.toFixed(3)}</span>
+                                                                <span className="text-xs text-emerald-400 font-black">${formatCost(stats.daily[hoveredIndex].cost)}</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -860,16 +866,16 @@ const AdminPage: React.FC = () => {
                                                             </div>
                                                             <div className="text-right">
                                                                 <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Max Spend</div>
-                                                                <div className="text-xl font-black text-emerald-400">${maxCost.toFixed(2)}</div>
+                                                                <div className="text-xl font-black text-emerald-400">${formatCost(maxCost)}</div>
                                                             </div>
                                                         </div>
 
                                                         <div className="h-72 w-full relative">
                                                             {/* Y-Axis Labels */}
                                                             <div className="absolute -left-10 top-0 bottom-0 flex flex-col justify-between text-[8px] font-black text-slate-700 uppercase py-4 pointer-events-none">
-                                                                <span>${maxCost.toFixed(2)} —</span>
-                                                                <span>${(maxCost / 2).toFixed(2)} —</span>
-                                                                <span>$0 —</span>
+                                                                <span>${formatCost(maxCost)} —</span>
+                                                                <span>${formatCost(maxCost / 2)} —</span>
+                                                                <span>$0,0 —</span>
                                                             </div>
 
                                                             <div className="h-full w-full relative group/area" onMouseLeave={() => setHoveredIndex(null)}>
