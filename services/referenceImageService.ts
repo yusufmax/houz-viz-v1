@@ -5,7 +5,8 @@ export interface ReferenceImage {
     user_id: string;
     name: string;
     image_url: string;
-    category?: 'exterior' | 'interior' | 'general';
+    category: 'exterior' | 'interior' | 'general';
+    is_default: boolean;
     display_order: number;
     created_at: string;
     updated_at: string;
@@ -19,6 +20,21 @@ export const fetchUserReferenceImages = async (userId: string): Promise<Referenc
         .from('user_reference_images')
         .select('*')
         .eq('user_id', userId)
+        .eq('is_default', false)
+        .order('display_order', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+};
+
+/**
+ * Fetch system-wide default reference images
+ */
+export const fetchDefaultReferenceImages = async (): Promise<ReferenceImage[]> => {
+    const { data, error } = await supabase
+        .from('user_reference_images')
+        .select('*')
+        .eq('is_default', true)
         .order('display_order', { ascending: true });
 
     if (error) throw error;
@@ -32,7 +48,8 @@ export const uploadReferenceImage = async (
     userId: string,
     file: File,
     name: string,
-    category: 'exterior' | 'interior' | 'general' = 'general'
+    category: 'exterior' | 'interior' | 'general' = 'general',
+    isDefault: boolean = false
 ): Promise<ReferenceImage> => {
     // Validate file
     if (!file.type.startsWith('image/')) {
@@ -76,6 +93,7 @@ export const uploadReferenceImage = async (
             name,
             image_url: publicUrl,
             category,
+            is_default: isDefault,
             display_order: nextOrder
         })
         .select()

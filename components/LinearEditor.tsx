@@ -27,7 +27,7 @@ import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
 import { useAgentic } from '../contexts/AgenticContext';
-import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
+import { fetchUserReferenceImages, fetchDefaultReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
 import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
 
@@ -290,22 +290,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Reference Images: Use custom or fallback to defaults
   const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
+  const [defaultReferenceImages, setDefaultReferenceImages] = useState<ReferenceImage[]>([]);
 
-  const filteredCustomRefs = customReferenceImages.filter(ref => {
-    const category = ref.category || 'general';
-    // Map general images to exterior if that's the convention, or keep strict?
-    // User asked for "based on the reference image category".
-    // Let's assume strict matching for now, but maybe allow 'general' to appear in 'general' mode.
-    // If the user uploads as 'general' (default), they might expect to see it somewhere.
-    // In ProfilePage we mapped general -> exterior. Let's do the same here for consistency if mode is exterior?
-    // Or just strict match. Let's try strict match first: category === editorMode.
-    // Exception: if category is 'general' and mode is 'exterior', maybe show it?
-    if (category === 'general' && editorMode === 'exterior') return true;
-    return category === editorMode;
-  });
+  const filteredRefs = useMemo(() => {
+    // Combine defaults and custom
+    const allRefs = [...defaultReferenceImages, ...customReferenceImages];
 
-  const styleLibrary = filteredCustomRefs.length > 0
-    ? filteredCustomRefs.map(ref => ({ name: ref.name, url: ref.image_url }))
+    return allRefs.filter(ref => {
+      const category = ref.category || 'general';
+      if (category === 'general' && editorMode === 'exterior') return true;
+      return category === editorMode;
+    });
+  }, [defaultReferenceImages, customReferenceImages, editorMode]);
+
+  const styleLibrary = filteredRefs.length > 0
+    ? filteredRefs.map(ref => ({ name: ref.name, url: ref.image_url }))
     : STYLE_LIBRARY;
 
   // Drawing
@@ -509,12 +508,23 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       try { setHistory(JSON.parse(saved)); } catch (e) { }
     }
 
-    // Fetch user's custom reference images
+    // Fetch user's custom reference images and system defaults
     if (user) {
-      fetchUserReferenceImages(user.id).then(refs => {
-        setCustomReferenceImages(refs);
+      Promise.all([
+        fetchUserReferenceImages(user.id),
+        fetchDefaultReferenceImages()
+      ]).then(([userRefs, sysDefaults]) => {
+        setCustomReferenceImages(userRefs);
+        setDefaultReferenceImages(sysDefaults);
       }).catch(err => {
-        console.error('Failed to load custom reference images:', err);
+        console.error('Failed to load reference images:', err);
+      });
+    } else {
+      // Still load defaults for guests
+      fetchDefaultReferenceImages().then(sysDefaults => {
+        setDefaultReferenceImages(sysDefaults);
+      }).catch(err => {
+        console.error('Failed to load system defaults:', err);
       });
     }
   }, [user]);
