@@ -1,5 +1,5 @@
 /**
- * Generates a standardized filename for downloads: houzaiDDMMYYYY_HHMMSS
+ * Generates a standardized filename for downloads: houzai_dd_mm_yy_time
  * @param extension File extension (e.g., 'png', 'mp4')
  */
 export const getHouzaiFilename = (extension: string): string => {
@@ -7,14 +7,14 @@ export const getHouzaiFilename = (extension: string): string => {
 
     const day = String(now.getDate()).padStart(2, '0');
     const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
+    const year = String(now.getFullYear()).slice(-2);
 
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    const dateStr = `${day}${month}${year}`;
+    const dateStr = `${day}_${month}_${year}`;
     const timeStr = `${hours}${minutes}${seconds}`;
 
-    return `houzai${dateStr}_${timeStr}.${extension}`;
+    return `houzai_${dateStr}_${timeStr}.${extension}`;
 };
