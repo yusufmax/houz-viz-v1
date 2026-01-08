@@ -647,7 +647,7 @@ const AdminPage: React.FC = () => {
                                     </div>
                                     <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Est. Total Cost (USD)</span>
                                 </div>
-                                <div className="text-3xl font-black text-white">${stats?.system.totalCostUSD.toFixed(2)}</div>
+                                <div className="text-3xl font-black text-white">${formatCost(stats?.system.totalCostUSD)}</div>
                             </div>
                         </div>
 
@@ -666,7 +666,7 @@ const AdminPage: React.FC = () => {
                                             <div key={day.date} className="flex items-center justify-between p-3 rounded-lg bg-slate-950/50 border border-slate-800/50">
                                                 <div className="flex flex-col">
                                                     <span className="font-mono text-xs text-slate-400">{day.date}</span>
-                                                    <span className="text-[10px] font-black text-emerald-500 uppercase mt-0.5">${day.cost.toFixed(3)}</span>
+                                                    <span className="text-[10px] font-black text-emerald-500 uppercase mt-0.5">${formatCost(day.cost)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-2 bg-indigo-500 rounded-full" style={{ width: `${Math.min(day.count * 2, 120)}px` }}></div>
