@@ -1,3 +1,6 @@
+import React, { useEffect } from 'react';
+import { X, Download } from 'lucide-react';
+import BeforeAfter from './BeforeAfter';
 import { getHouzaiFilename } from '../utils/filenameUtils';
 
 interface FullScreenPreviewProps {
