@@ -36,7 +36,7 @@ const FreepikSettings: React.FC<FreepikSettingsProps> = ({ settings, onChange, o
     ];
 
     return (
-        <div className="absolute bottom-full right-0 mb-2 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden flex flex-col backdrop-blur-xl">
+        <div className="w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden flex flex-col backdrop-blur-xl">
             <div className="p-3 border-b border-slate-800 bg-slate-800/50 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Sparkles size={14} className="text-amber-400" />
