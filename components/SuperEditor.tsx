@@ -926,37 +926,27 @@ const SuperEditor: React.FC = () => {
                                         >
                                             {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
                                         </button>
-                                        <div className="flex items-center">
-                                            <div className="relative flex items-center">
-                                                <button
-                                                    onClick={handleMagnificUpscale}
-                                                    disabled={isUpscaling || isMagnificUpscaling}
-                                                    className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-l-md rounded-r-none transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold border-r border-amber-500/30"
-                                                    title="Premium Magnific Upscale (High Detail)"
-                                                >
-                                                    {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setShowFreepikSettings(!showFreepikSettings);
-                                                    }}
-                                                    className="px-2 self-stretch bg-amber-700 hover:bg-amber-600 text-white rounded-r-md rounded-l-none flex items-center justify-center transition-colors shadow-lg shadow-amber-900/20"
-                                                    title="Upscale Settings"
-                                                >
-                                                    <Settings size={12} className={showFreepikSettings ? 'rotate-90' : ''} />
-                                                </button>
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowFreepikSettings(!showFreepikSettings)}
+                                                disabled={isUpscaling || isMagnificUpscaling}
+                                                className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
+                                                title="Configure & Run Magnific Upscale"
+                                            >
+                                                <Sparkles size={14} /> Magnific
+                                            </button>
 
-                                                {showFreepikSettings && (
-                                                    <div className="absolute bottom-full right-0 z-[100] mb-2">
-                                                        <FreepikSettings
-                                                            settings={freepikSettings}
-                                                            onChange={setFreepikSettings}
-                                                            onClose={() => setShowFreepikSettings(false)}
-                                                        />
-                                                    </div>
-                                                )}
-                                            </div>
+                                            {showFreepikSettings && (
+                                                <div className="absolute bottom-full right-0 z-[100] mb-2">
+                                                    <FreepikSettings
+                                                        settings={freepikSettings}
+                                                        onChange={setFreepikSettings}
+                                                        onClose={() => setShowFreepikSettings(false)}
+                                                        onUpscale={handleMagnificUpscale}
+                                                        isUpscaling={isMagnificUpscaling}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             onClick={async () => {

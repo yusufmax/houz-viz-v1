@@ -6,9 +6,11 @@ interface FreepikSettingsProps {
     settings: FreepikMagnificSettings;
     onChange: (settings: FreepikMagnificSettings) => void;
     onClose: () => void;
+    onUpscale: () => void;
+    isUpscaling?: boolean;
 }
 
-const FreepikSettings: React.FC<FreepikSettingsProps> = ({ settings, onChange, onClose }) => {
+const FreepikSettings: React.FC<FreepikSettingsProps> = ({ settings, onChange, onClose, onUpscale, isUpscaling }) => {
     const handleChange = (key: keyof FreepikMagnificSettings, value: any) => {
         onChange({ ...settings, [key]: value });
     };
@@ -113,6 +115,23 @@ const FreepikSettings: React.FC<FreepikSettingsProps> = ({ settings, onChange, o
                         />
                     </div>
                 ))}
+            </div>
+
+            <div className="p-4 bg-slate-800/50 border-t border-slate-800">
+                <button
+                    onClick={() => {
+                        onUpscale();
+                    }}
+                    disabled={isUpscaling}
+                    className="w-full py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-lg text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                    {isUpscaling ? (
+                        <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    ) : (
+                        <Sparkles size={14} />
+                    )}
+                    {isUpscaling ? 'Upscaling...' : 'Run Magnific'}
+                </button>
             </div>
         </div>
     );
