@@ -1,8 +1,4 @@
-
-/**
- * Service to interact with Freepik API for Magnific Upscale
- * Works in both development (via Vite proxy) and production (via Netlify function)
- */
+import { FreepikMagnificSettings } from '../types';
 
 export interface FreepikUpscaleResponse {
     data: {
@@ -12,7 +8,7 @@ export interface FreepikUpscaleResponse {
     };
 }
 
-export const upscaleImageFreepik = async (image: string, prompt?: string): Promise<string> => {
+export const upscaleImageFreepik = async (image: string, settings?: Partial<FreepikMagnificSettings>): Promise<string> => {
     const isDev = import.meta.env.DEV;
     const apiKey = import.meta.env.VITE_FREEPIK_API_KEY;
 
@@ -25,6 +21,18 @@ export const upscaleImageFreepik = async (image: string, prompt?: string): Promi
     // Remove data:image/X;base64, prefix if present
     const base64Image = image.includes('base64,') ? image.split('base64,')[1] : image;
 
+    const requestBody = {
+        image: base64Image,
+        scale_factor: settings?.scale_factor || '2x',
+        optimized_for: settings?.optimized_for || 'standard',
+        prompt: settings?.prompt || 'high quality, detailed render',
+        creativity: settings?.creativity ?? 0,
+        definition: settings?.definition ?? 0,
+        resemblance: settings?.resemblance ?? 0,
+        intricacy: settings?.intricacy ?? 0,
+        engine: settings?.engine || 'automatic'
+    };
+
     let taskId: string;
 
     // 1. Initiate Upscale
@@ -34,26 +42,17 @@ export const upscaleImageFreepik = async (image: string, prompt?: string): Promi
             'x-freepik-api-key': apiKey,
             'Content-Type': 'application/json'
         } : { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isDev ? {
-            image: base64Image,
-            scale_factor: '2x',
-            optimized_for: 'standard',
-            prompt: prompt || 'high quality, detailed render'
-        } : {
+        body: JSON.stringify(isDev ? requestBody : {
             path: '/ai/image-upscaler',
             method: 'POST',
-            body: {
-                image: base64Image,
-                scale_factor: '2x',
-                optimized_for: 'standard',
-                prompt: prompt || 'high quality, detailed render'
-            }
+            body: requestBody
         })
     });
 
     if (!initResponse.ok) {
         const errorData = await initResponse.json().catch(() => ({}));
-        throw new Error(errorData.message || `Freepik API Error: ${initResponse.status}`);
+        console.error("[Freepik] Init Error Details:", errorData);
+        throw new Error(errorData.message || errorData.error || `Freepik API Error: ${initResponse.status}`);
     }
 
     const initData: FreepikUpscaleResponse = await initResponse.json();

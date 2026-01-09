@@ -12,13 +12,14 @@ import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import InteriorCustomization from './InteriorCustomization';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens, Tag } from '../types';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens, Tag, FreepikMagnificSettings } from '../types';
 import {
   generateImage, editImage,
   enhancePrompt
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { upscaleImageFreepik } from '../services/freepikService';
+import FreepikSettings from './FreepikSettings';
 import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
 import { useNavigate } from 'react-router-dom';
@@ -274,6 +275,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const audioManagerRef = useRef<AudioManager | null>(null);
   const [isUpscaling, setIsUpscaling] = useState(false);
   const [isMagnificUpscaling, setIsMagnificUpscaling] = useState(false);
+  const [showFreepikSettings, setShowFreepikSettings] = useState(false);
+  const [freepikSettings, setFreepikSettings] = useState<FreepikMagnificSettings>({
+    scale_factor: '2x',
+    optimized_for: 'standard',
+    creativity: 0,
+    definition: 0,
+    resemblance: 0,
+    intricacy: 0,
+    engine: 'automatic'
+  });
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1319,8 +1330,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     if (!resultImage) return;
     setIsMagnificUpscaling(true);
     try {
-      // Use Freepik Magnific Upscale
-      const upscaled = await upscaleImageFreepik(resultImage, prompt);
+      // Use Freepik Magnific Upscale with custom settings
+      const upscaled = await upscaleImageFreepik(resultImage, {
+        ...freepikSettings,
+        prompt: prompt
+      });
       setResultImage(upscaled);
       saveToHistory(upscaled, "Premium Upscale: " + prompt);
     } catch (e: any) {
@@ -2015,119 +2029,141 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
                 </button>
               )}
-              {resultImage && (
-                <button
-                  onClick={handleMagnificUpscale}
-                  disabled={isUpscaling || isMagnificUpscaling}
-                  className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold"
-                  title="Premium Magnific Upscale (High Detail)"
-                >
-                  {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
-                </button>
-              )}
-              {resultImage && (
-                <button
-                  onClick={() => setDrawingTarget('result')}
-                  className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
-                >
-                  <Pencil size={14} /> {t('edit')}
-                </button>
-              )}
-              {resultImage && (
-                <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(resultImage);
-                      const blob = await response.blob();
-                      const url = window.URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = getHouzaiFilename('png');
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      window.URL.revokeObjectURL(url);
-                    } catch (err: any) {
-                      console.error("Download failed", err);
-                      alert(`Download failed: ${err.message} `);
-                    }
-                  }}
-                  className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
-                >
-                  <Download size={14} /> {t('download')}
-                </button>
-              )}
-            </div>
-          </div>
+              <div className="flex items-center">
+                <div className="relative flex items-center">
+                  <button
+                    onClick={handleMagnificUpscale}
+                    disabled={isUpscaling || isMagnificUpscaling}
+                    className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-l-md rounded-r-none transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold border-r border-amber-500/30"
+                    title="Premium Magnific Upscale (High Detail)"
+                  >
+                    {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFreepikSettings(!showFreepikSettings);
+                    }}
+                    className="px-2 self-stretch bg-amber-700 hover:bg-amber-600 text-white rounded-r-md rounded-l-none flex items-center justify-center transition-colors shadow-lg shadow-amber-900/20"
+                    title="Upscale Settings"
+                  >
+                    <Settings size={12} className={showFreepikSettings ? 'rotate-90' : ''} />
+                  </button>
 
-          <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col min-h-0">
-            {batchMode ? (
-              batchResults.length > 0 || isBatchProcessing ? (
-                <BatchResults
-                  results={batchResults}
-                  onClose={() => {
-                    setBatchResults([]);
-                  }}
-                />
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
-                  <Layers size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Batch results will appear here</p>
-                  <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
+                  {showFreepikSettings && (
+                    <div className="absolute bottom-full right-0 z-[100] mb-2">
+                      <FreepikSettings
+                        settings={freepikSettings}
+                        onChange={setFreepikSettings}
+                        onClose={() => setShowFreepikSettings(false)}
+                      />
+                    </div>
+                  )}
                 </div>
-              )
-            ) : (
-              isGenerating ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
-                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p className="text-sm font-mono">{t('simulating')}</p>
-                  {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
-                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
-                </div>
-              ) : multiResults.length > 1 ? (
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                  <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
-                    {multiResults.map((res, idx) => (
-                      <div
-                        key={idx}
-                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
-                        onClick={() => setResultImage(res.url)}
-                      >
-                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
-                        <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
-                          <div className="space-y-2 overflow-hidden">
-                            <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
-                              <span>SETTINGS</span>
-                              {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
-                            </div>
-                            <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
-                            <div className="flex flex-wrap gap-1">
-                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
-                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
-                            </div>
-                          </div>
-                          <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
-                            {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : resultImage ? (
-                sourceImage ? (
-                  <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
-                ) : (
-                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                )
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
-                  <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Generations will appear here</p>
-                </div>
-              )
+              </div>
+            </div>
+            {resultImage && (
+              <button
+                onClick={() => setDrawingTarget('result')}
+                className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Pencil size={14} /> {t('edit')}
+              </button>
+            )}
+            {resultImage && (
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(resultImage);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = getHouzaiFilename('png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } catch (err: any) {
+                    console.error("Download failed", err);
+                    alert(`Download failed: ${err.message} `);
+                  }
+                }}
+                className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Download size={14} /> {t('download')}
+              </button>
             )}
           </div>
+        </div>
+
+        <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col min-h-0">
+          {batchMode ? (
+            batchResults.length > 0 || isBatchProcessing ? (
+              <BatchResults
+                results={batchResults}
+                onClose={() => {
+                  setBatchResults([]);
+                }}
+              />
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
+                <Layers size={48} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Batch results will appear here</p>
+                <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
+              </div>
+            )
+          ) : (
+            isGenerating ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
+                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <p className="text-sm font-mono">{t('simulating')}</p>
+                {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
+                {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
+              </div>
+            ) : multiResults.length > 1 ? (
+              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                  {multiResults.map((res, idx) => (
+                    <div
+                      key={idx}
+                      className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
+                      onClick={() => setResultImage(res.url)}
+                    >
+                      <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                      <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
+                        <div className="space-y-2 overflow-hidden">
+                          <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
+                            <span>SETTINGS</span>
+                            {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
+                          </div>
+                          <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
+                          <div className="flex flex-wrap gap-1">
+                            <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
+                            <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
+                          </div>
+                        </div>
+                        <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
+                          {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : resultImage ? (
+              sourceImage ? (
+                <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+              ) : (
+                <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+              )
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
+                <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">Generations will appear here</p>
+              </div>
+            )
+          )}
         </div>
       </div>
     </div>

@@ -401,3 +401,18 @@ export interface VideoQuota {
   quota: number;
   last_reset: string;
 }
+
+export type FreepikScaleFactor = '2x' | '4x' | '8x' | '16x';
+export type FreepikStyle = 'standard' | 'soft_portraits' | 'hard_portraits' | 'art_n_illustration' | 'videogame_assets' | 'nature_n_landscapes' | 'films_n_photography' | '3d_renders' | 'science_fiction_n_horror';
+export type FreepikEngine = 'automatic' | 'illusio' | 'sharpy' | 'sparkle' | 'magnific_2_0' | 'magnific_1_0';
+
+export interface FreepikMagnificSettings {
+  scale_factor: FreepikScaleFactor;
+  optimized_for: FreepikStyle;
+  creativity: number;
+  definition: number;
+  resemblance: number;
+  intricacy: number;
+  engine: FreepikEngine;
+  prompt?: string;
+}

@@ -20,6 +20,7 @@ import {
     Layers,
     Sparkles,
     Save,
+    Settings,
     Users,
     UserCircle,
     Shirt,
@@ -44,7 +45,8 @@ import {
     SuperRenderStyle,
     SuperAtmosphere,
     SuperModeSettings,
-    CameraLens
+    CameraLens,
+    FreepikMagnificSettings
 } from '../types';
 import * as geminiService from '../services/geminiService';
 import { historyService } from '../services/historyService';
@@ -60,6 +62,7 @@ import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { upscaleImageFreepik } from '../services/freepikService';
+import FreepikSettings from './FreepikSettings';
 
 const STYLE_PREVIEWS: Record<SuperRenderStyle, string> = {
     [SuperRenderStyle.None]: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80',
@@ -101,6 +104,16 @@ const SuperEditor: React.FC = () => {
     const [isGenerating, setIsGenerating] = useState(false);
     const [isUpscaling, setIsUpscaling] = useState(false);
     const [isMagnificUpscaling, setIsMagnificUpscaling] = useState(false);
+    const [showFreepikSettings, setShowFreepikSettings] = useState(false);
+    const [freepikSettings, setFreepikSettings] = useState<FreepikMagnificSettings>({
+        scale_factor: '2x',
+        optimized_for: 'standard',
+        creativity: 0,
+        definition: 0,
+        resemblance: 0,
+        intricacy: 0,
+        engine: 'automatic'
+    });
 
     // Super Mode Specific
     const [superSettings, setSuperSettings] = useState<SuperModeSettings>({
@@ -272,7 +285,10 @@ const SuperEditor: React.FC = () => {
         if (!resultImage) return;
         setIsMagnificUpscaling(true);
         try {
-            const upscaled = await upscaleImageFreepik(resultImage, prompt);
+            const upscaled = await upscaleImageFreepik(resultImage, {
+                ...freepikSettings,
+                prompt: prompt
+            });
             setResultImage(upscaled);
             saveToHistory(upscaled, "Premium Upscale: " + prompt);
         } catch (e: any) {
@@ -910,14 +926,38 @@ const SuperEditor: React.FC = () => {
                                         >
                                             {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
                                         </button>
-                                        <button
-                                            onClick={handleMagnificUpscale}
-                                            disabled={isUpscaling || isMagnificUpscaling}
-                                            className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold"
-                                            title="Premium Magnific Upscale (High Detail)"
-                                        >
-                                            {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
-                                        </button>
+                                        <div className="flex items-center">
+                                            <div className="relative flex items-center">
+                                                <button
+                                                    onClick={handleMagnificUpscale}
+                                                    disabled={isUpscaling || isMagnificUpscaling}
+                                                    className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-l-md rounded-r-none transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold border-r border-amber-500/30"
+                                                    title="Premium Magnific Upscale (High Detail)"
+                                                >
+                                                    {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setShowFreepikSettings(!showFreepikSettings);
+                                                    }}
+                                                    className="px-2 self-stretch bg-amber-700 hover:bg-amber-600 text-white rounded-r-md rounded-l-none flex items-center justify-center transition-colors shadow-lg shadow-amber-900/20"
+                                                    title="Upscale Settings"
+                                                >
+                                                    <Settings size={12} className={showFreepikSettings ? 'rotate-90' : ''} />
+                                                </button>
+
+                                                {showFreepikSettings && (
+                                                    <div className="absolute bottom-full right-0 z-[100] mb-2">
+                                                        <FreepikSettings
+                                                            settings={freepikSettings}
+                                                            onChange={setFreepikSettings}
+                                                            onClose={() => setShowFreepikSettings(false)}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
                                         <button
                                             onClick={async () => {
                                                 const response = await fetch(resultImage);
