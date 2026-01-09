@@ -1999,10 +1999,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 2: RESULT (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 flex-1 flex flex-col relative">
+        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl flex-1 flex flex-col relative overflow-hidden">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
-          <div className="flex items-center justify-between mb-4 text-indigo-400 font-semibold relative">
+          <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">
             <div className="flex items-center gap-2">
               <Maximize2 size={18} />
               <h2>{t('result')}</h2>
@@ -2083,75 +2083,75 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="flex-1 bg-slate-900/50 rounded-lg border border-slate-700 overflow-hidden relative flex flex-col min-h-0">
-          {batchMode ? (
-            batchResults.length > 0 || isBatchProcessing ? (
-              <BatchResults
-                results={batchResults}
-                onClose={() => {
-                  setBatchResults([]);
-                }}
-              />
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
-                <Layers size={48} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Batch results will appear here</p>
-                <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
-              </div>
-            )
-          ) : (
-            isGenerating ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
-                <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-sm font-mono">{t('simulating')}</p>
-                {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
-                {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
-              </div>
-            ) : multiResults.length > 1 ? (
-              <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
-                  {multiResults.map((res, idx) => (
-                    <div
-                      key={idx}
-                      className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
-                      onClick={() => setResultImage(res.url)}
-                    >
-                      <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
-                      <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
-                        <div className="space-y-2 overflow-hidden">
-                          <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
-                            <span>SETTINGS</span>
-                            {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
-                          </div>
-                          <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
-                          <div className="flex flex-wrap gap-1">
-                            <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
-                            <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
-                          </div>
-                        </div>
-                        <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
-                          {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : resultImage ? (
-              sourceImage ? (
-                <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+          <div className="flex-1 relative flex flex-col min-h-0 bg-slate-900/30">
+            {batchMode ? (
+              batchResults.length > 0 || isBatchProcessing ? (
+                <BatchResults
+                  results={batchResults}
+                  onClose={() => {
+                    setBatchResults([]);
+                  }}
+                />
               ) : (
-                <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
+                  <Layers size={48} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Batch results will appear here</p>
+                  <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
+                </div>
               )
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center">
-                <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Generations will appear here</p>
-              </div>
-            )
-          )}
+              isGenerating ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
+                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-sm font-mono">{t('simulating')}</p>
+                  {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
+                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
+                </div>
+              ) : multiResults.length > 1 ? (
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                  <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                    {multiResults.map((res, idx) => (
+                      <div
+                        key={idx}
+                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
+                        onClick={() => setResultImage(res.url)}
+                      >
+                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                        <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
+                          <div className="space-y-2 overflow-hidden">
+                            <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
+                              <span>SETTINGS</span>
+                              {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
+                            </div>
+                            <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
+                            <div className="flex flex-wrap gap-1">
+                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
+                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
+                            </div>
+                          </div>
+                          <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
+                            {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : resultImage ? (
+                sourceImage ? (
+                  <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+                ) : (
+                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+                )
+              ) : (
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
+                  <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Generations will appear here</p>
+                </div>
+              )
+            )}
+          </div>
         </div>
       </div>
     </div>
