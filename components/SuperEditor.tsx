@@ -933,7 +933,7 @@ const SuperEditor: React.FC = () => {
                                                 className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
                                                 title="Configure & Run Magnific Upscale"
                                             >
-                                                <Sparkles size={14} /> Magnific
+                                                {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
                                             </button>
 
                                             {showFreepikSettings && (

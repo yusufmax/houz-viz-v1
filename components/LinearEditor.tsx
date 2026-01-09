@@ -2011,81 +2011,77 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             <div className="flex items-center gap-2 relative">
               {showInstructions && resultImage && <GuideTooltip text={t('guideTools')} className="-bottom-16 right-0" side="top" />}
               {resultImage && (
-                <button
-                  onClick={() => setPreviewImage(resultImage)}
-                  className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                  title={t('fullScreen')}
-                >
-                  <Maximize size={14} />
-                </button>
-              )}
-              {resultImage && (
-                <button
-                  onClick={handleUpscale}
-                  disabled={isUpscaling || isMagnificUpscaling}
-                  className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
-                  title="Recraft Crisp Upscale"
-                >
-                  {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
-                </button>
-              )}
-              {resultImage && (
-                <div className="relative">
+                <>
                   <button
-                    onClick={() => setShowFreepikSettings(!showFreepikSettings)}
-                    disabled={isUpscaling || isMagnificUpscaling}
-                    className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
-                    title="Configure & Run Magnific Upscale"
+                    onClick={() => setPreviewImage(resultImage)}
+                    className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    title={t('fullScreen')}
                   >
-                    <Sparkles size={14} /> Magnific
+                    <Maximize size={14} />
+                  </button>
+                  <button
+                    onClick={handleUpscale}
+                    disabled={isUpscaling || isMagnificUpscaling}
+                    className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                    title="Recraft Crisp Upscale"
+                  >
+                    {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFreepikSettings(!showFreepikSettings)}
+                      disabled={isUpscaling || isMagnificUpscaling}
+                      className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
+                      title="Configure & Run Magnific Upscale"
+                    >
+                      {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                    </button>
+
+                    {showFreepikSettings && (
+                      <div className="absolute bottom-full right-0 z-[100] mb-2">
+                        <FreepikSettings
+                          settings={freepikSettings}
+                          onChange={setFreepikSettings}
+                          onClose={() => setShowFreepikSettings(false)}
+                          onUpscale={handleMagnificUpscale}
+                          isUpscaling={isMagnificUpscaling}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setDrawingTarget('result')}
+                    className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <Pencil size={14} /> {t('edit')}
                   </button>
 
-                  {showFreepikSettings && (
-                    <div className="absolute bottom-full right-0 z-[100] mb-2">
-                      <FreepikSettings
-                        settings={freepikSettings}
-                        onChange={setFreepikSettings}
-                        onClose={() => setShowFreepikSettings(false)}
-                        onUpscale={handleMagnificUpscale}
-                        isUpscaling={isMagnificUpscaling}
-                      />
-                    </div>
-                  )}
-                </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(resultImage);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = getHouzaiFilename('png');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } catch (err: any) {
+                        console.error("Download failed", err);
+                        alert(`Download failed: ${err.message} `);
+                      }
+                    }}
+                    className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
+                  >
+                    <Download size={14} /> {t('download')}
+                  </button>
+                </>
               )}
             </div>
-            {resultImage && (
-              <button
-                onClick={() => setDrawingTarget('result')}
-                className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                <Pencil size={14} /> {t('edit')}
-              </button>
-            )}
-            {resultImage && (
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch(resultImage);
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = getHouzaiFilename('png');
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    window.URL.revokeObjectURL(url);
-                  } catch (err: any) {
-                    console.error("Download failed", err);
-                    alert(`Download failed: ${err.message} `);
-                  }
-                }}
-                className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
-              >
-                <Download size={14} /> {t('download')}
-              </button>
-            )}
           </div>
         </div>
 
