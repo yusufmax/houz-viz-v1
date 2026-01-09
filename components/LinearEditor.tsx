@@ -2038,7 +2038,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </button>
 
                     {showFreepikSettings && (
-                      <div className="absolute bottom-full right-0 z-[100] mb-2">
+                      <div className="absolute top-full right-0 z-[100] mt-2">
                         <FreepikSettings
                           settings={freepikSettings}
                           onChange={setFreepikSettings}
