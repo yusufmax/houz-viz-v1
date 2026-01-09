@@ -19,6 +19,7 @@ import {
     Layout,
     Layers,
     Sparkles,
+    Save,
     Users,
     UserCircle,
     Shirt,
@@ -57,6 +58,8 @@ import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
+import { upscaleImageReplicate } from '../services/replicateService';
+import { upscaleImageFreepik } from '../services/freepikService';
 
 const STYLE_PREVIEWS: Record<SuperRenderStyle, string> = {
     [SuperRenderStyle.None]: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=500&q=80',
@@ -97,6 +100,7 @@ const SuperEditor: React.FC = () => {
     const [batchResults, setBatchResults] = useState<any[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isUpscaling, setIsUpscaling] = useState(false);
+    const [isMagnificUpscaling, setIsMagnificUpscaling] = useState(false);
 
     // Super Mode Specific
     const [superSettings, setSuperSettings] = useState<SuperModeSettings>({
@@ -173,6 +177,30 @@ const SuperEditor: React.FC = () => {
         }
     };
 
+    const saveToHistory = async (imageUrl: string, historyPrompt: string) => {
+        if (!user) return;
+        try {
+            await historyService.addToHistory(user.id, {
+                id: Date.now().toString(),
+                url: imageUrl,
+                prompt: historyPrompt,
+                style: style as any,
+                timestamp: Date.now(),
+                metadata: {
+                    model: superSettings.model,
+                    aspectRatio: aspectRatio,
+                    superMode: true,
+                    styleReferenceImage: (styleReferenceImage && !styleReferenceImage.startsWith('data:')) ? styleReferenceImage : undefined,
+                    sourceImage: (sourceImage && !sourceImage.startsWith('data:')) ? sourceImage : undefined,
+                }
+            });
+            loadHistory();
+            loadQuota();
+        } catch (e) {
+            console.error("Failed to save to history", e);
+        }
+    };
+
     const updateGarment = (id: string, updates: Partial<{ type: any, image: string | null }>) => {
         setSuperSettings(prev => ({
             ...prev,
@@ -223,6 +251,36 @@ const SuperEditor: React.FC = () => {
         };
         localStorage.setItem('pending_super_node', JSON.stringify(payload));
         navigate('/?mode=infinity');
+    };
+
+    const handleUpscale = async () => {
+        if (!resultImage) return;
+        setIsUpscaling(true);
+        try {
+            const upscaled = await upscaleImageReplicate(resultImage);
+            setResultImage(upscaled);
+            saveToHistory(upscaled, "Upscaled: " + prompt);
+        } catch (e: any) {
+            console.error("Upscale failed", e);
+            alert(`Upscale failed: ${e.message}`);
+        } finally {
+            setIsUpscaling(false);
+        }
+    };
+
+    const handleMagnificUpscale = async () => {
+        if (!resultImage) return;
+        setIsMagnificUpscaling(true);
+        try {
+            const upscaled = await upscaleImageFreepik(resultImage, prompt);
+            setResultImage(upscaled);
+            saveToHistory(upscaled, "Premium Upscale: " + prompt);
+        } catch (e: any) {
+            console.error("Magnific Upscale failed", e);
+            alert(`Magnific Upscale failed: ${e.message}`);
+        } finally {
+            setIsMagnificUpscaling(false);
+        }
     };
 
     const handleGenerate = async () => {
@@ -840,8 +898,25 @@ const SuperEditor: React.FC = () => {
                                         <button
                                             onClick={() => setPreviewImage(resultImage)}
                                             className="p-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-white rounded transition-colors"
+                                            title={t('fullScreen')}
                                         >
                                             <Maximize size={14} />
+                                        </button>
+                                        <button
+                                            onClick={handleUpscale}
+                                            disabled={isUpscaling || isMagnificUpscaling}
+                                            className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                                            title="Recraft Crisp Upscale"
+                                        >
+                                            {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
+                                        </button>
+                                        <button
+                                            onClick={handleMagnificUpscale}
+                                            disabled={isUpscaling || isMagnificUpscaling}
+                                            className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold"
+                                            title="Premium Magnific Upscale (High Detail)"
+                                        >
+                                            {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
                                         </button>
                                         <button
                                             onClick={async () => {

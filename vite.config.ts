@@ -14,6 +14,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/replicate/, ''),
           secure: false,
+        },
+        '/api/freepik': {
+          target: 'https://api.freepik.com/v1',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/freepik/, ''),
+          secure: false,
         }
       }
     },

@@ -18,6 +18,7 @@ import {
   enhancePrompt
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
+import { upscaleImageFreepik } from '../services/freepikService';
 import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
 import { useNavigate } from 'react-router-dom';
@@ -272,6 +273,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const realtimeServiceRef = useRef<RealtimeService | null>(null);
   const audioManagerRef = useRef<AudioManager | null>(null);
   const [isUpscaling, setIsUpscaling] = useState(false);
+  const [isMagnificUpscaling, setIsMagnificUpscaling] = useState(false);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1313,6 +1315,22 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
+  const handleMagnificUpscale = async () => {
+    if (!resultImage) return;
+    setIsMagnificUpscaling(true);
+    try {
+      // Use Freepik Magnific Upscale
+      const upscaled = await upscaleImageFreepik(resultImage, prompt);
+      setResultImage(upscaled);
+      saveToHistory(upscaled, "Premium Upscale: " + prompt);
+    } catch (e: any) {
+      console.error("Magnific Upscale failed", e);
+      alert(`Magnific Upscale failed: ${e.message}`);
+    } finally {
+      setIsMagnificUpscaling(false);
+    }
+  };
+
   const handleDrawSave = (newImage: string) => {
     if (drawingTarget === 'source') {
       setSourceImage(newImage);
@@ -1990,10 +2008,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               {resultImage && (
                 <button
                   onClick={handleUpscale}
-                  disabled={isUpscaling}
+                  disabled={isUpscaling || isMagnificUpscaling}
                   className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                  title="Recraft Crisp Upscale"
                 >
                   {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
+                </button>
+              )}
+              {resultImage && (
+                <button
+                  onClick={handleMagnificUpscale}
+                  disabled={isUpscaling || isMagnificUpscaling}
+                  className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/20 disabled:opacity-50 font-bold"
+                  title="Premium Magnific Upscale (High Detail)"
+                >
+                  {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
                 </button>
               )}
               {resultImage && (
