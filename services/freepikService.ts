@@ -27,9 +27,9 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
         optimized_for: settings?.optimized_for || 'standard',
         prompt: settings?.prompt || 'high quality, detailed render',
         creativity: settings?.creativity ?? 0,
-        definition: settings?.definition ?? 0,
+        hdr: settings?.definition ?? 0,
         resemblance: settings?.resemblance ?? 0,
-        intricacy: settings?.intricacy ?? 0,
+        fractality: settings?.intricacy ?? 0,
         engine: settings?.engine || 'automatic'
     };
 
