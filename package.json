@@ -8,11 +8,11 @@
     "build": "vite build",
     "lint": "tsc --noEmit",
     "preview": "vite preview",
-    "start": "serve -s dist -l 8080"
+    "start": "node server.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
-    "@supabase/supabase-js": "^2.83.0",
+    "@supabase/supabase-js": "^2.90.1",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",

@@ -65,7 +65,8 @@ export const historyService = {
                 imageUrl = publicUrl;
 
             } catch (err) {
-                console.error('Failed to upload image to storage, falling back to original URL:', err);
+                console.error('Failed to upload image to storage:', err);
+                throw new Error('Failed to upload generated image to storage. Check storage bucket permissions.');
             }
         }
 

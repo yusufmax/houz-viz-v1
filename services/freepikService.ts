@@ -36,17 +36,14 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
     let taskId: string;
 
     // 1. Initiate Upscale
-    const initResponse = await fetch(isDev ? '/api/freepik/ai/image-upscaler' : '/.netlify/functions/freepik-proxy', {
+    // 1. Initiate Upscale - Unified Path for Dev (Vite) and Prod (server.cjs)
+    const initResponse = await fetch('/api/freepik/ai/image-upscaler', {
         method: 'POST',
-        headers: isDev ? {
-            'x-freepik-api-key': apiKey,
+        headers: {
+            // 'x-freepik-api-key': apiKey, // Handled by Proxy (Vite or server.cjs)
             'Content-Type': 'application/json'
-        } : { 'Content-Type': 'application/json' },
-        body: JSON.stringify(isDev ? requestBody : {
-            path: '/ai/image-upscaler',
-            method: 'POST',
-            body: requestBody
-        })
+        },
+        body: JSON.stringify(requestBody)
     });
 
     if (!initResponse.ok) {
@@ -69,15 +66,9 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
         attempts++;
         await new Promise(resolve => setTimeout(resolve, 5000));
 
-        const pollResponse = await fetch(isDev ? `/api/freepik/ai/image-upscaler/${taskId}` : '/.netlify/functions/freepik-proxy', {
-            method: isDev ? 'GET' : 'POST',
-            headers: isDev ? {
-                'x-freepik-api-key': apiKey
-            } : { 'Content-Type': 'application/json' },
-            body: isDev ? undefined : JSON.stringify({
-                path: `/ai/image-upscaler/${taskId}`,
-                method: 'GET'
-            })
+        const pollResponse = await fetch(`/api/freepik/ai/image-upscaler/${taskId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
         });
 
         if (!pollResponse.ok) {
