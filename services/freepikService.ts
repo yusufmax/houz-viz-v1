@@ -18,8 +18,27 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
 
     console.log("[Freepik] Starting Magnific upscale...");
 
-    // Remove data:image/X;base64, prefix if present
-    const base64Image = image.includes('base64,') ? image.split('base64,')[1] : image;
+    let base64Image = image;
+
+    // Handle URL input: Download and convert to Base64
+    if (image.startsWith('http')) {
+        try {
+            console.log("[Freepik] Input is URL, downloading to convert to Base64...");
+            const resp = await fetch(image);
+            const blob = await resp.blob();
+            const buffer = await blob.arrayBuffer();
+            const base64 = btoa(
+                new Uint8Array(buffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
+            base64Image = base64;
+        } catch (err) {
+            console.error("[Freepik] Failed to convert URL to Base64:", err);
+            throw new Error("Failed to process input image URL");
+        }
+    } else if (image.includes('base64,')) {
+        // Remove prefix if present
+        base64Image = image.split('base64,')[1];
+    }
 
     const requestBody = {
         image: base64Image,
