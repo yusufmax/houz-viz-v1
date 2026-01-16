@@ -21,6 +21,7 @@ import GeminiPlayground from './pages/Dev/GeminiPlayground';
 import AdminPage from './pages/Admin/AdminPage';
 import SuperEditor from './components/SuperEditor';
 import { User } from 'lucide-react';
+import MagnificPage from './pages/MagnificPage';
 import { AgenticProvider } from './contexts/AgenticContext';
 import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
@@ -303,6 +304,7 @@ const AppContent: React.FC = () => {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/playground" element={<GeminiPlayground />} />
         <Route path="/super" element={<SuperEditor />} />
+        <Route path="/magnific" element={<MagnificPage />} />
         <Route path="/" element={<Home />} />
         <Route path="*" element={<div className="p-10 text-center">404 - Page Not Found</div>} />
       </Routes>
