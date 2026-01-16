@@ -59,7 +59,7 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
     const initResponse = await fetch('/api/freepik/ai/image-upscaler', {
         method: 'POST',
         headers: {
-            // 'x-freepik-api-key': apiKey, // Handled by Proxy (Vite or server.cjs)
+            'x-freepik-api-key': apiKey, // Handled by Proxy (Vite or server.cjs)
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
