@@ -2,12 +2,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-const BOT_TOKEN = Deno.env.get("TELEGRAM_BOT_TOKEN")
-const ADMIN_CHAT_IDS = Deno.env.get("TELEGRAM_ADMIN_CHAT_ID")?.split(",").map(id => id.trim()).filter(id => id) || []
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+const BOT_TOKEN = "8058653165:AAGX-G1Wxt2fE5JLZQ67qzWtmlh3ErGKO4Y"
+const ADMIN_CHAT_IDS = ["483982607", "78001184", "456060838"]
+const SUPABASE_URL = "http://db.houzai.uz:8000"
+const SUPABASE_SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NjgxNDcyMjQsImV4cCI6NDkyMTc0NzIyNH0.IiV6aKCtU8RlCHZDdNyYJsjPcRQUW19fgpmF01h_cBk"
 
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
 serve(async (req) => {
     const url = new URL(req.url)
@@ -130,6 +130,25 @@ serve(async (req) => {
                 )
             }
 
+            return new Response("OK")
+        }
+
+        // 1.5 Handle Text Messages (e.g., /start)
+        if (body.message) {
+            const { chat, text } = body.message
+            console.log("🔹 RECEIVED MESSAGE:", text, "FROM:", chat.id) // DEBUG LOG
+
+            let response;
+            if (text === "/start") {
+                response = await sendTelegramMessage(chat.id, {
+                    text: "👋 Welcome to HouzBot!\n\nI am the notification bot for the HOUZ.AI platform. I will alert admins about new users and credit requests."
+                })
+            } else {
+                response = await sendTelegramMessage(chat.id, {
+                    text: `I received your message: "${text}".\nCurrently I only respond to specific system events.`
+                })
+            }
+            console.log("🔹 TELEGRAM API RESPONSE:", JSON.stringify(response)) // DEBUG LOG
             return new Response("OK")
         }
 

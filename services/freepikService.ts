@@ -40,6 +40,11 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
         base64Image = image.split('base64,')[1];
     }
 
+    // DEBUG: Clean and logging
+    base64Image = base64Image.replace(/[\n\r]/g, '').trim();
+    console.log(`[Freepik] Base64 Image Length: ${base64Image.length}`);
+    console.log(`[Freepik] Base64 Start: ${base64Image.substring(0, 50)}...`);
+
     const requestBody = {
         image: base64Image,
         scale_factor: settings?.scale_factor || '2x',
