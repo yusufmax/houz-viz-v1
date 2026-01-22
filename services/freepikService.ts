@@ -62,10 +62,11 @@ export const upscaleImageFreepik = async (imageInput: string, settings?: Partial
     let base64Image = imageInput;
 
     // Handle URL input: Download and convert to Base64
-    if (image.startsWith('http')) {
+    // Handle URL input: Download and convert to Base64
+    if (imageInput.startsWith('http')) {
         try {
             console.log("[Freepik] Input is URL, downloading to convert to Base64...");
-            const resp = await fetch(image);
+            const resp = await fetch(imageInput);
             const blob = await resp.blob();
             const buffer = await blob.arrayBuffer();
             const base64 = btoa(
