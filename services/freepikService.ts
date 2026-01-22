@@ -8,7 +8,48 @@ export interface FreepikUpscaleResponse {
     };
 }
 
-export const upscaleImageFreepik = async (image: string, settings?: Partial<FreepikMagnificSettings>): Promise<string> => {
+export const upscaleImageFreepik = async (imageInput: string, settings?: Partial<FreepikMagnificSettings>): Promise<string> => {
+    // Helper to resize image if needed
+    const ensureSafeDimensions = async (base64Data: string): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const MAX_PIXELS = 16 * 1000 * 1000; // 16MP safety limit (allow room for upscale)
+                const currentPixels = img.width * img.height;
+
+                if (currentPixels <= MAX_PIXELS) {
+                    resolve(base64Data);
+                    return;
+                }
+
+                console.log(`[Freepik] Image too large (${img.width}x${img.height} = ${(currentPixels / 1e6).toFixed(1)}MP). Resizing...`);
+
+                // Calculate new dimensions maintaining aspect ratio
+                const scale = Math.sqrt(MAX_PIXELS / currentPixels);
+                const newWidth = Math.floor(img.width * scale);
+                const newHeight = Math.floor(img.height * scale);
+
+                const canvas = document.createElement('canvas');
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error("Failed to get canvas context"));
+                    return;
+                }
+
+                ctx.drawImage(img, 0, 0, newWidth, newHeight);
+                // Return as base64 (JPEG 90% quality for efficiency)
+                const resized = canvas.toDataURL('image/jpeg', 0.90);
+                // Remove prefix for API
+                resolve(resized.split('base64,')[1]);
+            };
+            img.onerror = (e) => reject(new Error("Failed to load image for resizing"));
+            img.src = base64Data.startsWith('data:') ? base64Data : `data:image/png;base64,${base64Data}`;
+        });
+    };
+
     const isDev = import.meta.env.DEV;
     const apiKey = import.meta.env.VITE_FREEPIK_API_KEY;
 
@@ -18,7 +59,7 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
 
     console.log("[Freepik] Starting Magnific upscale...");
 
-    let base64Image = image;
+    let base64Image = imageInput;
 
     // Handle URL input: Download and convert to Base64
     if (image.startsWith('http')) {
@@ -35,15 +76,23 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
             console.error("[Freepik] Failed to convert URL to Base64:", err);
             throw new Error("Failed to process input image URL");
         }
-    } else if (image.includes('base64,')) {
+    } else if (imageInput.includes('base64,')) {
         // Remove prefix if present
-        base64Image = image.split('base64,')[1];
+        base64Image = imageInput.split('base64,')[1];
     }
 
     // DEBUG: Clean and logging
     base64Image = base64Image.replace(/[\n\r]/g, '').trim();
-    console.log(`[Freepik] Base64 Image Length: ${base64Image.length}`);
-    console.log(`[Freepik] Base64 Start: ${base64Image.substring(0, 50)}...`);
+
+    // Resize checks
+    try {
+        base64Image = await ensureSafeDimensions(base64Image);
+    } catch (err) {
+        console.error("[Freepik] Resize check-in failed:", err);
+        // Continue with original just in case it works
+    }
+
+    console.log(`[Freepik] Final Base64 Length: ${base64Image.length}`);
 
     const requestBody = {
         image: base64Image,
