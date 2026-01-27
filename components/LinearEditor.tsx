@@ -615,7 +615,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           lockCamera,
           lockInterior,
           interior: editorMode === 'interior' ? interiorSettings : undefined,
-          interior: editorMode === 'interior' ? interiorSettings : undefined,
+
           prompt: usedPrompt, // Save the prompt used for this generation
           tags,
           sunPosition
@@ -1023,7 +1023,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       aperture,
       lockInterior: editorMode === 'interior' ? lockInterior : false,
       interior: editorMode === 'interior' ? interiorSettings : undefined,
-      interior: editorMode === 'interior' ? interiorSettings : undefined,
+
       tags,
       sunPosition,
       ...settingsOverride
@@ -1832,6 +1832,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
 
               {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
+
+              {editorMode !== 'interior' && (
+                <div className="space-y-3 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center">
+                  <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+                </div>
+              )}
 
               <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
                 <div className="flex items-center justify-between">
