@@ -218,6 +218,7 @@ export interface GenerationSettings {
   superMode?: SuperModeSettings;
   tags?: Tag[];
   sunPosition?: number;
+  timeOfDay?: number;
 }
 
 export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';
@@ -339,6 +340,7 @@ export interface Project {
     editorMode?: 'exterior' | 'interior' | 'general';
     tags?: Tag[];
     sunPosition?: number;
+    timeOfDay?: number;
   };
 }
 

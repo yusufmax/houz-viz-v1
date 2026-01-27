@@ -202,6 +202,21 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
 
       textParts.push(`LIGHTING DIRECTION: Sunlight/Key Light source coming from ${angle} degrees azimuth (${directionDesc}). Cast shadows accordingly.`);
     }
+
+    // Time of Day Logic
+    if (settings.timeOfDay !== undefined) {
+      const h = settings.timeOfDay;
+      let timeDesc = "";
+      if (h < 5) timeDesc = "Night (Dark, artificial lights only)";
+      else if (h < 8) timeDesc = "Dawn/Sunrise (Low angle warm light, long shadows)";
+      else if (h < 11) timeDesc = "Morning (Soft clear light, medium shadows)";
+      else if (h < 14) timeDesc = "Midday (High contrast, short shadows, bright)";
+      else if (h < 17) timeDesc = "Afternoon (Warm clear light, medium shadows)";
+      else if (h < 20) timeDesc = "Golden Hour/Sunset (Low angle golden light, long dramatic shadows)";
+      else timeDesc = "Night (Dark, artificial lights only)";
+
+      textParts.push(`TIME OF DAY: ${h}:00 (${timeDesc}). Adjust solar elevation and color temperature accordingly.`);
+    }
   }
 
   // 3. Structural Constraints

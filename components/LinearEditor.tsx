@@ -349,6 +349,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [aperture, setAperture] = useState<string>('');
   const [lockInterior, setLockInterior] = useState(false);
   const [sunPosition, setSunPosition] = useState<number>(135);
+  const [timeOfDay, setTimeOfDay] = useState<number>(14); // Default 2 PM
 
   // Interior Settings State
   const [interiorSettings, setInteriorSettings] = useState<InteriorSettings>({
@@ -661,6 +662,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
       if (item.metadata.tags) setTags(item.metadata.tags);
       if (item.metadata.sunPosition !== undefined) setSunPosition(item.metadata.sunPosition);
+      if (item.metadata.timeOfDay !== undefined) setTimeOfDay(item.metadata.timeOfDay);
 
       // Assuming these are not part of HistoryItem metadata directly, but if they were, they'd be set here.
       // setGeneratedImage(item.imageUrl);
@@ -973,6 +975,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         if (state.editorMode) setEditorMode(state.editorMode);
         if (state.tags) setTags(state.tags);
         if (state.sunPosition !== undefined) setSunPosition(state.sunPosition);
+        if (state.timeOfDay !== undefined) setTimeOfDay(state.timeOfDay);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 
@@ -1026,6 +1029,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       tags,
       sunPosition,
+      timeOfDay,
       ...settingsOverride
     };
 
@@ -1834,8 +1838,29 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
               {editorMode !== 'interior' && (
-                <div className="space-y-3 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center">
+                <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center">
                   <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+
+                  <div className="w-full space-y-2 pt-2 border-t border-slate-800">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <span>Time of Day</span>
+                      <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="24"
+                      step="1"
+                      value={timeOfDay}
+                      onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[8px] text-slate-600 font-medium">
+                      <span>Night</span>
+                      <span>Noon</span>
+                      <span>Night</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
