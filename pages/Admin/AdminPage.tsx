@@ -329,7 +329,12 @@ const AdminPage: React.FC = () => {
                                                             <Users size={20} className="text-slate-500" />
                                                         </div>
                                                         <div>
-                                                            <div className="font-bold text-white leading-tight">{u.full_name || 'Anonymous User'}</div>
+                                                            <div className="font-bold text-white leading-tight">
+                                                                {u.display_name || u.full_name || 'Anonymous User'}
+                                                                {u.display_name && u.full_name && u.display_name !== u.full_name && (
+                                                                    <span className="text-[10px] text-slate-500 font-normal ml-2">({u.full_name})</span>
+                                                                )}
+                                                            </div>
                                                             <div className="text-[10px] text-slate-500 font-mono mt-0.5">{u.id}</div>
                                                         </div>
                                                     </div>
@@ -694,7 +699,7 @@ const AdminPage: React.FC = () => {
                                                     <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-black ${i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-slate-300 text-black' : i === 2 ? 'bg-amber-700 text-white' : 'bg-slate-800 text-slate-400'}`}>
                                                         {i + 1}
                                                     </span>
-                                                    <span className="font-bold text-white text-sm truncate max-w-[150px]">{u.full_name || 'Anonymous'}</span>
+                                                    <span className="font-bold text-white text-sm truncate max-w-[150px]">{u.display_name || u.full_name || 'Anonymous'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-8">
                                                     <div className="text-right">

@@ -228,7 +228,8 @@ export const adminService = {
             .select(`
                 *,
                 profiles (
-                    full_name
+                    full_name,
+                    display_name
                 )
             `)
             .gte('created_at', startOfDay)
@@ -248,7 +249,7 @@ export const adminService = {
     async getUserLeaderboard() {
         const { data, error } = await supabase
             .from('profiles')
-            .select('id, full_name, generations_used, generation_quota')
+            .select('id, full_name, display_name, generations_used, generation_quota')
             .order('generations_used', { ascending: false })
             .limit(10);
 
