@@ -217,6 +217,7 @@ export interface GenerationSettings {
   interior?: InteriorSettings;
   superMode?: SuperModeSettings;
   tags?: Tag[];
+  sunPosition?: number;
 }
 
 export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';
@@ -337,6 +338,7 @@ export interface Project {
     interiorSettings?: any;
     editorMode?: 'exterior' | 'interior' | 'general';
     tags?: Tag[];
+    sunPosition?: number;
   };
 }
 

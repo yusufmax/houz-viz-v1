@@ -188,6 +188,20 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     textParts.push(`Camera Angle: ${settings.camera}`);
     if (settings.lens) textParts.push(`Camera Lens characteristics: ${settings.lens}`);
     if (settings.aperture) textParts.push(`Aperture setting: ${settings.aperture} (simulate appropriate depth of field depth).`);
+    if (settings.aperture) textParts.push(`Aperture setting: ${settings.aperture} (simulate appropriate depth of field depth).`);
+
+    // Sun Position Logic
+    if (settings.sunPosition !== undefined) {
+      const angle = settings.sunPosition;
+      // Convert angle to cardinal direction description for better AI understanding
+      let directionDesc = "";
+      if (angle >= 315 || angle < 45) directionDesc = "North (Back/Indirect)";
+      else if (angle >= 45 && angle < 135) directionDesc = "East (Morning Light from Right)";
+      else if (angle >= 135 && angle < 225) directionDesc = "South (Direct/Front)";
+      else if (angle >= 225 && angle < 315) directionDesc = "West (Evening Light from Left)";
+
+      textParts.push(`LIGHTING DIRECTION: Sunlight/Key Light source coming from ${angle} degrees azimuth (${directionDesc}). Cast shadows accordingly.`);
+    }
   }
 
   // 3. Structural Constraints

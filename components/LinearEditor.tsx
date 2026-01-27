@@ -34,6 +34,7 @@ import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, fetchDefaultReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
 import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
+import SunPositionSelector from './SunPositionSelector';
 
 const STYLE_LIBRARY = [
   // Living Complex / House
@@ -347,6 +348,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [lens, setLens] = useState<CameraLens | undefined>(undefined);
   const [aperture, setAperture] = useState<string>('');
   const [lockInterior, setLockInterior] = useState(false);
+  const [sunPosition, setSunPosition] = useState<number>(135);
 
   // Interior Settings State
   const [interiorSettings, setInteriorSettings] = useState<InteriorSettings>({
@@ -613,8 +615,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           lockCamera,
           lockInterior,
           interior: editorMode === 'interior' ? interiorSettings : undefined,
+          interior: editorMode === 'interior' ? interiorSettings : undefined,
           prompt: usedPrompt, // Save the prompt used for this generation
-          tags
+          tags,
+          sunPosition
         }
       };
 
@@ -654,7 +658,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       if (item.metadata.styleReferenceImage) setStyleReferenceImage(item.metadata.styleReferenceImage);
       if (item.metadata.sourceImage) setSourceImage(item.metadata.sourceImage);
       if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
+      if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
       if (item.metadata.tags) setTags(item.metadata.tags);
+      if (item.metadata.sunPosition !== undefined) setSunPosition(item.metadata.sunPosition);
 
       // Assuming these are not part of HistoryItem metadata directly, but if they were, they'd be set here.
       // setGeneratedImage(item.imageUrl);
@@ -700,7 +706,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           lockInterior,
           interiorSettings: editorMode === 'interior' ? interiorSettings : undefined,
           editorMode, // Save the current editor mode
-          tags
+          tags,
+          sunPosition
         }
       };
 
@@ -965,6 +972,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         if (state.interiorSettings) setInteriorSettings(state.interiorSettings);
         if (state.editorMode) setEditorMode(state.editorMode);
         if (state.tags) setTags(state.tags);
+        if (state.sunPosition !== undefined) setSunPosition(state.sunPosition);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 
@@ -1015,7 +1023,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       aperture,
       lockInterior: editorMode === 'interior' ? lockInterior : false,
       interior: editorMode === 'interior' ? interiorSettings : undefined,
+      interior: editorMode === 'interior' ? interiorSettings : undefined,
       tags,
+      sunPosition,
       ...settingsOverride
     };
 
