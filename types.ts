@@ -341,6 +341,7 @@ export interface Project {
     tags?: Tag[];
     sunPosition?: number;
     timeOfDay?: number;
+    useSunControl?: boolean;
   };
 }
 

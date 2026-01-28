@@ -350,6 +350,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [lockInterior, setLockInterior] = useState(false);
   const [sunPosition, setSunPosition] = useState<number>(135);
   const [timeOfDay, setTimeOfDay] = useState<number>(14); // Default 2 PM
+  const [useSunControl, setUseSunControl] = useState(false);
 
   // Interior Settings State
   const [interiorSettings, setInteriorSettings] = useState<InteriorSettings>({
@@ -663,6 +664,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       if (item.metadata.tags) setTags(item.metadata.tags);
       if (item.metadata.sunPosition !== undefined) setSunPosition(item.metadata.sunPosition);
       if (item.metadata.timeOfDay !== undefined) setTimeOfDay(item.metadata.timeOfDay);
+      if (item.metadata.useSunControl !== undefined) setUseSunControl(item.metadata.useSunControl);
 
       // Assuming these are not part of HistoryItem metadata directly, but if they were, they'd be set here.
       // setGeneratedImage(item.imageUrl);
@@ -976,6 +978,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         if (state.tags) setTags(state.tags);
         if (state.sunPosition !== undefined) setSunPosition(state.sunPosition);
         if (state.timeOfDay !== undefined) setTimeOfDay(state.timeOfDay);
+        if (state.useSunControl !== undefined) setUseSunControl(state.useSunControl);
         setCurrentProjectName(data.name);
 
         // If project has history snapshot, maybe merge? 
@@ -1028,8 +1031,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       interior: editorMode === 'interior' ? interiorSettings : undefined,
 
       tags,
-      sunPosition,
-      timeOfDay,
+      sunPosition: useSunControl ? sunPosition : undefined,
+      timeOfDay: useSunControl ? timeOfDay : undefined,
       ...settingsOverride
     };
 
@@ -1838,27 +1841,42 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
               {editorMode !== 'interior' && (
-                <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center">
-                  <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+                <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center transition-all duration-300">
+                  <div className="w-full flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                      <Sun size={14} className={useSunControl ? "text-amber-400" : "text-slate-600"} />
+                      Sun & Time
+                    </label>
+                    <button
+                      onClick={() => setUseSunControl(!useSunControl)}
+                      className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                    >
+                      <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
 
-                  <div className="w-full space-y-2 pt-2 border-t border-slate-800">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      <span>Time of Day</span>
-                      <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="24"
-                      step="1"
-                      value={timeOfDay}
-                      onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
-                      className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[8px] text-slate-600 font-medium">
-                      <span>Night</span>
-                      <span>Noon</span>
-                      <span>Night</span>
+                  <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
+                    <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+
+                    <div className="w-full space-y-2 pt-4 border-t border-slate-800 mt-2">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        <span>Time of Day</span>
+                        <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="24"
+                        step="1"
+                        value={timeOfDay}
+                        onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
+                        className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[8px] text-slate-600 font-medium">
+                        <span>Night</span>
+                        <span>Noon</span>
+                        <span>Night</span>
+                      </div>
                     </div>
                   </div>
                 </div>
