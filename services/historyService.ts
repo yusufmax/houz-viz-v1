@@ -116,15 +116,21 @@ export const historyService = {
 
         try {
             const urlObj = new URL(url);
-            if (urlObj.hostname.includes('supabase.co')) {
-                const pathParts = urlObj.pathname.split('/');
-                const bucketIndex = pathParts.indexOf('generated-images');
-                if (bucketIndex !== -1) {
-                    const filePath = pathParts.slice(bucketIndex + 1).join('/');
-                    // Construct the render URL
-                    // Note: This matches Supabase's image transformation API structure
-                    return `${urlObj.origin}/storage/v1/render/image/public/generated-images/${filePath}?width=${width}&quality=80&resize=contain`;
+
+            // Handle both supabase.co and custom domains
+            // Standard Supabase storage path: /storage/v1/object/public/bucket/path
+            if (urlObj.pathname.includes('/storage/v1/object/public/generated-images/')) {
+                const newPath = urlObj.pathname.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/');
+                return `${urlObj.origin}${newPath}?width=${width}&quality=80&resize=contain`;
+            }
+
+            // If it's already a render URL, just ensure quality parameters are present
+            if (urlObj.pathname.includes('/storage/v1/render/image/public/generated-images/')) {
+                if (!url.includes('width=')) {
+                    const separator = url.includes('?') ? '&' : '?';
+                    return `${url}${separator}width=${width}&quality=80&resize=contain`;
                 }
+                return url;
             }
         } catch (e) {
             console.warn('Failed to construct optimized URL:', e);
