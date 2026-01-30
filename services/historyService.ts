@@ -280,5 +280,27 @@ export const historyService = {
         }
 
         return successCount;
+    },
+
+    /**
+     * Auto-pilot version that keeps going until no more items need processing
+     */
+    async autoBackfill(onProgress?: (total: number, session: number) => void): Promise<number> {
+        let totalProcessed = 0;
+        let lastSessionCount = -1;
+
+        while (lastSessionCount !== 0) {
+            lastSessionCount = await this.backfillCompressedImages(20);
+            totalProcessed += lastSessionCount;
+            if (onProgress) onProgress(totalProcessed, lastSessionCount);
+
+            // Short delay to prevent UI freezing and respect rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Safety break if it's taking too long or something is wrong
+            if (totalProcessed > 5000) break;
+        }
+
+        return totalProcessed;
     }
 };

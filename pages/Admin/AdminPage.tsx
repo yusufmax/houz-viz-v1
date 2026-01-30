@@ -32,6 +32,7 @@ const AdminPage: React.FC = () => {
     const [loadingStats, setLoadingStats] = useState(false);
     const [isRegenerating, setIsRegenerating] = useState(false);
     const [regeneratedCount, setRegeneratedCount] = useState<number | null>(null);
+    const [totalAutoProgress, setTotalAutoProgress] = useState(0);
 
     // Format cost to 22,8 style (1 decimal, comma separator)
     const formatCost = (val: number | undefined | null) => {
@@ -72,6 +73,14 @@ const AdminPage: React.FC = () => {
             loadStats();
         }
     }, [startDate, endDate, activeTab]);
+
+    // Handle Auto-Backfill via URL parameter
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('auto_backfill') === 'true' && !loading && !isRegenerating) {
+            handleRegenerateThumbnails();
+        }
+    }, [loading]);
 
     const loadStats = async () => {
         try {
@@ -238,21 +247,31 @@ const AdminPage: React.FC = () => {
     };
 
     const handleRegenerateThumbnails = async () => {
-        if (!confirm("This will process up to 30 history items missing thumbnails. Continue?")) return;
+        const isAuto = confirm("AUTO-PILOT MODE: Should I keep processing until ALL images are done? \n\nClick OK for Auto-Pilot \nClick CANCEL for a single batch of 30.");
+
         setIsRegenerating(true);
         setRegeneratedCount(null);
+        setTotalAutoProgress(0);
+
         try {
-            const count = await historyService.backfillCompressedImages(30);
-            setRegeneratedCount(count);
-            if (count > 0) {
-                alert(`Successfully regenerated thumbnails for ${count} items.`);
-                loadData();
+            if (isAuto) {
+                const total = await historyService.autoBackfill((progress, session) => {
+                    setTotalAutoProgress(progress);
+                });
+                alert(`AUTO-PILOT COMPLETE: Successfully optimized ${total} images.`);
             } else {
-                alert("No items needing regeneration found (limit 30).");
+                const count = await historyService.backfillCompressedImages(30);
+                setRegeneratedCount(count);
+                if (count > 0) {
+                    alert(`BATCH COMPLETE: Optimized ${count} images.`);
+                } else {
+                    alert("No items needing regeneration found.");
+                }
             }
+            loadData();
         } catch (error) {
             console.error("Regeneration failed", error);
-            alert("Regeneration failed");
+            alert("Regeneration failed: " + (error instanceof Error ? error.message : 'Unknown error'));
         } finally {
             setIsRegenerating(false);
         }
@@ -328,7 +347,7 @@ const AdminPage: React.FC = () => {
                             title="Regenerate missing thumbnails for all history (Limit 30)"
                         >
                             {isRegenerating ? <Loader2 size={16} className="animate-spin" /> : <TrendingUp size={16} />}
-                            {isRegenerating ? 'REGROWING...' : 'REGEN'}
+                            {isRegenerating ? `PROCESSED (${totalAutoProgress})` : 'AUTO-REGEN'}
                         </button>
                     </div>
                 </header>
