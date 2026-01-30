@@ -101,5 +101,35 @@ export const historyService = {
             console.error('Error clearing history:', error);
             throw error;
         }
+    },
+
+    /**
+     * Helper to get a transformed (smaller) image URL from Supabase Storage
+     */
+    getOptimizedUrl(url: string, width = 400): string {
+        if (!url || !url.includes('generated-images')) return url;
+
+        // Use Supabase Storage transformation parameters if available
+        // Note: This requires the Pro plan or specific configuration on Supabase
+        // If not available, it just returns the original URL.
+        // Format: .../storage/v1/render/image/public/bucket/path?width=400&height=400&resize=contain
+
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname.includes('supabase.co')) {
+                const pathParts = urlObj.pathname.split('/');
+                const bucketIndex = pathParts.indexOf('generated-images');
+                if (bucketIndex !== -1) {
+                    const filePath = pathParts.slice(bucketIndex + 1).join('/');
+                    // Construct the render URL
+                    // Note: This matches Supabase's image transformation API structure
+                    return `${urlObj.origin}/storage/v1/render/image/public/generated-images/${filePath}?width=${width}&quality=80&resize=contain`;
+                }
+            }
+        } catch (e) {
+            console.warn('Failed to construct optimized URL:', e);
+        }
+
+        return url;
     }
 };

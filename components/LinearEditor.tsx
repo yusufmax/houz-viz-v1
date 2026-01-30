@@ -1466,7 +1466,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           {history.length === 0 && <div className="text-slate-500 text-xs text-center py-4">No history yet</div>}
           {history.map(item => (
             <div key={item.id} className="bg-slate-800 rounded border border-slate-700 overflow-hidden group relative">
-              <img src={item.url} alt="History" className="w-full h-32 object-cover" />
+              <img src={historyService.getOptimizedUrl(item.url)} alt="History" className="w-full h-32 object-cover" />
               <div className="p-2">
                 <p className="text-[10px] text-slate-400 line-clamp-2">{item.prompt}</p>
                 <p className="text-[9px] text-slate-600 mt-1">{new Date(item.timestamp).toLocaleTimeString()}</p>

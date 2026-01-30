@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { X, ExternalLink, Clock, Tag } from 'lucide-react';
+import { historyService } from '../../services/historyService';
 
 interface HistoryModalProps {
     isOpen: boolean;
@@ -44,7 +45,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                                 <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg">
                                     <div className="aspect-square relative overflow-hidden bg-slate-950">
                                         <img
-                                            src={item.image_url}
+                                            src={historyService.getOptimizedUrl(item.image_url)}
                                             alt={item.prompt}
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                             loading="lazy"

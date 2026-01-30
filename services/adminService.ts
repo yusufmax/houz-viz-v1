@@ -152,6 +152,29 @@ export const adminService = {
     },
 
     /**
+     * Get recent generation history for all users
+     */
+    async getAllHistory(limit = 100) {
+        const { data, error } = await supabase
+            .from('generation_history')
+            .select(`
+                *,
+                profiles (
+                    full_name,
+                    display_name
+                )
+            `)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.error('Error fetching all history:', error);
+            throw error;
+        }
+        return data;
+    },
+
+    /**
      * Get overall system stats including estimated cost
      */
     async getSystemStats(startDate?: string, endDate?: string) {
