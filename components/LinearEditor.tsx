@@ -1467,7 +1467,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           {history.map(item => (
             <div key={item.id} className="bg-slate-800 rounded border border-slate-700 overflow-hidden group relative">
               <img
-                src={item.compressed_url || historyService.getOptimizedUrl(item.url)}
+                src={historyService.getOptimizedUrl(item.url)}
                 alt="History"
                 className="w-full h-32 object-cover"
                 onError={(e) => {

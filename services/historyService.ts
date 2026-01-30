@@ -37,21 +37,18 @@ export const historyService = {
 
     async addToHistory(userId: string, item: HistoryItem, projectId?: string, userDisplayName?: string): Promise<void> {
         let imageUrl = item.url;
-        let compressedUrl = item.compressed_url;
 
         // Check if the URL is a Base64 string
         if (imageUrl.startsWith('data:image')) {
             try {
-                // 1. Upload Original
                 const response = await fetch(imageUrl);
-                const originalBlob = await response.blob();
+                const blob = await response.blob();
                 const fileExt = imageUrl.split(';')[0].split('/')[1] || 'png';
-                const baseFileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}`;
-                const fileName = `${baseFileName}.${fileExt}`;
+                const fileName = `${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from('generated-images')
-                    .upload(fileName, originalBlob, {
+                    .upload(fileName, blob, {
                         contentType: `image/${fileExt}`,
                         upsert: false
                     });
@@ -63,29 +60,6 @@ export const historyService = {
                     .getPublicUrl(fileName);
 
                 imageUrl = publicUrl;
-
-                // 2. Generate and Upload Compressed Thumbnail
-                try {
-                    const compressedBlob = await this.compressImage(item.url); // Use original base64
-                    const thumbFileName = `${baseFileName}_thumb.jpg`;
-
-                    const { error: thumbError } = await supabase.storage
-                        .from('generated-images')
-                        .upload(thumbFileName, compressedBlob, {
-                            contentType: 'image/jpeg',
-                            upsert: false
-                        });
-
-                    if (!thumbError) {
-                        const { data: { publicUrl: thumbUrl } } = supabase.storage
-                            .from('generated-images')
-                            .getPublicUrl(thumbFileName);
-                        compressedUrl = thumbUrl;
-                    }
-                } catch (thumbErr) {
-                    console.warn('Failed to generate thumbnail during upload:', thumbErr);
-                }
-
             } catch (err) {
                 console.error('Failed to upload image to storage:', err);
                 throw new Error('Failed to upload generated image to storage.');
@@ -97,11 +71,10 @@ export const historyService = {
             .insert({
                 user_id: userId,
                 image_url: imageUrl,
-                compressed_url: compressedUrl,
                 prompt: item.prompt,
                 style: item.style,
                 project_id: projectId,
-                user_display_name: userDisplayName, // Save display name
+                user_display_name: userDisplayName,
                 created_at: new Date(item.timestamp).toISOString(),
                 metadata: item.metadata,
                 model_name: item.modelName,
