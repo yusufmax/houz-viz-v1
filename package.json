@@ -9,11 +9,12 @@
     "lint": "tsc --noEmit",
     "preview": "vite preview",
     "start": "node server.cjs",
-    "backfill": "bash scripts/auto-backfill.sh"
+    "backfill": "node scripts/backfill-thumbnails.js"
   },
   "dependencies": {
     "@google/genai": "^1.30.0",
     "@supabase/supabase-js": "^2.90.1",
+    "dotenv": "^17.2.3",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
@@ -22,7 +23,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
-    "serve": "^14.2.5"
+    "serve": "^14.2.5",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@netlify/functions": "^5.1.0",
