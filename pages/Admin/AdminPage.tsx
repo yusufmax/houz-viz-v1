@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import HistoryModal from '../../components/Admin/HistoryModal';
 import { fetchDefaultReferenceImages, uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
 import ImageUpload from '../../components/ImageUpload';
+import { historyService } from '../../services/historyService';
 
 const AdminPage: React.FC = () => {
     const { user } = useAuth();
@@ -29,6 +30,8 @@ const AdminPage: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
+    const [isRegenerating, setIsRegenerating] = useState(false);
+    const [regeneratedCount, setRegeneratedCount] = useState<number | null>(null);
 
     // Format cost to 22,8 style (1 decimal, comma separator)
     const formatCost = (val: number | undefined | null) => {
@@ -234,6 +237,27 @@ const AdminPage: React.FC = () => {
         }
     };
 
+    const handleRegenerateThumbnails = async () => {
+        if (!confirm("This will process up to 30 history items missing thumbnails. Continue?")) return;
+        setIsRegenerating(true);
+        setRegeneratedCount(null);
+        try {
+            const count = await historyService.backfillCompressedImages(30);
+            setRegeneratedCount(count);
+            if (count > 0) {
+                alert(`Successfully regenerated thumbnails for ${count} items.`);
+                loadData();
+            } else {
+                alert("No items needing regeneration found (limit 30).");
+            }
+        } catch (error) {
+            console.error("Regeneration failed", error);
+            alert("Regeneration failed");
+        } finally {
+            setIsRegenerating(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -296,6 +320,15 @@ const AdminPage: React.FC = () => {
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'defaults' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'}`}
                         >
                             <History size={16} /> Defaults
+                        </button>
+                        <button
+                            onClick={handleRegenerateThumbnails}
+                            disabled={isRegenerating}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all text-amber-500 hover:bg-amber-900/20 disabled:opacity-50`}
+                            title="Regenerate missing thumbnails for all history (Limit 30)"
+                        >
+                            {isRegenerating ? <Loader2 size={16} className="animate-spin" /> : <TrendingUp size={16} />}
+                            {isRegenerating ? 'REGROWING...' : 'REGEN'}
                         </button>
                     </div>
                 </header>
