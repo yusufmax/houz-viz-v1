@@ -348,7 +348,6 @@ export interface Project {
 export interface HistoryItem {
   id: string;
   url: string;
-  compressed_url?: string;
   prompt: string;
   timestamp: number;
   style: RenderStyle;

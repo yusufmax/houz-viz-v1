@@ -25,11 +25,10 @@ export const historyService = {
         return data.map((item: any) => ({
             id: item.id,
             url: item.image_url,
-            compressed_url: item.compressed_url,
             prompt: item.prompt,
             style: item.style as RenderStyle,
             timestamp: new Date(item.created_at).getTime(),
-            metadata: item.metadata, // Return full metadata
+            metadata: item.metadata,
             modelName: item.model_name,
             estimatedCost: item.estimated_cost
         }));
