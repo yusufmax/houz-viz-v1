@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 const { promises: fsPromises } = fs;
 
 const PORT = process.env.PORT || 8080;
@@ -24,6 +25,31 @@ const MIME_TYPES = {
     '.otf': 'font/otf',
     '.wasm': 'application/wasm'
 };
+
+// -------------------------------------------------------
+// KLING AI HELPERS
+// -------------------------------------------------------
+const KLING_ACCESS_KEY = process.env.KLING_ACCESS_KEY;
+const KLING_SECRET_KEY = process.env.KLING_SECRET_KEY;
+const KLING_API_BASE = 'https://api-singapore.klingai.com/v1';
+
+function generateKlingJWT(accessKey, secretKey) {
+    try {
+        const payload = {
+            iss: accessKey,
+            exp: Math.floor(Date.now() / 1000) + 1800,
+            nbf: Math.floor(Date.now() / 1000) - 5
+        };
+        const token = jwt.sign(payload, secretKey, {
+            algorithm: 'HS256',
+            header: { alg: 'HS256', typ: 'JWT' }
+        });
+        return token;
+    } catch (error) {
+        console.error('JWT Generation Error:', error);
+        throw new Error('Failed to generate authentication token');
+    }
+}
 
 const server = http.createServer(async (req, res) => {
     // -------------------------------------------------------
@@ -117,6 +143,158 @@ const server = http.createServer(async (req, res) => {
         } catch (err) {
             console.error('❌ Replicate Proxy Error:', err);
             res.writeHead(502);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+
+    // -------------------------------------------------------
+    // 3. API PROXY: Kling Video
+    // -------------------------------------------------------
+    if (req.url.startsWith('/api/kling-video')) {
+        if (req.method !== 'POST') {
+            res.writeHead(405, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+            return;
+        }
+
+        if (!KLING_ACCESS_KEY || !KLING_SECRET_KEY) {
+            console.error('❌ Missing Kling AI credentials');
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Server configuration error: Missing Kling AI credentials' }));
+            return;
+        }
+
+        try {
+            const buffers = [];
+            for await (const chunk of req) {
+                buffers.push(chunk);
+            }
+            const bodyStr = Buffer.concat(buffers).toString();
+            const { action, ...params } = JSON.parse(bodyStr || '{}');
+
+            const jwtToken = generateKlingJWT(KLING_ACCESS_KEY, KLING_SECRET_KEY);
+            const authHeader = `Bearer ${jwtToken}`;
+
+            if (action === 'generate') {
+                const modelMap = {
+                    'kling-v1': 'kling-v1',
+                    'kling-v1-5': 'kling-v1-5',
+                    'kling-v2-1': 'kling-v2-1',
+                    'kling-v2-5-turbo': 'kling-v2-5-turbo'
+                };
+
+                let base64Image = params.image;
+                let base64EndImage = params.end_image || null;
+
+                // Handle Image URL to Base64
+                if (base64Image && (base64Image.startsWith('http://') || base64Image.startsWith('https://'))) {
+                    const imgRes = await fetch(base64Image);
+                    const arrayBuffer = await imgRes.arrayBuffer();
+                    base64Image = Buffer.from(arrayBuffer).toString('base64');
+                } else if (base64Image) {
+                    base64Image = base64Image.replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+                }
+
+                if (base64EndImage && (base64EndImage.startsWith('http://') || base64EndImage.startsWith('https://'))) {
+                    const endImgRes = await fetch(base64EndImage);
+                    const endArrayBuffer = await endImgRes.arrayBuffer();
+                    base64EndImage = Buffer.from(endArrayBuffer).toString('base64');
+                } else if (base64EndImage) {
+                    base64EndImage = base64EndImage.replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+                }
+
+                const requestBody = {
+                    model_name: modelMap[params.model] || 'kling-v1',
+                    duration: String(params.duration || 5),
+                    image: base64Image,
+                    prompt: params.prompt || ''
+                };
+
+                if (base64EndImage) requestBody.image_tail = base64EndImage;
+                if (params.mode) requestBody.mode = params.mode;
+                if (params.negativePrompt) requestBody.negative_prompt = params.negativePrompt;
+
+                const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': authHeader
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    task_id: data.data?.task_id,
+                    task_status: data.data?.task_status,
+                    error: data.code !== 0 ? data.message : undefined
+                }));
+
+            } else if (action === 'poll') {
+                const response = await fetch(`${KLING_API_BASE}/videos/image2video/${params.task_id}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': authHeader }
+                });
+
+                const data = await response.json();
+                let status = 'pending';
+                const taskStatus = data.data?.task_status;
+
+                if (taskStatus === 'succeed') status = 'completed';
+                else if (taskStatus === 'failed') status = 'failed';
+                else if (taskStatus === 'processing') status = 'processing';
+                else if (taskStatus === 'submitted') status = 'pending';
+
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    status: status,
+                    video_url: data.data?.task_result?.videos?.[0]?.url || null,
+                    error_message: data.data?.task_status_msg || null,
+                    duration: data.data?.task_result?.videos?.[0]?.duration || null
+                }));
+            }
+        } catch (err) {
+            console.error('❌ Kling Proxy Error:', err);
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
+
+    // -------------------------------------------------------
+    // 4. API PROXY: Video Download
+    // -------------------------------------------------------
+    if (req.url.startsWith('/api/video-download')) {
+        const urlParams = new URLSearchParams(req.url.split('?')[1]);
+        const videoUrl = urlParams.get('url');
+
+        if (!videoUrl) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing video URL' }));
+            return;
+        }
+
+        try {
+            console.log(`🔄 Proxying Video Download: ${videoUrl}`);
+            const videoRes = await fetch(videoUrl);
+            if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.statusText}`);
+
+            const contentType = videoRes.headers.get('content-type') || 'video/mp4';
+            const arrayBuffer = await videoRes.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            const filename = path.basename(new URL(videoUrl).pathname) || `video-${Date.now()}.mp4`;
+
+            res.writeHead(200, {
+                'Content-Type': contentType,
+                'Content-Disposition': `attachment; filename="${filename}"`
+            });
+            res.end(buffer);
+        } catch (err) {
+            console.error('❌ Download Proxy Error:', err);
+            res.writeHead(500);
             res.end(JSON.stringify({ error: err.message }));
         }
         return;

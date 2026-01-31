@@ -100,7 +100,7 @@ const VideoEditor: React.FC = () => {
             const processedImage = await resizeImage(sourceImage);
 
             // Call Netlify function to generate video
-            const response = await fetch('/.netlify/functions/kling-video', {
+            const response = await fetch('/api/kling-video', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -135,7 +135,7 @@ const VideoEditor: React.FC = () => {
             // Poll for completion
             const pollInterval = setInterval(async () => {
                 try {
-                    const pollResponse = await fetch('/.netlify/functions/kling-video', {
+                    const pollResponse = await fetch('/api/kling-video', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -422,7 +422,7 @@ const VideoEditor: React.FC = () => {
                                             const button = document.activeElement as HTMLButtonElement;
                                             if (button) button.disabled = true;
 
-                                            const downloadUrl = `/.netlify/functions/video-download?url=${encodeURIComponent(generatedVideoUrl)}`;
+                                            const downloadUrl = `/api/video-download?url=${encodeURIComponent(generatedVideoUrl)}`;
                                             const response = await fetch(downloadUrl);
                                             if (!response.ok) throw new Error('Download failed');
 

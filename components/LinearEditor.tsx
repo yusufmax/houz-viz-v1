@@ -1254,7 +1254,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       const processedImage = await resizeImage(resultImage);
 
       // Call Netlify function to generate video
-      const response = await fetch('/.netlify/functions/kling-video', {
+      const response = await fetch('/api/kling-video', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1286,7 +1286,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       // Poll for completion
       const pollInterval = setInterval(async () => {
         try {
-          const pollResponse = await fetch('/.netlify/functions/kling-video', {
+          const pollResponse = await fetch('/api/kling-video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
