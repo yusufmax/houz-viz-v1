@@ -13,7 +13,7 @@ export const adminService = {
         const { data, error } = await supabase
             .from('profiles')
             .select('*')
-            .order('updated_at', { ascending: false });
+            .order('generations_used', { ascending: false });
 
         if (error) {
             console.error('Error fetching visible users:', error);
