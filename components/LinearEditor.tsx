@@ -227,32 +227,7 @@ const LENS_CONFIGS = [
   { val: CameraLens.Telephoto, label: '200mm (Zoom)', desc: 'Detail' },
 ];
 
-const QUICK_PRESETS = [
-  {
-    id: 'hero',
-    name: 'Hero Shot',
-    icon: <Sparkles size={14} />,
-    config: { camera: CameraAngle.LowAngle, lens: CameraLens.Wide, atmosphere: [Atmosphere.Sunset], scene: { people: true, cars: true } }
-  },
-  {
-    id: 'aerial',
-    name: 'Aerial View',
-    icon: <Cloud size={14} />,
-    config: { camera: CameraAngle.Drone, lens: CameraLens.Standard, atmosphere: [Atmosphere.Sunny], scene: { city: true, clouds: true } }
-  },
-  {
-    id: 'interior',
-    name: 'Int. Wide',
-    icon: <Maximize2 size={14} />,
-    config: { camera: CameraAngle.InteriorWide, lens: CameraLens.UltraWide, atmosphere: [Atmosphere.NaturalLight], scene: { vegetation: true } }
-  },
-  {
-    id: 'street',
-    name: 'Street Level',
-    icon: <Car size={14} />,
-    config: { camera: CameraAngle.StreetLevel, lens: CameraLens.Wide, atmosphere: [Atmosphere.Overcast], scene: { people: true, cars: true } }
-  },
-];
+
 
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
@@ -1711,33 +1686,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 )}
               </div>
 
-              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
-                <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Flame size={14} className="text-orange-400" /> Quick Presets
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {QUICK_PRESETS.map(preset => (
-                    <button
-                      key={preset.id}
-                      onClick={() => {
-                        setCamera(preset.config.camera);
-                        setLens(preset.config.lens);
-                        setAtmosphere(preset.config.atmosphere);
-                        setSceneElements(prev => ({ ...prev, ...preset.config.scene }));
-                      }}
-                      className="flex items-center gap-3 p-2.5 bg-slate-950/50 border border-slate-800 rounded-lg hover:border-indigo-500/50 hover:bg-slate-900 transition-all group"
-                    >
-                      <div className="w-8 h-8 rounded bg-slate-900 flex items-center justify-center text-slate-400 group-hover:text-indigo-400 group-hover:bg-indigo-400/10 transition-colors">
-                        {preset.icon}
-                      </div>
-                      <div className="text-left">
-                        <div className="text-[11px] font-bold text-slate-200">{preset.name}</div>
-                        <div className="text-[9px] text-slate-500 truncate w-24">Pro Setup</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+
 
               <div className="space-y-3">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
