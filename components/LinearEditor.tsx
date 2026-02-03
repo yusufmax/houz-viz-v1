@@ -30,7 +30,7 @@ import { quotaService } from '../services/quotaService';
 import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
-import { useAgentic } from '../contexts/AgenticContext';
+// import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
 import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
@@ -257,7 +257,7 @@ const QUICK_PRESETS = [
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const { setToolExecutor } = useAgentic();
+  // const { setToolExecutor } = useAgentic();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
   const [currentProjectName, setCurrentProjectName] = useState<string | null>(null);
@@ -420,100 +420,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
-  // Setup tool executor for Agentic Mode
-  useEffect(() => {
-    setToolExecutor((toolName: string, args: any) => {
-      console.log(`🔧 Executing tool: ${toolName} `, args);
-
-      switch (toolName) {
-        case 'selectStyle':
-          if (args.style && Object.values(RenderStyle).includes(args.style)) {
-            setStyle(args.style as RenderStyle);
-            console.log(`✅ Style changed to: ${args.style} `);
-          }
-          break;
-
-        case 'setAtmosphere':
-          if (args.atmospheres && Array.isArray(args.atmospheres)) {
-            const validAtmospheres = args.atmospheres
-              .filter((atm: string) => Object.values(Atmosphere).includes(atm as Atmosphere))
-              .slice(0, 3); // Max 3 atmospheres
-            if (validAtmospheres.length > 0) {
-              setAtmosphere(validAtmospheres as Atmosphere[]);
-              console.log(`✅ Atmospheres changed to: ${validAtmospheres.join(', ')} `);
-            }
-          }
-          break;
-
-        case 'setCameraAngle':
-          if (args.angle && Object.values(CameraAngle).includes(args.angle)) {
-            setCamera(args.angle as CameraAngle);
-            console.log(`✅ Camera angle changed to: ${args.angle} `);
-          }
-          break;
-
-        case 'setModel':
-          if (args.model) {
-            setModel(args.model);
-            console.log(`✅ Model changed to: ${args.model} `);
-          }
-          break;
-
-        case 'setResolution':
-          if (args.resolution) {
-            setResolution(args.resolution);
-            console.log(`✅ Resolution changed to: ${args.resolution} `);
-          }
-          break;
-
-        case 'setAspectRatio':
-          if (args.aspectRatio) {
-            setAspectRatio(args.aspectRatio);
-            console.log(`✅ Aspect ratio changed to: ${args.aspectRatio} `);
-          }
-          break;
-
-        case 'toggleSceneElement':
-          if (args.element && typeof args.enabled === 'boolean') {
-            setSceneElements(prev => ({
-              ...prev,
-              [args.element]: args.enabled
-            }));
-            console.log(`✅ Scene element ${args.element} ${args.enabled ? 'enabled' : 'disabled'} `);
-          }
-          break;
-
-        case 'setSceneElements':
-          if (args.elements && typeof args.elements === 'object') {
-            setSceneElements(prev => ({
-              ...prev,
-              ...args.elements
-            }));
-            const changed = Object.entries(args.elements)
-              .map(([key, val]) => `${key}: ${val ? 'on' : 'off'} `)
-              .join(', ');
-            console.log(`✅ Scene elements updated: ${changed} `);
-          }
-          break;
-
-        case 'generateImage':
-          if (args.prompt && sourceImage) {
-            setPrompt(args.prompt);
-            // Trigger generation after a short delay to let prompt update
-            setTimeout(() => handleGenerate(), 100);
-            console.log(`✅ Generating image with prompt: ${args.prompt} `);
-          }
-          break;
-
-        case 'navigateToMode':
-          console.log(`ℹ️ Navigate to ${args.mode} mode - not implemented in Linear Editor`);
-          break;
-
-        default:
-          console.warn(`⚠️ Unknown tool: ${toolName} `);
-      }
-    });
-  }, [sourceImage, setToolExecutor, setStyle, setAtmosphere, setCamera, setModel, setResolution, setAspectRatio, setSceneElements, setPrompt]);
+  // Setup tool executor for Agentic Mode removed
 
   // Load history and custom reference images on mount
   useEffect(() => {

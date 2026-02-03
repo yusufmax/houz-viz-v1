@@ -316,9 +316,7 @@ const App: React.FC = () => {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AgenticProvider>
-          <AppContent />
-        </AgenticProvider>
+        <AppContent />
       </AuthProvider>
     </LanguageProvider>
   );
