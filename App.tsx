@@ -22,8 +22,8 @@ import AdminPage from './pages/Admin/AdminPage';
 import SuperEditor from './components/SuperEditor';
 import { User } from 'lucide-react';
 import MagnificPage from './pages/MagnificPage';
-import { AgenticProvider } from './contexts/AgenticContext';
-import AgenticOverlay from './components/AgenticOverlay';
+// import { AgenticProvider } from './contexts/AgenticContext';
+// import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
 import CreditRequestModal from './components/CreditRequestModal';
 
@@ -308,7 +308,6 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="*" element={<div className="p-10 text-center">404 - Page Not Found</div>} />
       </Routes>
-      <AgenticOverlay />
     </Router>
   );
 };
@@ -317,9 +316,7 @@ const App: React.FC = () => {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AgenticProvider>
-          <AppContent />
-        </AgenticProvider>
+        <AppContent />
       </AuthProvider>
     </LanguageProvider>
   );

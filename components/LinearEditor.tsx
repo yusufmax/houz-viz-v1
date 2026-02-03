@@ -156,7 +156,7 @@ const STYLE_PREVIEWS: Partial<Record<RenderStyle, string>> = {
 const GuideTooltip = ({ text, className, side = 'left' }: { text: string, className?: string, side?: 'left' | 'right' | 'top' | 'bottom' }) => {
   const { t } = useLanguage();
   return (
-    <div className={`absolute z - 50 bg - indigo - 600 / 90 backdrop - blur text - white text - xs p - 3 rounded - lg shadow - xl border border - indigo - 400 max - w - [220px] animate - pulse ${className} `}>
+    <div className={`absolute z-50 bg-indigo-600/90 backdrop-blur text-white text-xs p-3 rounded-lg shadow-xl border border-indigo-400 max-w-[220px] animate-pulse ${className}`}>
       {side === 'left' && <div className="absolute top-1/2 -left-1 w-2 h-2 bg-indigo-600/90 transform -translate-y-1/2 rotate-45 border-l border-b border-indigo-400"></div>}
       {side === 'right' && <div className="absolute top-1/2 -right-1 w-2 h-2 bg-indigo-600/90 transform -translate-y-1/2 rotate-45 border-r border-t border-indigo-400"></div>}
       {side === 'top' && <div className="absolute -top-1 left-1/2 w-2 h-2 bg-indigo-600/90 transform -translate-x-1/2 rotate-45 border-l border-t border-indigo-400"></div>}
@@ -1432,7 +1432,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       )}
 
       {/* History Sidebar */}
-      <div className={`absolute left - 0 top - 4 bottom - 4 bg - slate - 900 / 95 border - r border - slate - 700 z - 30 transition - all duration - 300 flex flex - col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'} `}>
+      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/95 border-r border-slate-700 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
         <div className="p-4 border-b border-slate-700 flex justify-between items-center">
           <h3 className="font-bold text-slate-200 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
           <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-slate-800 rounded"><ChevronRight size={16} /></button>
@@ -1535,7 +1535,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     setBatchResults([]);
                   }
                 }}
-                className={`w - full py - 2 px - 4 rounded - lg font - medium transition - all flex items - center justify - center gap - 2 ${batchMode
+                className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
                   ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
                   : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                   } `}
@@ -1589,7 +1589,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setStyle(RenderStyle.None);
                     }
                   }}
-                  className={`flex - 1 py - 1.5 text - xs font - medium rounded - md capitalize transition - all ${editorMode === mode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'} `}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                   {mode}
                 </button>
@@ -1599,7 +1599,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             {editorMode === 'exterior' && (
               <button
                 onClick={() => setKeepBuilding(!keepBuilding)}
-                className={`w - full mb - 6 py - 3 px - 4 rounded - lg font - medium text - sm transition - all flex items - center justify - center gap - 2 border ${keepBuilding ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'} `}
+                className={`w-full mb-6 py-3 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${keepBuilding ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200 shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}
               >
                 <Lock size={16} />
                 {keepBuilding ? 'Building Shape Locked' : 'Lock Building Shape & Details'}
@@ -1672,7 +1672,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
                 <div className="relative">
                   <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('instructionsPlaceholder')} className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none" />
-                  <button onClick={handleVoiceInput} className={`absolute bottom - 2 right - 2 p - 2 rounded - full transition - all ${isRecording ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-700'} `} title={isRecording ? "Stop Recording" : "Voice Input"}>
+                  <button onClick={handleVoiceInput} className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`} title={isRecording ? "Stop Recording" : "Voice Input"}>
                     {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
                 </div>
@@ -1731,14 +1731,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
                     <button
                       onClick={(e) => { e.stopPropagation(); setStyleViewMode('grid'); }}
-                      className={`p - 1 rounded transition - all ${styleViewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'} `}
+                      className={`p-1 rounded transition-all ${styleViewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                       title="Grid View"
                     >
                       <Grid size={12} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setStyleViewMode('list'); }}
-                      className={`p - 1 rounded transition - all ${styleViewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'} `}
+                      className={`p-1 rounded transition-all ${styleViewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
                       title="Dropdown View"
                     >
                       <LayoutTemplate size={12} />
@@ -1870,7 +1870,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     ].includes(opt.val);
                   }).map(opt => {
                     const isSelected = atmosphere.includes(opt.val);
-                    return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex - col items - center justify - center p - 2 rounded border text - xs transition - all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'} `}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
+                    return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
                   })}
                 </div>
               </div>
@@ -1886,13 +1886,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </label>
                     <button
                       onClick={() => setUseSunControl(!useSunControl)}
-                      className={`w - 8 h - 4 rounded - full p - 0.5 transition - colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'} `}
+                      className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'}`}
                     >
-                      <div className={`w - 3 h - 3 bg - white rounded - full shadow - sm transition - transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'} `} />
+                      <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
                     </button>
                   </div>
 
-                  <div className={`w - full flex flex - col items - center transition - all duration - 300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'} `}>
+                  <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
                     <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
 
                     <div className="w-full space-y-2 pt-4 border-t border-slate-800 mt-2">
@@ -1924,7 +1924,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
                     <Aperture size={14} className="text-indigo-400" /> Optics & Perspective
                   </label>
-                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items - center gap - 1.5 px - 2 py - 1 rounded text - [10px] font - bold uppercase tracking - wider transition - all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'} `}>
+                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
                     {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
                     {lockCamera ? "Locked" : "Lock"}
                   </button>
@@ -1939,7 +1939,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                           key={opt.val}
                           onClick={() => setCamera(opt.val)}
                           disabled={lockCamera}
-                          className={`flex flex - col items - center justify - center gap - 1.5 py - 2.5 rounded - lg border text - [10px] font - medium transition - all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''} `}
+                          className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
                           title={opt.val}
                         >
                           {opt.icon}
@@ -1960,7 +1960,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                               key={opt.val}
                               onClick={() => setCamera(opt.val)}
                               disabled={lockCamera}
-                              className={`flex flex - col items - center justify - center gap - 1.5 py - 2.5 rounded - lg border text - [10px] font - medium transition - all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''} `}
+                              className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              title={opt.val}
                             >
                               {opt.icon}
                               <span className="truncate w-full px-1 text-center">{opt.label}</span>
@@ -2008,15 +2009,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <Layers size={14} className="text-emerald-400" /> Scene Elements
                 </label>
                 <div className="grid grid-cols-2 gap-1.5">
-                  <button onClick={() => toggleElement('people')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Users size={12} /> {t('people')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Car size={12} /> {t('cars')}</button>}
-                  <button onClick={() => toggleElement('vegetation')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Cloud size={12} /> {t('clouds')}</button>}
+                  <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Users size={12} /> {t('people')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Car size={12} /> {t('cars')}</button>}
+                  <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
+                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Cloud size={12} /> {t('clouds')}</button>}
                   {editorMode !== 'interior' && (
                     <>
-                      <button onClick={() => toggleElement('city')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Building2 size={12} /> {t('city')}</button>
-                      <button onClick={() => toggleElement('motionBlur')} className={`flex items - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Wind size={12} /> {t('motionBlur')}</button>
-                      <button onClick={() => toggleElement('enhanceFacade')} className={`col - span - 2 flex items - center justify - center gap - 2 px - 3 py - 2 rounded - lg border text - [10px] font - bold uppercase tracking - wider transition - all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'} `}><Zap size={12} /> {t('enhanceFacade')}</button>
+                      <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Building2 size={12} /> {t('city')}</button>
+                      <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Wind size={12} /> {t('motionBlur')}</button>
+                      <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
                     </>
                   )}
                 </div>
@@ -2026,7 +2027,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
                 <div className="grid grid-cols-3 gap-1">
                   {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px - 2 py - 2 text - xs rounded border transition - all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'} `}>{ratio}</button>
+                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
                   ))}
                 </div>
               </div>
@@ -2041,7 +2042,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       <button
                         key={style}
                         onClick={() => setSketchStyle(style)}
-                        className={`px - 2 py - 0.5 text - [9px] rounded - full border transition - all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'} `}
+                        className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
                       >
                         {style.charAt(0).toUpperCase() + style.slice(1)}
                       </button>
@@ -2051,7 +2052,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <button
                   onClick={handleSketchify}
                   disabled={isGenerating || (!sourceImage && !resultImage)}
-                  className={`w - full py - 2.5 rounded - lg font - bold text - xs shadow - xl transition - all transform hover: scale - [1.01] active: scale - [0.99] flex items - center justify - center gap - 2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'} `}
+                  className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
                 >
                   <Pen size={14} /> Sketchify Current Image
                 </button>
@@ -2064,9 +2065,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <button
                       onClick={() => batchMode ? processBatch() : handleGenerate()}
                       disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                      className={`w - full py - 6 rounded - xl font - bold text - xl shadow - 2xl transition - all transform hover: scale - [1.01] active: scale - [0.99] flex items - center justify - center gap - 3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'} `}
+                      className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
                     >
-                      {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current} / ${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
+                      {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
                     </button>
                   </div>
 
@@ -2206,14 +2207,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
               ) : multiResults.length > 1 ? (
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                  <div className={`grid gap - 4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'} `}>
+                  <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
                     {multiResults.map((res, idx) => (
                       <div
                         key={idx}
-                        className={`group relative rounded - lg border - 2 overflow - hidden transition - all cursor - pointer hover: scale - [1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'} `}
+                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
                         onClick={() => setResultImage(res.url)}
                       >
-                        <img src={res.url} alt={`Result ${idx + 1} `} className="w-full h-auto aspect-square object-cover" />
+                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
                         <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
                           <div className="space-y-2 overflow-hidden">
                             <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
