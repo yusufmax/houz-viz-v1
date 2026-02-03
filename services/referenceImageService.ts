@@ -27,19 +27,6 @@ export const fetchUserReferenceImages = async (userId: string): Promise<Referenc
     return data || [];
 };
 
-/**
- * Fetch system-wide default reference images
- */
-export const fetchDefaultReferenceImages = async (): Promise<ReferenceImage[]> => {
-    const { data, error } = await supabase
-        .from('user_reference_images')
-        .select('*')
-        .eq('is_default', true)
-        .order('display_order', { ascending: true });
-
-    if (error) throw error;
-    return data || [];
-};
 
 /**
  * Upload reference image to storage and create database entry

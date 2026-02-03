@@ -6,7 +6,7 @@ import { useAuth } from '../../contexts/AuthProvider';
 import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap, BarChart3, TrendingUp, Trophy, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import HistoryModal from '../../components/Admin/HistoryModal';
-import { fetchDefaultReferenceImages, uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
+import { uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
 import ImageUpload from '../../components/ImageUpload';
 import { historyService } from '../../services/historyService';
 
@@ -15,8 +15,7 @@ const AdminPage: React.FC = () => {
     const navigate = useNavigate();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [creditRequests, setCreditRequests] = useState<any[]>([]);
-    const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats' | 'defaults'>('users');
-    const [defaults, setDefaults] = useState<ReferenceImage[]>([]);
+    const [activeTab, setActiveTab] = useState<'users' | 'requests' | 'stats'>('users');
     const [stats, setStats] = useState<{
         system: { totalGenerations: number, totalUsers: number, generationsLast24h: number, totalCostUSD: number },
         daily: { date: string, count: number, cost: number }[],
@@ -42,12 +41,6 @@ const AdminPage: React.FC = () => {
     const [userHistory, setUserHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
 
-    // Default Images Management State
-    const [isUploadingDefault, setIsUploadingDefault] = useState(false);
-    const [newDefaultName, setNewDefaultName] = useState('');
-    const [newDefaultCategory, setNewDefaultCategory] = useState<'exterior' | 'interior' | 'general'>('general');
-    const [newDefaultImage, setNewDefaultImage] = useState<string | null>(null);
-    const [uploadFile, setUploadFile] = useState<File | null>(null);
 
     useEffect(() => {
         const init = async () => {
@@ -143,8 +136,6 @@ const AdminPage: React.FC = () => {
             ]);
             setUsers(usersData);
             setCreditRequests(requestsData.data || []);
-            const defaultsData = await fetchDefaultReferenceImages();
-            setDefaults(defaultsData);
             await loadStats();
         } catch (error) {
             console.error("Failed to load admin data", error);
@@ -294,12 +285,6 @@ const AdminPage: React.FC = () => {
                         >
                             <BarChart3 size={16} /> Stats
                         </button>
-                        <button
-                            onClick={() => setActiveTab('defaults')}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'defaults' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <History size={16} /> Defaults
-                        </button>
                     </div>
                 </header>
 
@@ -448,158 +433,6 @@ const AdminPage: React.FC = () => {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
-                    </div>
-                ) : activeTab === 'defaults' ? (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-8">
-                        {/* Global Defaults Management */}
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                            {/* Upload Form */}
-                            <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6 shadow-2xl h-fit">
-                                <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2 mb-6 text-sm">
-                                    <Zap className="text-yellow-400" size={16} />
-                                    Upload Global Default
-                                </h3>
-
-                                <div className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Reference Name</label>
-                                        <input
-                                            type="text"
-                                            value={newDefaultName}
-                                            onChange={(e) => setNewDefaultName(e.target.value)}
-                                            placeholder="e.g. Modern Villa"
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Category</label>
-                                        <select
-                                            value={newDefaultCategory}
-                                            onChange={(e) => setNewDefaultCategory(e.target.value as any)}
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-indigo-500"
-                                        >
-                                            <option value="general">General</option>
-                                            <option value="exterior">Exterior</option>
-                                            <option value="interior">Interior</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="space-y-1">
-                                        <label className="text-[10px] text-slate-500 uppercase font-bold tracking-widest ml-1">Reference Image</label>
-                                        <div className="relative group">
-                                            <ImageUpload
-                                                selectedImage={newDefaultImage}
-                                                onImageSelected={(img) => {
-                                                    setNewDefaultImage(img);
-                                                }}
-                                                compact={true}
-                                            />
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                id="admin-file-upload"
-                                                accept="image/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        setUploadFile(file);
-                                                        const reader = new FileReader();
-                                                        reader.onload = (re) => setNewDefaultImage(re.target?.result as string);
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }}
-                                            />
-                                            {!newDefaultImage && (
-                                                <label
-                                                    htmlFor="admin-file-upload"
-                                                    className="absolute inset-0 flex items-center justify-center cursor-pointer"
-                                                >
-                                                    <span className="text-[10px] text-slate-400 font-bold uppercase hover:text-indigo-400 transition-colors">Select System File</span>
-                                                </label>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        onClick={async () => {
-                                            if (!user || !uploadFile || !newDefaultName) {
-                                                alert("Missing name or image");
-                                                return;
-                                            }
-                                            setIsUploadingDefault(true);
-                                            try {
-                                                await uploadReferenceImage(user.id, uploadFile, newDefaultName, newDefaultCategory, true);
-                                                setNewDefaultName('');
-                                                setNewDefaultImage(null);
-                                                setUploadFile(null);
-                                                const renewed = await fetchDefaultReferenceImages();
-                                                setDefaults(renewed);
-                                                alert("Global default uploaded successfully");
-                                            } catch (err) {
-                                                alert("Upload failed");
-                                            } finally {
-                                                setIsUploadingDefault(false);
-                                            }
-                                        }}
-                                        disabled={isUploadingDefault || !uploadFile || !newDefaultName}
-                                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2"
-                                    >
-                                        {isUploadingDefault ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                                        SAVE GLOBAL DEFAULT
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* List View */}
-                            <div className="lg:col-span-2 space-y-6">
-                                <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
-                                    <div className="p-6 border-b border-slate-800 bg-slate-950/50">
-                                        <h3 className="font-bold text-white uppercase tracking-tight flex items-center gap-2 text-sm">
-                                            <BarChart3 className="text-indigo-400" size={16} />
-                                            Active System Defaults ({defaults.length})
-                                        </h3>
-                                    </div>
-                                    <div className="divide-y divide-slate-800">
-                                        {defaults.length === 0 ? (
-                                            <div className="p-12 text-center text-slate-500 italic">No global defaults configured.</div>
-                                        ) : (
-                                            defaults.map((ref) => (
-                                                <div key={ref.id} className="flex items-center gap-4 p-4 hover:bg-slate-800/30 transition-colors group">
-                                                    <img src={ref.image_url} alt={ref.name} className="w-16 h-16 rounded-lg object-cover border border-slate-700" />
-                                                    <div className="flex-1">
-                                                        <div className="font-bold text-white">{ref.name}</div>
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase border ${ref.category === 'exterior' ? 'bg-indigo-900/30 text-indigo-400 border-indigo-500/20' :
-                                                                ref.category === 'interior' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-500/20' :
-                                                                    'bg-amber-900/30 text-amber-400 border-amber-500/20'
-                                                                }`}>
-                                                                {ref.category}
-                                                            </span>
-                                                            <span className="text-[10px] text-slate-500 font-mono italic">is_default</span>
-                                                        </div>
-                                                    </div>
-                                                    <button
-                                                        onClick={async () => {
-                                                            if (!confirm("Delete this global default? This will affect all users.")) return;
-                                                            try {
-                                                                await deleteReferenceImage(ref.id);
-                                                                setDefaults(defaults.filter(d => d.id !== ref.id));
-                                                            } catch (err) {
-                                                                alert("Failed to delete");
-                                                            }
-                                                        }}
-                                                        className="p-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-600 hover:text-red-500"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 ) : (

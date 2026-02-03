@@ -31,7 +31,7 @@ import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
 import { useAgentic } from '../contexts/AgenticContext';
-import { fetchUserReferenceImages, fetchDefaultReferenceImages, ReferenceImage } from '../services/referenceImageService';
+import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
 import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
 import SunPositionSelector from './SunPositionSelector';
@@ -306,22 +306,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   // Reference Images: Use custom or fallback to defaults
   const [customReferenceImages, setCustomReferenceImages] = useState<ReferenceImage[]>([]);
-  const [defaultReferenceImages, setDefaultReferenceImages] = useState<ReferenceImage[]>([]);
 
   const filteredRefs = useMemo(() => {
-    // Combine defaults and custom
-    const allRefs = [...defaultReferenceImages, ...customReferenceImages];
-
-    return allRefs.filter(ref => {
+    return customReferenceImages.filter(ref => {
       const category = ref.category || 'general';
       if (category === 'general' && editorMode === 'exterior') return true;
       return category === editorMode;
     });
-  }, [defaultReferenceImages, customReferenceImages, editorMode]);
+  }, [customReferenceImages, editorMode]);
 
-  const styleLibrary = filteredRefs.length > 0
-    ? filteredRefs.map(ref => ({ name: ref.name, url: ref.image_url }))
-    : STYLE_LIBRARY;
+  const styleLibrary = filteredRefs.map(ref => ({ name: ref.name, url: ref.image_url }));
 
   // Drawing
   const [drawingTarget, setDrawingTarget] = useState<'source' | 'result' | null>(null);
@@ -527,23 +521,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       try { setHistory(JSON.parse(saved)); } catch (e) { }
     }
 
-    // Fetch user's custom reference images and system defaults
+    // Fetch user's custom reference images
     if (user) {
-      Promise.all([
-        fetchUserReferenceImages(user.id),
-        fetchDefaultReferenceImages()
-      ]).then(([userRefs, sysDefaults]) => {
+      fetchUserReferenceImages(user.id).then(userRefs => {
         setCustomReferenceImages(userRefs);
-        setDefaultReferenceImages(sysDefaults);
       }).catch(err => {
         console.error('Failed to load reference images:', err);
-      });
-    } else {
-      // Still load defaults for guests
-      fetchDefaultReferenceImages().then(sysDefaults => {
-        setDefaultReferenceImages(sysDefaults);
-      }).catch(err => {
-        console.error('Failed to load system defaults:', err);
       });
     }
   }, [user]);

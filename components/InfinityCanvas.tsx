@@ -1769,7 +1769,7 @@ const InfinityCanvas: React.FC = () => {
                                                         <div className="grid grid-cols-5 gap-1">
                                                             {(customReferenceImages.length > 0
                                                                 ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
-                                                                : STYLE_LIBRARY
+                                                                : []
                                                             ).map((styleRef, idx) => (
                                                                 <button
                                                                     key={idx}
