@@ -22,7 +22,7 @@ import AdminPage from './pages/Admin/AdminPage';
 import SuperEditor from './components/SuperEditor';
 import { User } from 'lucide-react';
 import MagnificPage from './pages/MagnificPage';
-// import { AgenticProvider } from './contexts/AgenticContext';
+import { AgenticProvider } from './contexts/AgenticContext';
 // import AgenticOverlay from './components/AgenticOverlay';
 import { quotaService } from './services/quotaService';
 import CreditRequestModal from './components/CreditRequestModal';
@@ -316,7 +316,9 @@ const App: React.FC = () => {
   return (
     <LanguageProvider>
       <AuthProvider>
-        <AppContent />
+        <AgenticProvider>
+          <AppContent />
+        </AgenticProvider>
       </AuthProvider>
     </LanguageProvider>
   );
