@@ -2111,7 +2111,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           </div>
         </div>
       </div>
-      );
+    </div>
+  );
 };
 
-      export default LinearEditor;
+export default LinearEditor;
