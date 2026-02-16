@@ -239,7 +239,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const [editorMode, setEditorMode] = useState<EditorMode>('exterior'); // Default to exterior
   const [sourceImage, setSourceImage] = useState<string | null>(null);
-  const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null);
+  const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null); // Legacy (kept for compatibility)
+  const [atmosphereRefImage, setAtmosphereRefImage] = useState<string | null>(null);
+  const [architectureRefImage, setArchitectureRefImage] = useState<string | null>(null);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [multiResults, setMultiResults] = useState<{ url: string; settings: GenerationSettings }[]>([]);
   const [generationCount, setGenerationCount] = useState<number>(1);
@@ -886,7 +888,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       camera,
       aspectRatio,
       sceneElements,
-      styleReferenceImage,
+      styleReferenceImage, // Legacy
+      atmosphereReferenceImage: atmosphereRefImage,
+      architectureReferenceImage: architectureRefImage,
       model,
       resolution,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false, // Only apply keepBuilding in exterior mode
@@ -1022,7 +1026,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       camera,
       aspectRatio,
       sceneElements,
-      styleReferenceImage,
+      styleReferenceImage, // Legacy
+      atmosphereReferenceImage: atmosphereRefImage,
+      architectureReferenceImage: architectureRefImage,
       model,
       resolution,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false,
@@ -1594,518 +1600,515 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Palette size={14} /> {t('styleRef')}</label>
-                <ImageUpload selectedImage={styleReferenceImage} onImageSelected={setStyleReferenceImage} label={t('uploadStyleRef')} compact />
-                <div className="grid grid-cols-5 gap-1 mt-2">
-                  {styleLibrary.map((s, idx) => (
-                    <button key={idx} onClick={() => convertUrlToBase64(s.url)} className="relative aspect-square rounded overflow-hidden border border-slate-700 hover:border-indigo-500 group" title={s.name}>
-                      <img src={s.url} alt={s.name} className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[8px] text-center text-white p-1 transition-opacity">{s.name}</div>
-                    </button>
-                  ))}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Palette size={14} /> Atmosphere Reference (Lighting/Mood)</label>
+                  <ImageUpload selectedImage={atmosphereRefImage} onImageSelected={setAtmosphereRefImage} label="Upload Atmosphere Ref" compact />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Building2 size={14} /> Style Reference (Architecture/Material)</label>
+                  <ImageUpload selectedImage={architectureRefImage} onImageSelected={setArchitectureRefImage} label="Upload Style Ref" compact />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button onClick={() => setShowStyles(!showStyles)} className="w-full flex items-center justify-between text-xs font-medium text-slate-400 uppercase group hover:text-slate-200 transition-colors">
+                <div className="flex items-center gap-2"><Zap size={14} /> {t('stylePreset')}</div>
+                <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setStyleViewMode('grid'); }}
+                    className={`p-1 rounded transition-all ${styleViewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                    title="Grid View"
+                  >
+                    <Grid size={12} />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setStyleViewMode('list'); }}
+                    className={`p-1 rounded transition-all ${styleViewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                    title="Dropdown View"
+                  >
+                    <LayoutTemplate size={12} />
+                  </button>
+                </div>
+                {showStyles ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              </button>
+              {showStyles && (
+                <div className="space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
+                  {styleViewMode === 'grid' ? (
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                      <div onClick={() => setStyle(RenderStyle.None)} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
+                        <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400"><X size={18} /></div>
+                        <span className="text-xs font-medium text-slate-300">{t('None')}</span>
+                      </div>
+                      {Object.entries(groupedStyles).map(([group, styles]) => (
+                        <div key={group} className="space-y-2">
+                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
+                          <div className="grid grid-cols-3 gap-2">
+                            {(styles as RenderStyle[]).map(s => {
+                              const isSelected = style === s;
+                              const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                              const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
+                              return (
+                                <button key={s} onClick={() => setStyle(s)} className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]' : 'border-slate-700 hover:border-indigo-500/50'}`}>
+                                  <img src={previewUrl} alt={s} className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
+                                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    <div className="absolute bottom-0 left-0 right-0 p-1.5"><p className="text-[9px] font-medium text-white leading-tight truncate">{t(displayName as any) || displayName}</p></div>
+                                  </div>
+                                  {isSelected && <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg"><Zap size={8} className="text-white fill-white" /></div>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <select
+                        value={style}
+                        onChange={(e) => setStyle(e.target.value as RenderStyle)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
+                      >
+                        <option value={RenderStyle.None}>{t('None')}</option>
+                        {Object.entries(groupedStyles).map(([group, styles]) => (
+                          <optgroup key={group} label={group} className="bg-slate-900 text-slate-400 text-[10px] uppercase font-bold">
+                            {(styles as RenderStyle[]).map(s => {
+                              const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                              return (
+                                <option key={s} value={s} className="bg-slate-900 text-slate-200 text-xs normal-case font-normal">
+                                  {t(displayName as any) || displayName}
+                                </option>
+                              );
+                            })}
+                          </optgroup>
+                        ))}
+                      </select>
+                      <p className="text-[9px] text-slate-500 italic px-1">Selected: <span className="text-indigo-400 font-medium">{style}</span></p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Sun size={14} className="text-amber-400" /> Atmosphere & Mood
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
+                  { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
+                  { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
+                  { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
+                  { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
+                  { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
+                  { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
+                  { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
+                  { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
+                  { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
+                  { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
+                  { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
+                  { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
+                  { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
+                  { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
+                  { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
+                  { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+                ].filter(opt => {
+                  if (editorMode !== 'interior') return true;
+                  // Only show these for interior mode
+                  return [
+                    Atmosphere.None,
+                    Atmosphere.Sunny,
+                    Atmosphere.Sunset,
+                    Atmosphere.Night,
+                    Atmosphere.WarmTungsten,
+                    Atmosphere.NaturalLight,
+                    Atmosphere.Studio,
+                    Atmosphere.Candlelight
+                  ].includes(opt.val);
+                }).map(opt => {
+                  const isSelected = atmosphere.includes(opt.val);
+                  return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
+                })}
+              </div>
+            </div>
+
+            {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
+
+            {editorMode !== 'interior' && (
+              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center transition-all duration-300">
+                <div className="w-full flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                    <Sun size={14} className={useSunControl ? "text-amber-400" : "text-slate-600"} />
+                    Sun & Time
+                  </label>
+                  <button
+                    onClick={() => setUseSunControl(!useSunControl)}
+                    className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                  >
+                    <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
+                </div>
+
+                <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
+                  <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+
+                  <div className="w-full space-y-2 pt-4 border-t border-slate-800 mt-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      <span>Time of Day</span>
+                      <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="24"
+                      step="1"
+                      value={timeOfDay}
+                      onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
+                      className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[8px] text-slate-600 font-medium">
+                      <span>Night</span>
+                      <span>Noon</span>
+                      <span>Night</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                  <Aperture size={14} className="text-indigo-400" /> Optics & Perspective
+                </label>
+                <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                  {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
+                  {lockCamera ? "Locked" : "Lock"}
+                </button>
               </div>
 
               <div className="space-y-3">
-                <button onClick={() => setShowStyles(!showStyles)} className="w-full flex items-center justify-between text-xs font-medium text-slate-400 uppercase group hover:text-slate-200 transition-colors">
-                  <div className="flex items-center gap-2"><Zap size={14} /> {t('stylePreset')}</div>
-                  <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setStyleViewMode('grid'); }}
-                      className={`p-1 rounded transition-all ${styleViewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                      title="Grid View"
+                <div className="grid grid-cols-4 gap-2">
+                  {CAMERA_CONFIGS.slice(0, 8).map(opt => {
+                    const isSelected = camera === opt.val;
+                    return (
+                      <button
+                        key={opt.val}
+                        onClick={() => setCamera(opt.val)}
+                        disabled={lockCamera}
+                        className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        title={opt.val}
+                      >
+                        {opt.icon}
+                        <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                      </button>
+                    );
+                  })}
+                  <details className="col-span-4 group">
+                    <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-indigo-400 transition-colors">
+                      <ChevronDown size={12} className="group-open:rotate-180 transition-transform mr-1" />
+                      {camera.includes('Wide') || camera.includes('View') || camera.includes('Level') && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera) ? 'Custom Angle Selected' : 'Show More Angles'}
+                    </summary>
+                    <div className="grid grid-cols-4 gap-2 pt-2">
+                      {CAMERA_CONFIGS.slice(8).map(opt => {
+                        const isSelected = camera === opt.val;
+                        return (
+                          <button
+                            key={opt.val}
+                            onClick={() => setCamera(opt.val)}
+                            disabled={lockCamera}
+                            className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={opt.val}
+                          >
+                            {opt.icon}
+                            <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </details>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                      <Maximize size={12} /> Lens (Optics)
+                    </label>
+                    <select
+                      value={lens || ''}
+                      onChange={(e) => setLens(e.target.value as CameraLens)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"
                     >
-                      <Grid size={12} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setStyleViewMode('list'); }}
-                      className={`p-1 rounded transition-all ${styleViewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                      title="Dropdown View"
-                    >
-                      <LayoutTemplate size={12} />
-                    </button>
+                      <option value="">Default Lens</option>
+                      {LENS_CONFIGS.map(l => (
+                        <option key={l.val} value={l.val}>{l.label}</option>
+                      ))}
+                    </select>
                   </div>
-                  {showStyles ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                      <Sparkles size={12} /> Aperture (f-stop)
+                    </label>
+                    <input
+                      type="text"
+                      value={aperture}
+                      onChange={(e) => setAperture(e.target.value)}
+                      placeholder="e.g. f/1.8"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Layers size={14} className="text-emerald-400" /> Scene Elements
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Users size={12} /> {t('people')}</button>
+                {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Car size={12} /> {t('cars')}</button>}
+                <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
+                {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Cloud size={12} /> {t('clouds')}</button>}
+                {editorMode !== 'interior' && (
+                  <>
+                    <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Building2 size={12} /> {t('city')}</button>
+                    <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Wind size={12} /> {t('motionBlur')}</button>
+                    <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
+              <div className="grid grid-cols-3 gap-1">
+                {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
+                  <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                ))}
+              </div>
+            </div>
+        </div>
+
+        <div className="pt-6 space-y-3">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Sketch Style</span>
+              <div className="flex gap-1">
+                {(['handdrawn', 'pen', 'pencil', 'watercolor'] as const).map((style) => (
+                  <button
+                    key={style}
+                    onClick={() => setSketchStyle(style)}
+                    className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                  >
+                    {style.charAt(0).toUpperCase() + style.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={handleSketchify}
+              disabled={isGenerating || (!sourceImage && !resultImage)}
+              className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
+            >
+              <Pen size={14} /> Sketchify Current Image
+            </button>
+          </div>
+
+          <div className="relative pt-6 flex flex-col gap-2">
+            <div className="relative flex items-stretch gap-2">
+              <div className="relative flex-1">
+                {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
+                <button
+                  onClick={() => batchMode ? processBatch() : handleGenerate()}
+                  disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
+                  className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
+                >
+                  {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
                 </button>
-                {showStyles && (
-                  <div className="space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
-                    {styleViewMode === 'grid' ? (
-                      <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                        <div onClick={() => setStyle(RenderStyle.None)} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
-                          <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400"><X size={18} /></div>
-                          <span className="text-xs font-medium text-slate-300">{t('None')}</span>
-                        </div>
-                        {Object.entries(groupedStyles).map(([group, styles]) => (
-                          <div key={group} className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
-                            <div className="grid grid-cols-3 gap-2">
-                              {(styles as RenderStyle[]).map(s => {
-                                const isSelected = style === s;
-                                const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                                const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
-                                return (
-                                  <button key={s} onClick={() => setStyle(s)} className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]' : 'border-slate-700 hover:border-indigo-500/50'}`}>
-                                    <img src={previewUrl} alt={s} className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
-                                    <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                      <div className="absolute bottom-0 left-0 right-0 p-1.5"><p className="text-[9px] font-medium text-white leading-tight truncate">{t(displayName as any) || displayName}</p></div>
-                                    </div>
-                                    {isSelected && <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg"><Zap size={8} className="text-white fill-white" /></div>}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <select
-                          value={style}
-                          onChange={(e) => setStyle(e.target.value as RenderStyle)}
-                          className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
-                        >
-                          <option value={RenderStyle.None}>{t('None')}</option>
-                          {Object.entries(groupedStyles).map(([group, styles]) => (
-                            <optgroup key={group} label={group} className="bg-slate-900 text-slate-400 text-[10px] uppercase font-bold">
-                              {(styles as RenderStyle[]).map(s => {
-                                const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                                return (
-                                  <option key={s} value={s} className="bg-slate-900 text-slate-200 text-xs normal-case font-normal">
-                                    {t(displayName as any) || displayName}
-                                  </option>
-                                );
-                              })}
-                            </optgroup>
-                          ))}
-                        </select>
-                        <p className="text-[9px] text-slate-500 italic px-1">Selected: <span className="text-indigo-400 font-medium">{style}</span></p>
-                      </div>
-                    )}
+              </div>
+
+              {!batchMode && (
+                <div className="flex flex-col gap-1 min-w-[80px]">
+                  <span className="text-[9px] font-bold text-slate-500 uppercase text-center">Amount</span>
+                  <select
+                    value={generationCount}
+                    onChange={(e) => setGenerationCount(parseInt(e.target.value))}
+                    className="h-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 text-slate-200 font-bold focus:border-indigo-500 transition-colors cursor-pointer appearance-none text-center outline-none"
+                    style={{ height: 'calc(100% - 14px)' }}
+                  >
+                    {[1, 2, 3, 4].map(num => (
+                      <option key={num} value={num}>{num} {num === 1 ? 'Image' : 'Images'}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+      </div >
+
+
+  {/* COLUMN 2: RESULT (50%) */ }
+  < div className = "w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain" >
+    <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl flex-1 flex flex-col relative overflow-hidden">
+      {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
+
+      <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">
+        <div className="flex items-center gap-2">
+          <Maximize2 size={18} />
+          <h2>{t('result')}</h2>
+        </div>
+
+        <div className="flex items-center gap-2 relative">
+          {showInstructions && resultImage && <GuideTooltip text={t('guideTools')} className="-bottom-16 right-0" side="top" />}
+          {resultImage && (
+            <>
+              <button
+                onClick={() => setPreviewImage(resultImage)}
+                className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                title={t('fullScreen')}
+              >
+                <Maximize size={14} />
+              </button>
+              <button
+                onClick={handleUpscale}
+                disabled={isUpscaling || isMagnificUpscaling}
+                className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
+                title="Recraft Crisp Upscale"
+              >
+                {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
+              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowFreepikSettings(!showFreepikSettings)}
+                  disabled={isUpscaling || isMagnificUpscaling}
+                  className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
+                  title="Configure & Run Magnific Upscale"
+                >
+                  {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                </button>
+
+                {showFreepikSettings && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 z-[100] mt-2">
+                    <FreepikSettings
+                      settings={freepikSettings}
+                      onChange={setFreepikSettings}
+                      onClose={() => setShowFreepikSettings(false)}
+                      onUpscale={handleMagnificUpscale}
+                      isUpscaling={isMagnificUpscaling}
+                    />
                   </div>
                 )}
               </div>
 
+              <button
+                onClick={() => setDrawingTarget('result')}
+                className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Pencil size={14} /> {t('edit')}
+              </button>
 
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Sun size={14} className="text-amber-400" /> Atmosphere & Mood
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
-                    { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
-                    { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
-                    { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
-                    { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
-                    { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
-                    { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
-                    { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
-                    { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
-                    { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
-                    { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
-                    { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
-                    { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
-                    { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
-                    { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
-                    { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
-                    { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
-                  ].filter(opt => {
-                    if (editorMode !== 'interior') return true;
-                    // Only show these for interior mode
-                    return [
-                      Atmosphere.None,
-                      Atmosphere.Sunny,
-                      Atmosphere.Sunset,
-                      Atmosphere.Night,
-                      Atmosphere.WarmTungsten,
-                      Atmosphere.NaturalLight,
-                      Atmosphere.Studio,
-                      Atmosphere.Candlelight
-                    ].includes(opt.val);
-                  }).map(opt => {
-                    const isSelected = atmosphere.includes(opt.val);
-                    return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
-                  })}
-                </div>
-              </div>
-
-              {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
-
-              {editorMode !== 'interior' && (
-                <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center transition-all duration-300">
-                  <div className="w-full flex items-center justify-between">
-                    <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                      <Sun size={14} className={useSunControl ? "text-amber-400" : "text-slate-600"} />
-                      Sun & Time
-                    </label>
-                    <button
-                      onClick={() => setUseSunControl(!useSunControl)}
-                      className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'}`}
-                    >
-                      <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
-                    </button>
-                  </div>
-
-                  <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
-                    <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
-
-                    <div className="w-full space-y-2 pt-4 border-t border-slate-800 mt-2">
-                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                        <span>Time of Day</span>
-                        <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="24"
-                        step="1"
-                        value={timeOfDay}
-                        onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
-                        className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                      />
-                      <div className="flex justify-between text-[8px] text-slate-600 font-medium">
-                        <span>Night</span>
-                        <span>Noon</span>
-                        <span>Night</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                    <Aperture size={14} className="text-indigo-400" /> Optics & Perspective
-                  </label>
-                  <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
-                    {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
-                    {lockCamera ? "Locked" : "Lock"}
-                  </button>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="grid grid-cols-4 gap-2">
-                    {CAMERA_CONFIGS.slice(0, 8).map(opt => {
-                      const isSelected = camera === opt.val;
-                      return (
-                        <button
-                          key={opt.val}
-                          onClick={() => setCamera(opt.val)}
-                          disabled={lockCamera}
-                          className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          title={opt.val}
-                        >
-                          {opt.icon}
-                          <span className="truncate w-full px-1 text-center">{opt.label}</span>
-                        </button>
-                      );
-                    })}
-                    <details className="col-span-4 group">
-                      <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-indigo-400 transition-colors">
-                        <ChevronDown size={12} className="group-open:rotate-180 transition-transform mr-1" />
-                        {camera.includes('Wide') || camera.includes('View') || camera.includes('Level') && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera) ? 'Custom Angle Selected' : 'Show More Angles'}
-                      </summary>
-                      <div className="grid grid-cols-4 gap-2 pt-2">
-                        {CAMERA_CONFIGS.slice(8).map(opt => {
-                          const isSelected = camera === opt.val;
-                          return (
-                            <button
-                              key={opt.val}
-                              onClick={() => setCamera(opt.val)}
-                              disabled={lockCamera}
-                              className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
-                              title={opt.val}
-                            >
-                              {opt.icon}
-                              <span className="truncate w-full px-1 text-center">{opt.label}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </details>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                        <Maximize size={12} /> Lens (Optics)
-                      </label>
-                      <select
-                        value={lens || ''}
-                        onChange={(e) => setLens(e.target.value as CameraLens)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"
-                      >
-                        <option value="">Default Lens</option>
-                        {LENS_CONFIGS.map(l => (
-                          <option key={l.val} value={l.val}>{l.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                        <Sparkles size={12} /> Aperture (f-stop)
-                      </label>
-                      <input
-                        type="text"
-                        value={aperture}
-                        onChange={(e) => setAperture(e.target.value)}
-                        placeholder="e.g. f/1.8"
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <Layers size={14} className="text-emerald-400" /> Scene Elements
-                </label>
-                <div className="grid grid-cols-2 gap-1.5">
-                  <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Users size={12} /> {t('people')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Car size={12} /> {t('cars')}</button>}
-                  <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
-                  {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Cloud size={12} /> {t('clouds')}</button>}
-                  {editorMode !== 'interior' && (
-                    <>
-                      <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Building2 size={12} /> {t('city')}</button>
-                      <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Wind size={12} /> {t('motionBlur')}</button>
-                      <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
-                <div className="grid grid-cols-3 gap-1">
-                  {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 space-y-3">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Sketch Style</span>
-                  <div className="flex gap-1">
-                    {(['handdrawn', 'pen', 'pencil', 'watercolor'] as const).map((style) => (
-                      <button
-                        key={style}
-                        onClick={() => setSketchStyle(style)}
-                        className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
-                      >
-                        {style.charAt(0).toUpperCase() + style.slice(1)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  onClick={handleSketchify}
-                  disabled={isGenerating || (!sourceImage && !resultImage)}
-                  className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
-                >
-                  <Pen size={14} /> Sketchify Current Image
-                </button>
-              </div>
-
-              <div className="relative pt-6 flex flex-col gap-2">
-                <div className="relative flex items-stretch gap-2">
-                  <div className="relative flex-1">
-                    {showInstructions && <GuideTooltip text={t('guideGenerate')} className="-top-14 left-0 w-full max-w-none" side="bottom" />}
-                    <button
-                      onClick={() => batchMode ? processBatch() : handleGenerate()}
-                      disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                      className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
-                    >
-                      {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
-                    </button>
-                  </div>
-
-                  {!batchMode && (
-                    <div className="flex flex-col gap-1 min-w-[80px]">
-                      <span className="text-[9px] font-bold text-slate-500 uppercase text-center">Amount</span>
-                      <select
-                        value={generationCount}
-                        onChange={(e) => setGenerationCount(parseInt(e.target.value))}
-                        className="h-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 text-slate-200 font-bold focus:border-indigo-500 transition-colors cursor-pointer appearance-none text-center outline-none"
-                        style={{ height: 'calc(100% - 14px)' }}
-                      >
-                        {[1, 2, 3, 4].map(num => (
-                          <option key={num} value={num}>{num} {num === 1 ? 'Image' : 'Images'}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(resultImage);
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = getHouzaiFilename('png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                  } catch (err: any) {
+                    console.error("Download failed", err);
+                    alert(`Download failed: ${err.message} `);
+                  }
+                }}
+                className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Download size={14} /> {t('download')}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-
-      {/* COLUMN 2: RESULT (50%) */}
-      <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl flex-1 flex flex-col relative overflow-hidden">
-          {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
-
-          <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">
-            <div className="flex items-center gap-2">
-              <Maximize2 size={18} />
-              <h2>{t('result')}</h2>
+      <div className="flex-1 relative flex flex-col min-h-0 bg-slate-900/30">
+        {batchMode ? (
+          batchResults.length > 0 || isBatchProcessing ? (
+            <BatchResults
+              results={batchResults}
+              onClose={() => {
+                setBatchResults([]);
+              }}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
+              <Layers size={48} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Batch results will appear here</p>
+              <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
             </div>
-
-            <div className="flex items-center gap-2 relative">
-              {showInstructions && resultImage && <GuideTooltip text={t('guideTools')} className="-bottom-16 right-0" side="top" />}
-              {resultImage && (
-                <>
-                  <button
-                    onClick={() => setPreviewImage(resultImage)}
-                    className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                    title={t('fullScreen')}
-                  >
-                    <Maximize size={14} />
-                  </button>
-                  <button
-                    onClick={handleUpscale}
-                    disabled={isUpscaling || isMagnificUpscaling}
-                    className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
-                    title="Recraft Crisp Upscale"
-                  >
-                    {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
-                  </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowFreepikSettings(!showFreepikSettings)}
-                      disabled={isUpscaling || isMagnificUpscaling}
-                      className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
-                      title="Configure & Run Magnific Upscale"
-                    >
-                      {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
-                    </button>
-
-                    {showFreepikSettings && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 z-[100] mt-2">
-                        <FreepikSettings
-                          settings={freepikSettings}
-                          onChange={setFreepikSettings}
-                          onClose={() => setShowFreepikSettings(false)}
-                          onUpscale={handleMagnificUpscale}
-                          isUpscaling={isMagnificUpscaling}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onClick={() => setDrawingTarget('result')}
-                    className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
-                  >
-                    <Pencil size={14} /> {t('edit')}
-                  </button>
-
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch(resultImage);
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = getHouzaiFilename('png');
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                        window.URL.revokeObjectURL(url);
-                      } catch (err: any) {
-                        console.error("Download failed", err);
-                        alert(`Download failed: ${err.message} `);
-                      }
-                    }}
-                    className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
-                  >
-                    <Download size={14} /> {t('download')}
-                  </button>
-                </>
-              )}
+          )
+        ) : (
+          isGenerating ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
+              <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-sm font-mono">{t('simulating')}</p>
+              {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
+              {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
             </div>
-          </div>
-
-          <div className="flex-1 relative flex flex-col min-h-0 bg-slate-900/30">
-            {batchMode ? (
-              batchResults.length > 0 || isBatchProcessing ? (
-                <BatchResults
-                  results={batchResults}
-                  onClose={() => {
-                    setBatchResults([]);
-                  }}
-                />
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
-                  <Layers size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Batch results will appear here</p>
-                  <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
-                </div>
-              )
-            ) : (
-              isGenerating ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
-                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                  <p className="text-sm font-mono">{t('simulating')}</p>
-                  {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
-                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
-                </div>
-              ) : multiResults.length > 1 ? (
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                  <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
-                    {multiResults.map((res, idx) => (
-                      <div
-                        key={idx}
-                        className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
-                        onClick={() => setResultImage(res.url)}
-                      >
-                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
-                        <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
-                          <div className="space-y-2 overflow-hidden">
-                            <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
-                              <span>SETTINGS</span>
-                              {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
-                            </div>
-                            <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
-                            <div className="flex flex-wrap gap-1">
-                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
-                              <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
-                            </div>
-                          </div>
-                          <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
-                            {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
-                          </button>
+          ) : multiResults.length > 1 ? (
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              <div className={`grid gap-4 ${multiResults.length === 2 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                {multiResults.map((res, idx) => (
+                  <div
+                    key={idx}
+                    className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
+                    onClick={() => setResultImage(res.url)}
+                  >
+                    <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                    <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
+                      <div className="space-y-2 overflow-hidden">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
+                          <span>SETTINGS</span>
+                          {resultImage === res.url && <span className="text-emerald-400 flex items-center gap-1"><CheckCircle2 size={10} /> ACTIVE</span>}
+                        </div>
+                        <p className="text-[10px] text-slate-200 line-clamp-3 leading-tight italic">"{res.settings.prompt}"</p>
+                        <div className="flex flex-wrap gap-1">
+                          <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.style}</span>
+                          <span className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-[9px] text-slate-400">{res.settings.model}</span>
                         </div>
                       </div>
-                    ))}
+                      <button className="w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded transition-colors shadow-lg shadow-indigo-900/40">
+                        {resultImage === res.url ? 'Viewing This Result' : 'Select Result'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ) : resultImage ? (
-                sourceImage ? (
-                  <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
-                ) : (
-                  <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
-                )
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
-                  <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Generations will appear here</p>
-                </div>
-              )
-            )}
-          </div>
-        </div>
+                ))}
+              </div>
+            </div>
+          ) : resultImage ? (
+            sourceImage ? (
+              <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+            ) : (
+              <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
+            )
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
+              <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
+              <p className="text-sm">Generations will appear here</p>
+            </div>
+          )
+        )}
       </div>
     </div>
   );

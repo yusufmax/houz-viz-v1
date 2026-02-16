@@ -207,6 +207,8 @@ export interface GenerationSettings {
   negativePrompt?: string;
   sceneElements: SceneElements;
   styleReferenceImage?: string | null;
+  atmosphereReferenceImage?: string | null;
+  architectureReferenceImage?: string | null;
   model?: string;
   lens?: CameraLens;
   aperture?: string;
@@ -333,6 +335,8 @@ export interface Project {
     model: string;
     sourceImage: string | null;
     styleReferenceImage: string | null;
+    atmosphereReferenceImage?: string | null;
+    architectureReferenceImage?: string | null;
     resultImage: string | null;
     lockCamera?: boolean;
     lockInterior?: boolean;

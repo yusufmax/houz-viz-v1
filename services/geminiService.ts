@@ -489,7 +489,33 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       }
     }
 
-    // 2. Add Style Reference Image - SECOND
+    // 2.1 Atmosphere Reference
+    if (settings.atmosphereReferenceImage) {
+      const { mimeType, data } = await toInlineData(settings.atmosphereReferenceImage);
+      if (data) {
+        parts.push({
+          inlineData: { mimeType, data }
+        });
+        parts.push({
+          text: "IMAGE (Above): ATMOSPHERE/LIGHTING REFERENCE. Use this image for lighting, mood, color palette, and time of day. IGNORE its geometry."
+        });
+      }
+    }
+
+    // 2.2 Architecture Style Reference
+    if (settings.architectureReferenceImage) {
+      const { mimeType, data } = await toInlineData(settings.architectureReferenceImage);
+      if (data) {
+        parts.push({
+          inlineData: { mimeType, data }
+        });
+        parts.push({
+          text: "IMAGE (Above): ARCHITECTURAL STYLE REFERENCE. Use this image for materials, facade details, and architectural style. IGNORE its specific building shape if a source image layout is provided."
+        });
+      }
+    }
+
+    // 2.3 Style Reference (Legacy / General)
     if (settings.styleReferenceImage) {
       const { mimeType, data } = await toInlineData(settings.styleReferenceImage);
       if (data) {
@@ -500,7 +526,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           }
         });
         parts.push({
-          text: "IMAGE 2 (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry."
+          text: "IMAGE (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry."
         });
       }
     }

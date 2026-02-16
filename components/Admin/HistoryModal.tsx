@@ -14,6 +14,14 @@ interface HistoryModalProps {
 }
 
 const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, history, onLoadMore, hasMore, loadingMore }) => {
+    const [loadingQueueIndex, setLoadingQueueIndex] = React.useState(0);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setLoadingQueueIndex(0);
+        }
+    }, [isOpen, user.id]);
+
     if (!isOpen) return null;
 
     return (
@@ -46,21 +54,22 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {history.map((item, index) => (
-                                    <div
-                                        key={item.id}
-                                        className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-backwards"
-                                        style={{ animationDelay: `${index * 150}ms` }}
-                                    >
+                                    <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg">
                                         <div className="aspect-square relative overflow-hidden bg-slate-950">
                                             <img
-                                                src={historyService.getOptimizedUrl(item.image_url)}
+                                                src={index <= loadingQueueIndex ? historyService.getOptimizedUrl(item.image_url) : ''}
                                                 alt={item.prompt}
-                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                loading="lazy"
+                                                className={`w-full h-full object-cover transition-all duration-500 ${index <= loadingQueueIndex ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
+                                                loading="eager"
+                                                onLoad={() => setLoadingQueueIndex(prev => Math.max(prev, index + 1))}
                                                 onError={(e) => {
                                                     const target = e.target as HTMLImageElement;
-                                                    if (target.src !== item.image_url) {
+                                                    // Try original URL if optimized fails
+                                                    if (target.src !== item.image_url && index <= loadingQueueIndex) {
                                                         target.src = item.image_url;
+                                                    } else {
+                                                        // Determine next index and proceed
+                                                        setLoadingQueueIndex(prev => Math.max(prev, index + 1));
                                                     }
                                                 }}
                                             />
