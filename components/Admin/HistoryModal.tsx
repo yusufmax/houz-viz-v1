@@ -8,9 +8,12 @@ interface HistoryModalProps {
     onClose: () => void;
     user: { id: string, full_name: string | null };
     history: any[];
+    onLoadMore?: () => void;
+    hasMore?: boolean;
+    loadingMore?: boolean;
 }
 
-const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, history }) => {
+const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, history, onLoadMore, hasMore, loadingMore }) => {
     if (!isOpen) return null;
 
     return (
@@ -40,55 +43,77 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                             <p>No generations found for this user.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {history.map((item) => (
-                                <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg">
-                                    <div className="aspect-square relative overflow-hidden bg-slate-950">
-                                        <img
-                                            src={historyService.getOptimizedUrl(item.image_url)}
-                                            alt={item.prompt}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                            loading="lazy"
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                if (target.src !== item.image_url) {
-                                                    target.src = item.image_url;
-                                                }
-                                            }}
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                            <a
-                                                href={item.image_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg"
-                                            >
-                                                <ExternalLink size={14} /> View Original
-                                            </a>
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {history.map((item, index) => (
+                                    <div
+                                        key={item.id}
+                                        className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-backwards"
+                                        style={{ animationDelay: `${index * 150}ms` }}
+                                    >
+                                        <div className="aspect-square relative overflow-hidden bg-slate-950">
+                                            <img
+                                                src={historyService.getOptimizedUrl(item.image_url)}
+                                                alt={item.prompt}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                loading="lazy"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    if (target.src !== item.image_url) {
+                                                        target.src = item.image_url;
+                                                    }
+                                                }}
+                                            />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                                <a
+                                                    href={item.image_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-lg"
+                                                >
+                                                    <ExternalLink size={14} /> View Original
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 space-y-3">
+                                            <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                                <span className="flex items-center gap-1">
+                                                    <Clock size={10} /> {new Date(item.created_at).toLocaleDateString()}
+                                                </span>
+                                                <span className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded text-slate-400">
+                                                    <Tag size={10} /> {item.style || 'Standard'}
+                                                </span>
+                                            </div>
+                                            <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                                                {item.prompt || 'No prompt provided'}
+                                            </p>
                                         </div>
                                     </div>
-                                    <div className="p-4 space-y-3">
-                                        <div className="flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase tracking-wider">
-                                            <span className="flex items-center gap-1">
-                                                <Clock size={10} /> {new Date(item.created_at).toLocaleDateString()}
-                                            </span>
-                                            <span className="flex items-center gap-1 bg-slate-800 px-2 py-0.5 rounded text-slate-400">
-                                                <Tag size={10} /> {item.style || 'Standard'}
-                                            </span>
-                                        </div>
-                                        <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
-                                            {item.prompt || 'No prompt provided'}
-                                        </p>
-                                    </div>
+                                ))}
+                            </div>
+
+                            {hasMore && (
+                                <div className="flex justify-center pt-4">
+                                    <button
+                                        onClick={onLoadMore}
+                                        disabled={loadingMore}
+                                        className="px-6 py-2 bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {loadingMore ? (
+                                            <>Loading...</>
+                                        ) : (
+                                            <>Load More History</>
+                                        )}
+                                    </button>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
                 <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-xs text-slate-500">
-                    <span>Total Items: {history.length}</span>
+                    <span>Showing {history.length} items</span>
                     <span className="font-mono">{user.id}</span>
                 </div>
             </div>

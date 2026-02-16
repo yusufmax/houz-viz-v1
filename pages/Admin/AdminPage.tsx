@@ -40,6 +40,9 @@ const AdminPage: React.FC = () => {
     const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
     const [userHistory, setUserHistory] = useState<any[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [historyPage, setHistoryPage] = useState(1);
+    const [historyTotal, setHistoryTotal] = useState(0);
+    const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
 
 
     useEffect(() => {
@@ -217,13 +220,34 @@ const AdminPage: React.FC = () => {
         try {
             setSelectedUser(u);
             setLoadingHistory(true);
-            const history = await adminService.getUserHistory(u.id);
-            setUserHistory(history || []);
+            setHistoryPage(1);
+            const { data, count } = await adminService.getUserHistory(u.id, 1, 5);
+            setUserHistory(data || []);
+            setHistoryTotal(count || 0);
         } catch (error) {
             console.error("Failed to load user history", error);
             alert("Failed to load user history");
         } finally {
             setLoadingHistory(false);
+        }
+    };
+
+    const loadMoreHistory = async () => {
+        if (!selectedUser) return;
+        try {
+            setLoadingMoreHistory(true);
+            const nextPage = historyPage + 1;
+            const { data, count } = await adminService.getUserHistory(selectedUser.id, nextPage, 5);
+
+            if (data) {
+                setUserHistory(prev => [...prev, ...data]);
+                setHistoryPage(nextPage);
+                setHistoryTotal(count || 0);
+            }
+        } catch (error) {
+            console.error("Failed to load more history", error);
+        } finally {
+            setLoadingMoreHistory(false);
         }
     };
 
@@ -816,6 +840,9 @@ const AdminPage: React.FC = () => {
                 onClose={() => setSelectedUser(null)}
                 user={{ id: selectedUser?.id || '', full_name: selectedUser?.full_name || null }}
                 history={userHistory}
+                onLoadMore={loadMoreHistory}
+                hasMore={userHistory.length < historyTotal}
+                loadingMore={loadingMoreHistory}
             />
 
             {loadingHistory && (

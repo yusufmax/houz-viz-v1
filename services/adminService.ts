@@ -134,21 +134,25 @@ export const adminService = {
     },
 
     /**
-     * Get generation history for a specific user
+     * Get generation history for a specific user with pagination
      */
-    async getUserHistory(userId: string) {
-        const { data, error } = await supabase
+    async getUserHistory(userId: string, page = 1, limit = 5) {
+        const from = (page - 1) * limit;
+        const to = from + limit - 1;
+
+        const { data, error, count } = await supabase
             .from('generation_history')
-            .select('*')
+            .select('*', { count: 'exact' })
             .eq('user_id', userId)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .range(from, to);
 
         if (error) {
             console.error('Error fetching user history:', error);
             throw error;
         }
 
-        return data;
+        return { data, count };
     },
 
     /**
