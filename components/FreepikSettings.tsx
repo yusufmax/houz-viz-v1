@@ -1,4 +1,4 @@
-import React from 'react';
+himport React from 'react';
 import { Settings, Sliders, Target, Zap, Sparkles } from 'lucide-react';
 import { FreepikMagnificSettings, FreepikScaleFactor, FreepikStyle, FreepikEngine } from '../types';
 

@@ -178,7 +178,7 @@ export enum CameraAngle {
   ExteriorWide = 'Exterior Wide Angle'
 }
 
-export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | 'Original';
+export type AspectRatio = '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | 'Original' | '1:4' | '4:1' | '1:8' | '8:1';
 
 export interface SceneElements {
   people: boolean;

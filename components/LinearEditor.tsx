@@ -1586,10 +1586,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
                   <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
+                  <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                 </select>
               </div>
 
-              {model === 'gemini-3-pro-image-preview' && (
+              {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && (
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)</label>
                   <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
@@ -1884,13 +1885,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
-              <div className="grid grid-cols-3 gap-1">
-                {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                  <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
-                ))}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
+                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                  ))}
+                </div>
               </div>
+
+              {model === 'gemini-3.1-flash-image-preview' && (
+                <div className="space-y-2 bg-indigo-900/10 border border-indigo-500/20 p-3 rounded-xl backdrop-blur-sm">
+                  <label className="text-[10px] font-black text-indigo-400 uppercase flex items-center gap-2 tracking-widest"><LayoutTemplate size={12} /> Panorama Mode</label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {['1:4', '4:1', '1:8', '8:1'].map((ratio) => (
+                      <button
+                        key={ratio}
+                        onClick={() => setAspectRatio(ratio as AspectRatio)}
+                        className={`px-2 py-1.5 text-xs font-bold rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-900 border-slate-700 text-indigo-300 hover:bg-slate-800 hover:border-indigo-500/50'}`}
+                        title={`Panorama ${ratio}`}
+                      >
+                        {ratio}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="pt-6 space-y-3">
