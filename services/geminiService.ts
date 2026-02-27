@@ -387,7 +387,14 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       config.imageConfig = { aspectRatio: finalRatio };
     }
 
-    console.log("Gemini Flash Config:", JSON.stringify(config, null, 2));
+    // Handle Image Size for High-Quality Models
+    if (settings.model === 'gemini-3-pro-image-preview' || settings.model === 'gemini-3.1-flash-image-preview') {
+      config.responseModalities = ['TEXT', 'IMAGE'];
+      if (!config.imageConfig) config.imageConfig = {};
+      config.imageConfig.imageSize = settings.resolution || '4K';
+    }
+
+    console.log(`Gemini Generate Config (${settings.model}):`, JSON.stringify(config, null, 2));
 
     const response = await ai.models.generateContent({
       model: settings.model || 'gemini-2.5-flash',
@@ -534,8 +541,8 @@ export const editImage = async (sourceImage: string | null, settings: Generation
     // 3. Add the constructed prompt (Text + Interior Images)
     parts.push(...fullPromptParts);
 
-    // Gemini 3 Pro Logic
-    if (settings.model === 'gemini-3-pro-image-preview') {
+    // High-Quality Models Logic (Gemini 3 Pro & Nano Banana 2)
+    if (settings.model === 'gemini-3-pro-image-preview' || settings.model === 'gemini-3.1-flash-image-preview') {
       let finalRatio = settings.aspectRatio || '16:9';
       if (finalRatio === 'Original' && sourceImage) {
         try {
@@ -550,14 +557,14 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
           aspectRatio: finalRatio !== 'Original' ? finalRatio : '16:9',
-          imageSize: '4K'
+          imageSize: settings.resolution || '4K'
         }
       };
 
-      console.log("Gemini 3 Pro Edit Config:", JSON.stringify(config, null, 2));
+      console.log(`Gemini HI-RES Edit Config (${settings.model}):`, JSON.stringify(config, null, 2));
 
       const response = await ai.models.generateContent({
-        model: 'gemini-3-pro-image-preview',
+        model: settings.model || 'gemini-3-pro-image-preview',
         contents: [{ role: 'user', parts: parts }],
         config: config
       });
