@@ -961,6 +961,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       tags,
       sunPosition: useSunControl ? sunPosition : undefined,
       timeOfDay: useSunControl ? timeOfDay : undefined,
+      useGrounding,
       ...settingsOverride
     };
 
