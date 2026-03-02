@@ -561,7 +561,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         }
       };
 
-      if (settings.model === 'gemini-3.1-flash-image-preview') {
+      if (settings.model === 'gemini-3.1-flash-image-preview' && settings.useGrounding) {
         config.tools = [
           {
             googleSearch: {

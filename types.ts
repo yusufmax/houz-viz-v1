@@ -221,6 +221,7 @@ export interface GenerationSettings {
   tags?: Tag[];
   sunPosition?: number;
   timeOfDay?: number;
+  useGrounding?: boolean;
 }
 
 export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';

@@ -3,7 +3,7 @@ import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees,
   Building2, Wind, Zap, Loader2, Pencil, Pen, Lock, LayoutTemplate, Grid,
-  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2
+  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2, Globe, Info
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -305,6 +305,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [useGrounding, setUseGrounding] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const realtimeServiceRef = useRef<RealtimeService | null>(null);
   const audioManagerRef = useRef<AudioManager | null>(null);
@@ -1655,6 +1656,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <option value="2K">2K - 4 Credits</option>
                     <option value="4K">4K - 5 Credits</option>
                   </select>
+                </div>
+              )}
+
+              {model === 'gemini-3.1-flash-image-preview' && (
+                <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                  <div className="space-y-0.5">
+                    <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1.5"><Globe size={14} className="text-blue-400" /> Enable Web Grounding</label>
+                    <p className="text-[9px] text-slate-500 max-w-[200px] leading-tight flex items-center gap-1"><Info size={10} className="shrink-0" /> Uses real-time Google Search & Images for generation context.</p>
+                  </div>
+                  <button
+                    onClick={() => setUseGrounding(!useGrounding)}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${useGrounding ? 'bg-blue-500' : 'bg-slate-700'}`}
+                  >
+                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useGrounding ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </button>
                 </div>
               )}
 
