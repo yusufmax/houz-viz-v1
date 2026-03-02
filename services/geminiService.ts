@@ -392,6 +392,19 @@ export const generateImage = async (settings: GenerationSettings): Promise<strin
       config.responseModalities = ['TEXT', 'IMAGE'];
       if (!config.imageConfig) config.imageConfig = {};
       config.imageConfig.imageSize = settings.resolution || '4K';
+
+      if (settings.model === 'gemini-3.1-flash-image-preview' && settings.useGrounding) {
+        config.tools = [
+          {
+            googleSearch: {
+              searchTypes: {
+                webSearch: {},
+                imageSearch: {}
+              }
+            }
+          }
+        ];
+      }
     }
 
     console.log(`Gemini Generate Config (${settings.model}):`, JSON.stringify(config, null, 2));
