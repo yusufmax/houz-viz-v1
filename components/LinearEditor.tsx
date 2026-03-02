@@ -206,17 +206,17 @@ const ALL_ATMOSPHERES: Atmosphere[] = [
 ];
 
 const CAMERA_CONFIGS = [
-  { val: CameraAngle.Default, icon: <LayoutTemplate size={14} />, label: 'Default', preview: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=500&q=80' },
-  { val: CameraAngle.EyeLevel, icon: <Users size={14} />, label: 'Eye Level', preview: 'https://images.unsplash.com/photo-1600607688969-a5bfcd64bd40?w=500&q=80' },
-  { val: CameraAngle.LowAngle, icon: <ChevronDown size={14} />, label: 'HeroShot', preview: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80' },
-  { val: CameraAngle.WormEyeView, icon: <ChevronDown size={14} className="rotate-180" />, label: 'Worm Eye', preview: 'https://images.unsplash.com/photo-1588636511634-1cae2bc44369?w=500&q=80' },
-  { val: CameraAngle.BirdEyeView, icon: <Maximize size={14} />, label: 'Bird Eye', preview: 'https://images.unsplash.com/photo-1510443588725-3ef3e4a291dc?w=500&q=80' },
-  { val: CameraAngle.Drone, icon: <Cloud size={14} />, label: 'Aerial', preview: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&q=80' },
-  { val: CameraAngle.StreetLevel, icon: <Car size={14} />, label: 'Street', preview: 'https://images.unsplash.com/photo-1512498700204-6b94e772eaef?w=500&q=80' },
-  { val: CameraAngle.ThreeQuarterView, icon: <Layers size={14} />, label: '3/4 View', preview: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=500&q=80' },
-  { val: CameraAngle.FacadeView, icon: <Building2 size={14} />, label: 'Facade', preview: 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=500&q=80' },
-  { val: CameraAngle.InteriorWide, icon: <Maximize2 size={14} />, label: 'Int. Wide', preview: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=500&q=80' },
-  { val: CameraAngle.ExteriorWide, icon: <ImageIcon size={14} />, label: 'Ext. Wide', preview: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&q=80' },
+  { val: CameraAngle.Default, icon: <LayoutTemplate size={14} />, label: 'Default' },
+  { val: CameraAngle.EyeLevel, icon: <Users size={14} />, label: 'Eye Level' },
+  { val: CameraAngle.LowAngle, icon: <ChevronDown size={14} />, label: 'HeroShot' },
+  { val: CameraAngle.WormEyeView, icon: <ChevronDown size={14} className="rotate-180" />, label: 'Worm Eye' },
+  { val: CameraAngle.BirdEyeView, icon: <Maximize size={14} />, label: 'Bird Eye' },
+  { val: CameraAngle.Drone, icon: <Cloud size={14} />, label: 'Aerial' },
+  { val: CameraAngle.StreetLevel, icon: <Car size={14} />, label: 'Street' },
+  { val: CameraAngle.ThreeQuarterView, icon: <Layers size={14} />, label: '3/4 View' },
+  { val: CameraAngle.FacadeView, icon: <Building2 size={14} />, label: 'Facade' },
+  { val: CameraAngle.InteriorWide, icon: <Maximize2 size={14} />, label: 'Int. Wide' },
+  { val: CameraAngle.ExteriorWide, icon: <ImageIcon size={14} />, label: 'Ext. Wide' },
 ];
 
 const LENS_CONFIGS = [
@@ -228,7 +228,64 @@ const LENS_CONFIGS = [
 ];
 
 
+const CameraAnglePreview = ({ angle }: { angle: string }) => {
+  let cx = 50, cy = 50;
+  let rx = 50, ry = 60;
 
+  switch (angle) {
+    case CameraAngle.BirdEyeView:
+      cx = 50; cy = 10; ry = 50;
+      break;
+    case CameraAngle.Drone:
+      cx = 80; cy = 20; rx = 50; ry = 60;
+      break;
+    case CameraAngle.EyeLevel:
+      cx = 20; cy = 70; ry = 70;
+      break;
+    case CameraAngle.LowAngle:
+    case CameraAngle.WormEyeView:
+      cx = 20; cy = 90; ry = 50;
+      break;
+    case CameraAngle.StreetLevel:
+      cx = 10; cy = 80; ry = 80;
+      break;
+    case CameraAngle.ThreeQuarterView:
+      cx = 20; cy = 40; ry = 60;
+      break;
+    case CameraAngle.FacadeView:
+      cx = 50; cy = 60; ry = 60; rx = 50;
+      break;
+    case CameraAngle.InteriorWide:
+    case CameraAngle.ExteriorWide:
+      cx = 10; cy = 50; ry = 50;
+      break;
+    case CameraAngle.Default:
+    default:
+      cx = 25; cy = 60; ry = 60;
+  }
+
+  const dx = rx - cx;
+  const dy = ry - cy;
+  const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
+
+  return (
+    <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-700">
+      <span className="text-[10px] text-slate-400 font-bold uppercase mb-1">{angle}</span>
+      <svg viewBox="0 0 100 100" className="w-full h-full text-indigo-400 overflow-visible">
+        <line x1="10" y1="80" x2="90" y2="80" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 2" />
+        <path d="M40 80 V40 H60 V80 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.6" />
+        <path d="M45 50 H55 M45 60 H55 M45 70 H55" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" />
+        <line x1={cx} y1={cy} x2={rx - 10} y2={ry - 5} stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 2" />
+        <line x1={cx} y1={cy} x2={rx + 10} y2={ry + 5} stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 2" />
+        <g transform={`translate(${cx}, ${cy}) rotate(${rotation})`}>
+          <rect x="-6" y="-5" width="12" height="10" rx="2" fill="currentColor" />
+          <path d="M6 -3 L12 -6 V6 L6 3 Z" fill="currentColor" />
+          <circle cx="0" cy="0" r="2.5" fill="#0f172a" />
+        </g>
+      </svg>
+    </div>
+  );
+};
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -1756,8 +1813,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         {opt.icon}
                         <span className="truncate w-full px-1 text-center">{opt.label}</span>
                         {/* Hover Preview Implementation */}
-                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 aspect-square rounded-lg overflow-hidden border border-slate-700 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                          <img src={opt.preview} alt={opt.label} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-40 aspect-video rounded-lg overflow-hidden shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                          <CameraAnglePreview angle={opt.val} />
                         </div>
                       </button>
                     );
@@ -1780,8 +1837,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                           >
                             {opt.icon}
                             <span className="truncate w-full px-1 text-center">{opt.label}</span>
-                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 aspect-square rounded-lg overflow-hidden border border-slate-700 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                              <img src={opt.preview} alt={opt.label} className="w-full h-full object-cover" />
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-40 aspect-video rounded-lg overflow-hidden shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                              <CameraAnglePreview angle={opt.val} />
                             </div>
                           </button>
                         );
