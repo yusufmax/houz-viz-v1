@@ -504,7 +504,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           inlineData: { mimeType, data }
         });
         parts.push({
-          text: "IMAGE (Above): ATMOSPHERE/LIGHTING REFERENCE. Use this image for lighting, mood, color palette, and time of day. IGNORE its geometry."
+          text: "STRICT INSTRUCTION - IMAGE (Above): ATMOSPHERE/LIGHTING REFERENCE ONLY. YOU MUST ONLY extract the lighting, mood, color palette, and time of day from this image. YOU MUST COMPLETELY IGNORE its geometry, architecture, objects, and layout."
         });
       }
     }
@@ -517,7 +517,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           inlineData: { mimeType, data }
         });
         parts.push({
-          text: "IMAGE (Above): ARCHITECTURAL STYLE REFERENCE. Use this image for materials, facade details, and architectural style. IGNORE its specific building shape if a source image layout is provided."
+          text: "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. YOU MUST ONLY extract the materials, facade details, and general architectural style from this image. YOU MUST COMPLETELY IGNORE the specific building shape, layout, or environment."
         });
       }
     }
