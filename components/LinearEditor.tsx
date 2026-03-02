@@ -206,17 +206,17 @@ const ALL_ATMOSPHERES: Atmosphere[] = [
 ];
 
 const CAMERA_CONFIGS = [
-  { val: CameraAngle.Default, icon: <LayoutTemplate size={14} />, label: 'Default' },
-  { val: CameraAngle.EyeLevel, icon: <Users size={14} />, label: 'Eye Level' },
-  { val: CameraAngle.LowAngle, icon: <ChevronDown size={14} />, label: 'HeroShot' },
-  { val: CameraAngle.WormEyeView, icon: <ChevronDown size={14} className="rotate-180" />, label: 'Worm Eye' },
-  { val: CameraAngle.BirdEyeView, icon: <Maximize size={14} />, label: 'Bird Eye' },
-  { val: CameraAngle.Drone, icon: <Cloud size={14} />, label: 'Aerial' },
-  { val: CameraAngle.StreetLevel, icon: <Car size={14} />, label: 'Street' },
-  { val: CameraAngle.ThreeQuarterView, icon: <Layers size={14} />, label: '3/4 View' },
-  { val: CameraAngle.FacadeView, icon: <Building2 size={14} />, label: 'Facade' },
-  { val: CameraAngle.InteriorWide, icon: <Maximize2 size={14} />, label: 'Int. Wide' },
-  { val: CameraAngle.ExteriorWide, icon: <ImageIcon size={14} />, label: 'Ext. Wide' },
+  { val: CameraAngle.Default, icon: <LayoutTemplate size={14} />, label: 'Default', preview: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=500&q=80' },
+  { val: CameraAngle.EyeLevel, icon: <Users size={14} />, label: 'Eye Level', preview: 'https://images.unsplash.com/photo-1600607688969-a5bfcd64bd40?w=500&q=80' },
+  { val: CameraAngle.LowAngle, icon: <ChevronDown size={14} />, label: 'HeroShot', preview: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=500&q=80' },
+  { val: CameraAngle.WormEyeView, icon: <ChevronDown size={14} className="rotate-180" />, label: 'Worm Eye', preview: 'https://images.unsplash.com/photo-1588636511634-1cae2bc44369?w=500&q=80' },
+  { val: CameraAngle.BirdEyeView, icon: <Maximize size={14} />, label: 'Bird Eye', preview: 'https://images.unsplash.com/photo-1510443588725-3ef3e4a291dc?w=500&q=80' },
+  { val: CameraAngle.Drone, icon: <Cloud size={14} />, label: 'Aerial', preview: 'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=500&q=80' },
+  { val: CameraAngle.StreetLevel, icon: <Car size={14} />, label: 'Street', preview: 'https://images.unsplash.com/photo-1512498700204-6b94e772eaef?w=500&q=80' },
+  { val: CameraAngle.ThreeQuarterView, icon: <Layers size={14} />, label: '3/4 View', preview: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=500&q=80' },
+  { val: CameraAngle.FacadeView, icon: <Building2 size={14} />, label: 'Facade', preview: 'https://images.unsplash.com/photo-1455587734955-081b22074882?w=500&q=80' },
+  { val: CameraAngle.InteriorWide, icon: <Maximize2 size={14} />, label: 'Int. Wide', preview: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=500&q=80' },
+  { val: CameraAngle.ExteriorWide, icon: <ImageIcon size={14} />, label: 'Ext. Wide', preview: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=500&q=80' },
 ];
 
 const LENS_CONFIGS = [
@@ -1614,82 +1614,31 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
 
             <div className="space-y-3">
-              <button onClick={() => setShowStyles(!showStyles)} className="w-full flex items-center justify-between text-xs font-medium text-slate-400 uppercase group hover:text-slate-200 transition-colors">
-                <div className="flex items-center gap-2"><Zap size={14} /> {t('stylePreset')}</div>
-                <div className="flex items-center gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-700/50">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setStyleViewMode('grid'); }}
-                    className={`p-1 rounded transition-all ${styleViewMode === 'grid' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                    title="Grid View"
-                  >
-                    <Grid size={12} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setStyleViewMode('list'); }}
-                    className={`p-1 rounded transition-all ${styleViewMode === 'list' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
-                    title="Dropdown View"
-                  >
-                    <LayoutTemplate size={12} />
-                  </button>
-                </div>
-                {showStyles ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              </button>
-              {showStyles && (
-                <div className="space-y-4 animate-in slide-in-from-top-2 fade-in duration-200">
-                  {styleViewMode === 'grid' ? (
-                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                      <div onClick={() => setStyle(RenderStyle.None)} className={`flex items-center gap-3 p-2 rounded-lg border cursor-pointer transition-all ${style === RenderStyle.None ? 'bg-indigo-600/20 border-indigo-500 ring-1 ring-indigo-500/50' : 'bg-slate-900 border-slate-700 hover:border-slate-500'}`}>
-                        <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center text-slate-400"><X size={18} /></div>
-                        <span className="text-xs font-medium text-slate-300">{t('None')}</span>
-                      </div>
-                      {Object.entries(groupedStyles).map(([group, styles]) => (
-                        <div key={group} className="space-y-2">
-                          <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-1">{group}</h4>
-                          <div className="grid grid-cols-3 gap-2">
-                            {(styles as RenderStyle[]).map(s => {
-                              const isSelected = style === s;
-                              const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                              const previewUrl = STYLE_PREVIEWS[s] || 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=200&q=80';
-                              return (
-                                <button key={s} onClick={() => setStyle(s)} className={`group relative aspect-square rounded-lg overflow-hidden border transition-all ${isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/50 scale-[0.98]' : 'border-slate-700 hover:border-indigo-500/50'}`}>
-                                  <img src={previewUrl} alt={s} className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110' : 'group-hover:scale-110'}`} />
-                                  <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
-                                    <div className="absolute bottom-0 left-0 right-0 p-1.5"><p className="text-[9px] font-medium text-white leading-tight truncate">{t(displayName as any) || displayName}</p></div>
-                                  </div>
-                                  {isSelected && <div className="absolute top-1 right-1 bg-indigo-600 rounded-full p-0.5 shadow-lg"><Zap size={8} className="text-white fill-white" /></div>}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-2">
-                      <select
-                        value={style}
-                        onChange={(e) => setStyle(e.target.value as RenderStyle)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
-                      >
-                        <option value={RenderStyle.None}>{t('None')}</option>
-                        {Object.entries(groupedStyles).map(([group, styles]) => (
-                          <optgroup key={group} label={group} className="bg-slate-900 text-slate-400 text-[10px] uppercase font-bold">
-                            {(styles as RenderStyle[]).map(s => {
-                              const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                              return (
-                                <option key={s} value={s} className="bg-slate-900 text-slate-200 text-xs normal-case font-normal">
-                                  {t(displayName as any) || displayName}
-                                </option>
-                              );
-                            })}
-                          </optgroup>
-                        ))}
-                      </select>
-                      <p className="text-[9px] text-slate-500 italic px-1">Selected: <span className="text-indigo-400 font-medium">{style}</span></p>
-                    </div>
-                  )}
-                </div>
-              )}
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <Zap size={14} className="text-yellow-400" /> {t('stylePreset')}
+              </label>
+              <div className="space-y-2">
+                <select
+                  value={style}
+                  onChange={(e) => setStyle(e.target.value as RenderStyle)}
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500 transition-colors"
+                >
+                  <option value={RenderStyle.None}>{t('None')}</option>
+                  {Object.entries(groupedStyles).map(([group, styles]) => (
+                    <optgroup key={group} label={group} className="bg-slate-900 text-slate-400 text-[10px] uppercase font-bold">
+                      {(styles as RenderStyle[]).map(s => {
+                        const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                        return (
+                          <option key={s} value={s} className="bg-slate-900 text-slate-200 text-xs normal-case font-normal">
+                            {t(displayName as any) || displayName}
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  ))}
+                </select>
+                <p className="text-[9px] text-slate-500 italic px-1">Selected: <span className="text-indigo-400 font-medium">{style}</span></p>
+              </div>
             </div>
 
 
@@ -1784,7 +1733,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Aperture size={14} className="text-indigo-400" /> Optics & Perspective
+                  <Aperture size={14} className="text-indigo-400" /> Camera & Perspective
                 </label>
                 <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
                   {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
@@ -1801,11 +1750,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         key={opt.val}
                         onClick={() => setCamera(opt.val)}
                         disabled={lockCamera}
-                        className={`flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`group relative flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
                         title={opt.val}
                       >
                         {opt.icon}
                         <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                        {/* Hover Preview Implementation */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 aspect-square rounded-lg overflow-hidden border border-slate-700 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                          <img src={opt.preview} alt={opt.label} className="w-full h-full object-cover" />
+                        </div>
                       </button>
                     );
                   })}
@@ -1822,11 +1775,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                             key={opt.val}
                             onClick={() => setCamera(opt.val)}
                             disabled={lockCamera}
-                            className={`flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`group relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
                             title={opt.val}
                           >
                             {opt.icon}
                             <span className="truncate w-full px-1 text-center">{opt.label}</span>
+                            <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-32 aspect-square rounded-lg overflow-hidden border border-slate-700 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
+                              <img src={opt.preview} alt={opt.label} className="w-full h-full object-cover" />
+                            </div>
                           </button>
                         );
                       })}
@@ -1837,7 +1793,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                      <Maximize size={12} /> Lens (Optics)
+                      <Maximize size={12} /> Lens (Camera)
                     </label>
                     <select
                       value={lens || ''}
