@@ -553,13 +553,26 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         }
       }
 
-      const config = {
+      const config: any = {
         responseModalities: ['TEXT', 'IMAGE'],
         imageConfig: {
           aspectRatio: finalRatio !== 'Original' ? finalRatio : '16:9',
           imageSize: settings.resolution || '4K'
         }
       };
+
+      if (settings.model === 'gemini-3.1-flash-image-preview') {
+        config.tools = [
+          {
+            googleSearch: {
+              searchTypes: {
+                webSearch: {},
+                imageSearch: {}
+              }
+            }
+          }
+        ];
+      }
 
       console.log(`Gemini HI-RES Edit Config (${settings.model}):`, JSON.stringify(config, null, 2));
 
