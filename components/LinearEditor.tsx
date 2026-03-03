@@ -288,7 +288,7 @@ const CameraAnglePreview = ({ angle }: { angle: string }) => {
 };
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   // const { setToolExecutor } = useAgentic();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
@@ -2027,36 +2027,30 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   >
                     <Maximize size={14} />
                   </button>
-                  <button
-                    onClick={handleUpscale}
-                    disabled={isUpscaling || isMagnificUpscaling}
-                    className="flex items-center gap-2 text-xs bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded-md transition-colors disabled:opacity-50"
-                    title="Recraft Crisp Upscale"
-                  >
-                    {isUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Zap size={14} />} {t('upscale')}
-                  </button>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowFreepikSettings(!showFreepikSettings)}
-                      disabled={isUpscaling || isMagnificUpscaling}
-                      className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
-                      title="Configure & Run Magnific Upscale"
-                    >
-                      {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
-                    </button>
+                  {profile?.magnific_enabled && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowFreepikSettings(!showFreepikSettings)}
+                        disabled={isUpscaling || isMagnificUpscaling}
+                        className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
+                        title="Configure & Run Magnific Upscale"
+                      >
+                        {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                      </button>
 
-                    {showFreepikSettings && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 z-[100] mt-2">
-                        <FreepikSettings
-                          settings={freepikSettings}
-                          onChange={setFreepikSettings}
-                          onClose={() => setShowFreepikSettings(false)}
-                          onUpscale={handleMagnificUpscale}
-                          isUpscaling={isMagnificUpscaling}
-                        />
-                      </div>
-                    )}
-                  </div>
+                      {showFreepikSettings && (
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 z-[100] mt-2">
+                          <FreepikSettings
+                            settings={freepikSettings}
+                            onChange={setFreepikSettings}
+                            onClose={() => setShowFreepikSettings(false)}
+                            onUpscale={handleMagnificUpscale}
+                            isUpscaling={isMagnificUpscaling}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <button
                     onClick={() => setDrawingTarget('result')}

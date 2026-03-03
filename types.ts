@@ -316,6 +316,7 @@ export interface Profile {
   is_admin_visible?: boolean;
   is_admin?: boolean;
   is_banned?: boolean;
+  magnific_enabled?: boolean;
 }
 export interface Project {
   id: string;

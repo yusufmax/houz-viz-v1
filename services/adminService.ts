@@ -54,6 +54,21 @@ export const adminService = {
     },
 
     /**
+     * Toggle whether a user has access to Magnific Upscale
+     */
+    async toggleMagnific(userId: string, isEnabled: boolean) {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ magnific_enabled: isEnabled })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error toggling magnific permission:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Check if a user is an admin
      */
     async checkIsAdmin(userId: string): Promise<boolean> {
