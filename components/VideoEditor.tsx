@@ -38,7 +38,7 @@ const VideoEditor: React.FC = () => {
             }
         };
         loadVideoQuota();
-    }, [user]);
+    }, [user?.id]);
 
     // Helper to resize image to max 2K resolution
     const resizeImage = (imageSrc: string): Promise<string> => {

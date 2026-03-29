@@ -60,7 +60,7 @@ const AdminPage: React.FC = () => {
             loadData();
         };
         init();
-    }, [user]);
+    }, [user?.id]);
 
     useEffect(() => {
         const isValidDate = (d: string) => !d || /^\d{4}-\d{2}-\d{2}$/.test(d);

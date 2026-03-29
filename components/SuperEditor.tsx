@@ -163,7 +163,7 @@ const SuperEditor: React.FC = () => {
             loadHistory();
             loadQuota();
         }
-    }, [user]);
+    }, [user?.id]);
 
     const CATEGORY_ICONS: Record<string, any> = {
         'Top': <Shirt size={12} />,

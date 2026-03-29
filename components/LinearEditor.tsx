@@ -472,7 +472,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         console.error('Failed to load reference images:', err);
       });
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Load video quota
   useEffect(() => {
@@ -483,12 +483,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         console.error('Failed to load video quota:', err);
       });
     }
-  }, [user]);
+  }, [user?.id]);
 
   // Load prompt templates
   useEffect(() => {
     loadSavedTemplates();
-  }, [user]);
+  }, [user?.id]);
 
   // Auto-detect aspect ratio from result image
   useEffect(() => {

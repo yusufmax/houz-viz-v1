@@ -44,7 +44,7 @@ const ProfilePage: React.FC = () => {
             fetchQuota();
             fetchProfile();
         }
-    }, [user]);
+    }, [user?.id]);
 
     const fetchProfile = async () => {
         if (!user) return;
