@@ -140,6 +140,7 @@ const InfinityCanvas: React.FC = () => {
 
     // Connections
     const [connectingNodeId, setConnectingNodeId] = useState<string | null>(null);
+    const [connectingFromPort, setConnectingFromPort] = useState<string | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     // Context Menus
@@ -653,27 +654,31 @@ const InfinityCanvas: React.FC = () => {
         setResizingNodeId(id);
     };
 
-    const handlePortTouchStart = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output') => {
+    const handlePortTouchStart = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output', portId?: string) => {
         e.stopPropagation();
         if (type === 'output') {
             setConnectingNodeId(nodeId);
+            setConnectingFromPort(portId || null);
         }
     };
 
-    const handlePortTouchEnd = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output') => {
+    const handlePortTouchEnd = (e: React.TouchEvent, nodeId: string, type: 'input' | 'output', portId?: string) => {
         e.stopPropagation();
         if (connectingNodeId && type === 'input' && connectingNodeId !== nodeId) {
-            if (!connections.find(c => c.from === connectingNodeId && c.to === nodeId)) {
+            if (!connections.find(c => c.from === connectingNodeId && c.to === nodeId && c.fromPort === connectingFromPort && c.toPort === portId)) {
                 setConnections(prev => [...prev, {
                     id: `c-${Date.now()}`,
                     from: connectingNodeId,
-                    to: nodeId
+                    fromPort: connectingFromPort || undefined,
+                    to: nodeId,
+                    toPort: portId
                 }]);
                 setNodes(prev => prev.map(n =>
-                    n.id === nodeId ? { ...n, inputs: [...n.inputs, connectingNodeId] } : n
+                    n.id === nodeId && !n.inputs.includes(connectingNodeId) ? { ...n, inputs: [...n.inputs, connectingNodeId] } : n
                 ));
             }
             setConnectingNodeId(null);
+            setConnectingFromPort(null);
         }
     };
 
@@ -766,27 +771,31 @@ const InfinityCanvas: React.FC = () => {
         setResizingNodeId(id);
     };
 
-    const handlePortMouseDown = (e: React.MouseEvent, nodeId: string, type: 'input' | 'output') => {
+    const handlePortMouseDown = (e: React.MouseEvent, nodeId: string, type: 'input' | 'output', portId?: string) => {
         e.stopPropagation();
         if (type === 'output') {
             setConnectingNodeId(nodeId);
+            setConnectingFromPort(portId || null);
         }
     };
 
-    const handlePortMouseUp = (e: React.MouseEvent, nodeId: string, type: 'input' | 'output') => {
+    const handlePortMouseUp = (e: React.MouseEvent, nodeId: string, type: 'input' | 'output', portId?: string) => {
         e.stopPropagation();
         if (connectingNodeId && type === 'input' && connectingNodeId !== nodeId) {
-            if (!connections.find(c => c.from === connectingNodeId && c.to === nodeId)) {
+            if (!connections.find(c => c.from === connectingNodeId && c.to === nodeId && c.fromPort === connectingFromPort && c.toPort === portId)) {
                 setConnections(prev => [...prev, {
                     id: `c-${Date.now()}`,
                     from: connectingNodeId,
-                    to: nodeId
+                    fromPort: connectingFromPort || undefined,
+                    to: nodeId,
+                    toPort: portId
                 }]);
                 setNodes(prev => prev.map(n =>
-                    n.id === nodeId ? { ...n, inputs: [...n.inputs, connectingNodeId] } : n
+                    n.id === nodeId && !n.inputs.includes(connectingNodeId) ? { ...n, inputs: [...n.inputs, connectingNodeId] } : n
                 ));
             }
             setConnectingNodeId(null);
+            setConnectingFromPort(null);
         }
     };
 
@@ -926,18 +935,30 @@ const InfinityCanvas: React.FC = () => {
             const inputConns = currentConnections.filter(c => c.to === nodeId);
             let sourceImg = null;
             let promptText = node.data.settings?.prompt || "";
+            const dynamicSettings: Partial<GenerationSettings> = {};
 
             for (const conn of inputConns) {
                 const sourceNode = currentNodes.find(n => n.id === conn.from);
-                if ((sourceNode?.type === 'input' || sourceNode?.type === 'output' || sourceNode?.type === 'processor') && sourceNode.data.imageSrc) {
-                    sourceImg = sourceNode.data.imageSrc;
-                }
+                
                 if (sourceNode?.type === 'prompt' && sourceNode.data.value) {
                     promptText += (promptText ? " " : "") + sourceNode.data.value;
+                } else if ((sourceNode?.type === 'input' || sourceNode?.type === 'output' || sourceNode?.type === 'processor') && sourceNode.data.imageSrc) {
+                    const imgUrl = sourceNode.data.imageSrc;
+                    
+                    if (conn.toPort === 'style') {
+                        dynamicSettings.styleReferenceImage = imgUrl;
+                    } else if (conn.toPort === 'arch') {
+                        dynamicSettings.architectureReferenceImage = imgUrl;
+                    } else if (conn.toPort === 'atmosphere') {
+                        dynamicSettings.atmosphereReferenceImage = imgUrl;
+                    } else {
+                        // Default fallback mapping is source image
+                        sourceImg = imgUrl;
+                    }
                 }
             }
 
-            const settings: GenerationSettings = { ...node.data.settings, prompt: promptText };
+            const settings: GenerationSettings = { ...node.data.settings, ...dynamicSettings, prompt: promptText };
 
             let result = '';
             
@@ -1536,7 +1557,26 @@ const InfinityCanvas: React.FC = () => {
                         const toNode = nodes.find(n => n.id === conn.to);
                         if (!fromNode || !toNode) return null;
                         const w1 = fromNode.width || (fromNode.type === 'processor' ? 320 : 240);
-                        return <g key={conn.id}>{renderConnectionLine(fromNode.x + w1, fromNode.y + 24, toNode.x, toNode.y + 24)}</g>;
+                        
+                        let targetY = toNode.y + 24; // Default legacy fallback
+                        if (toNode.type === 'processor') {
+                            // Map explicit custom ports (top offset + 12px pin center)
+                            if (conn.toPort === 'source') targetY = toNode.y + 72;
+                            else if (conn.toPort === 'style') targetY = toNode.y + 132;
+                            else if (conn.toPort === 'arch') targetY = toNode.y + 192;
+                            else if (conn.toPort === 'atmosphere') targetY = toNode.y + 252;
+                            else targetY = toNode.y + 72; // Fallback to source
+                        } else {
+                            targetY = toNode.y + (toNode.height || 150) / 2; // For output nodes
+                        }
+
+                        // Adjust fromNode if it has a fromPort
+                        let sourceY = fromNode.y + 24;
+                        if (fromNode.type !== 'processor' && fromNode.type !== 'input') {
+                            sourceY = fromNode.y + (fromNode.height || 150) / 2;
+                        }
+
+                        return <g key={conn.id}>{renderConnectionLine(fromNode.x + w1, sourceY, toNode.x, targetY)}</g>;
                     })}
                     {connectingNodeId && (
                         <g>
@@ -1544,7 +1584,11 @@ const InfinityCanvas: React.FC = () => {
                                 const node = nodes.find(n => n.id === connectingNodeId);
                                 if (!node) return null;
                                 const w = node.width || (node.type === 'processor' ? 320 : 240);
-                                return renderConnectionLine(node.x + w, node.y + 24, mousePos.x, mousePos.y, true);
+                                let sourceY = node.y + 24;
+                                if (node.type !== 'processor' && node.type !== 'input') {
+                                    sourceY = node.y + (node.height || 150) / 2;
+                                }
+                                return renderConnectionLine(node.x + w, sourceY, mousePos.x, mousePos.y, true);
                             })()}
                         </g>
                     )}
@@ -1903,17 +1947,44 @@ const InfinityCanvas: React.FC = () => {
 
                             {/* Handles */}
                             {/* Input Ports */}
-                            {node.type !== 'input' && (
+                            {node.type !== 'input' && node.type !== 'processor' && (
                                 <div
-                                    className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
+                                    className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors group"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'input')}
                                     onMouseUp={(e) => handlePortMouseUp(e, node.id, 'input')}
                                     onTouchStart={(e) => handlePortTouchStart(e, node.id, 'input')}
                                     onTouchEnd={(e) => handlePortTouchEnd(e, node.id, 'input')}
                                     title="Input"
                                 >
-                                    <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none"></div>
+                                    <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none group-hover:bg-white"></div>
                                 </div>
+                            )}
+
+                            {node.type === 'processor' && (
+                                <>
+                                    {[
+                                        { id: 'source', label: "Base Frame", color: "hover:bg-indigo-500", y: 60 },
+                                        { id: 'style', label: "Style Context", color: "hover:bg-pink-500", y: 120 },
+                                        { id: 'arch', label: "Arch Reference", color: "hover:bg-blue-500", y: 180 },
+                                        { id: 'atmosphere', label: "Env Reference", color: "hover:bg-emerald-500", y: 240 }
+                                    ].map((port) => (
+                                        <div
+                                            key={port.id}
+                                            className={`absolute -left-3 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 ${port.color} cursor-pointer z-20 flex items-center justify-center transition-colors group`}
+                                            style={{ top: `${port.y}px` }}
+                                            onMouseDown={(e) => handlePortMouseDown(e, node.id, 'input', port.id)}
+                                            onMouseUp={(e) => handlePortMouseUp(e, node.id, 'input', port.id)}
+                                            onTouchStart={(e) => handlePortTouchStart(e, node.id, 'input', port.id)}
+                                            onTouchEnd={(e) => handlePortTouchEnd(e, node.id, 'input', port.id)}
+                                            title={port.label}
+                                        >
+                                            <div className="w-1.5 h-1.5 bg-slate-500 rounded-full pointer-events-none group-hover:bg-white"></div>
+                                            <div className="absolute left-6 ml-1 bg-black text-white text-[8px] font-bold px-1 py-0.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 shadow-md border border-white/10 uppercase tracking-widest text-slate-300">
+                                                {port.label}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </>
                             )}
 
                             {/* Output Ports */}

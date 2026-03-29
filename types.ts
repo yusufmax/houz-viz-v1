@@ -312,7 +312,9 @@ export interface Node {
 export interface Connection {
   id: string;
   from: string;
+  fromPort?: string;
   to: string;
+  toPort?: string;
 }
 
 export interface Profile {

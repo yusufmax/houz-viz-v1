@@ -186,34 +186,6 @@ export const ArchProcessorNodePanel = ({ node, setNodes, customReferenceImages }
                 onMouseDown={(e) => e.stopPropagation()}
             />
 
-            {/* Global Style Context Reference Strip */}
-            {customReferenceImages && customReferenceImages.length > 0 && (
-                <div className="space-y-1">
-                    <label className="text-[8px] text-slate-500 font-bold uppercase block tracking-wider">Project Context Maps</label>
-                    <div className="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1">
-                        {customReferenceImages.map((ref, idx) => {
-                            const isSelected = node.data.settings?.styleReferenceImage === ref.image_url;
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { 
-                                            ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : ref.image_url } } 
-                                        } : n));
-                                    }}
-                                    className={`relative flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 ${
-                                        isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/30 scale-105' : 'border-white/10 opacity-60 hover:opacity-100 hover:border-indigo-400'
-                                    }`}
-                                    title={ref.name}
-                                >
-                                    <img src={ref.image_url} alt={ref.name} className="w-full h-full object-cover" />
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
 
             {/* Direct Multi-Uploads */}
             <div className="space-y-1">
