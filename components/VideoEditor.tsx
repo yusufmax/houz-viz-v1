@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Film, Loader2, Download, Zap, Maximize2, Eye, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Film, Loader2, Download, Zap, Maximize2, Eye, Upload, Image as ImageIcon, X, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthProvider';
 import { getHouzaiFilename } from '../utils/filenameUtils';
 import { videoQuotaService } from '../services/quotaService';
@@ -23,7 +23,11 @@ const VideoEditor: React.FC = () => {
         aspectRatio: '16:9',
         prompt: '',
         cfgScale: 0.5,
-        mode: 'std'
+        mode: 'std',
+        multiShot: false,
+        multiPrompt: [
+            { index: 1, prompt: '', duration: '5' }
+        ]
     });
 
     // Load video quota
@@ -99,6 +103,11 @@ const VideoEditor: React.FC = () => {
             // Resize/Process image before sending
             const processedImage = await resizeImage(sourceImage);
 
+            // Calculate duration (Sum customized multi_prompts if active)
+            const durationToSend = (videoSettings.model === KlingModel.V3 && videoSettings.multiShot && videoSettings.multiPrompt)
+                ? videoSettings.multiPrompt.reduce((acc, shot) => acc + parseInt(shot.duration || '0'), 0)
+                : videoSettings.duration;
+
             // Call Netlify function to generate video
             const response = await fetch('/api/kling-video', {
                 method: 'POST',
@@ -107,12 +116,14 @@ const VideoEditor: React.FC = () => {
                     action: 'generate',
                     image: processedImage,
                     model: videoSettings.model,
-                    duration: videoSettings.duration,
+                    duration: durationToSend,
                     aspectRatio: videoSettings.aspectRatio,
                     prompt: videoSettings.prompt,
                     cfgScale: videoSettings.cfgScale || 0.5,
                     mode: videoSettings.mode,
-                    end_image: endImage ? await resizeImage(endImage) : undefined
+                    end_image: endImage ? await resizeImage(endImage) : undefined,
+                    multiShot: videoSettings.model === KlingModel.V3 ? videoSettings.multiShot : false,
+                    multiPrompt: videoSettings.multiPrompt
                 })
             });
 
@@ -249,8 +260,25 @@ const VideoEditor: React.FC = () => {
                             >
                                 <option value={KlingModel.V2_5_Turbo}>Kling 2.5 Turbo (Faster)</option>
                                 <option value={KlingModel.V2_1}>Kling 2.1 (Higher Quality)</option>
+                                <option value={KlingModel.V3}>Kling 3.0 (Multi-Shot)</option>
                             </select>
                         </div>
+
+                        {/* Multi-Shot Toggle */}
+                        {videoSettings.model === KlingModel.V3 && (
+                            <div className="flex items-center gap-3 bg-slate-800/50 p-3 rounded-lg border border-slate-700 transition-all">
+                                <input
+                                    type="checkbox"
+                                    checked={videoSettings.multiShot}
+                                    onChange={(e) => setVideoSettings({ ...videoSettings, multiShot: e.target.checked })}
+                                    className="w-4 h-4 rounded border-slate-600 bg-slate-900 checked:bg-indigo-500 shrink-0"
+                                />
+                                <div className="flex flex-col">
+                                    <span className="text-sm font-medium text-white">Custom Multi-Shot</span>
+                                    <span className="text-[10px] text-slate-400 leading-tight mt-0.5">Generate multiple consecutive segments in one video sequence</span>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Quality Selector */}
                         <div>
@@ -283,27 +311,29 @@ const VideoEditor: React.FC = () => {
                         </div>
 
                         {/* Duration Selector */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-400 uppercase mb-2">Duration</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={() => setVideoSettings({ ...videoSettings, duration: 5 })}
-                                    className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 5
-                                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                                >
-                                    5 seconds
-                                </button>
-                                <button
-                                    onClick={() => setVideoSettings({ ...videoSettings, duration: 10 })}
-                                    className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 10
-                                        ? 'bg-indigo-600 border-indigo-500 text-white'
-                                        : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                                >
-                                    10 seconds
-                                </button>
+                        {!videoSettings.multiShot && (
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 uppercase mb-2">Duration</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        onClick={() => setVideoSettings({ ...videoSettings, duration: 5 })}
+                                        className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 5
+                                            ? 'bg-indigo-600 border-indigo-500 text-white'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                                    >
+                                        5 seconds
+                                    </button>
+                                    <button
+                                        onClick={() => setVideoSettings({ ...videoSettings, duration: 10 })}
+                                        className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 10
+                                            ? 'bg-indigo-600 border-indigo-500 text-white'
+                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                                    >
+                                        10 seconds
+                                    </button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Aspect Ratio */}
                         <div>
@@ -325,43 +355,108 @@ const VideoEditor: React.FC = () => {
                         </div>
 
 
-                        {/* Prompt */}
-                        <div>
-                            <label className="block text-xs font-medium text-slate-400 uppercase mb-2">Prompt (Optional)</label>
-                            <textarea
-                                value={videoSettings.prompt}
-                                onChange={(e) => setVideoSettings({ ...videoSettings, prompt: e.target.value })}
-                                placeholder="Describe the camera movement or scene action..."
-                                className="w-full bg-slate-800 text-white px-4 py-3 rounded-lg text-sm resize-none border border-slate-700 focus:border-indigo-500 focus:outline-none transition-colors"
-                                rows={4}
-                                maxLength={2500}
-                            />
-                        </div>
-
-                        {/* Quick Prompts */}
-                        <div className="flex flex-wrap gap-2 mt-3">
-                            {[
-                                { label: 'Zoom In', value: 'Slow smooth zoom in' },
-                                { label: 'Zoom Out', value: 'Slow smooth zoom out' },
-                                { label: 'Pan Left', value: 'Slow smooth pan left' },
-                                { label: 'Pan Right', value: 'Slow smooth pan right' },
-                                { label: 'Timelapse', value: 'Realistic day to midnight timelapse' },
-                                { label: 'Drone Shot', value: 'Realistic drone shot establishing view' },
-                                { label: 'Cinematic', value: 'Cinematic lighting, 8k, highly detailed' },
-                                { label: 'Slow Motion', value: 'Slow motion movement' }
-                            ].map((item) => (
+                        {/* Prompt Structure */}
+                        {videoSettings.multiShot ? (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-indigo-400 uppercase tracking-widest">Multi-Shot Sequence</label>
+                                    <span className="text-[10px] text-slate-400 bg-slate-800 border border-slate-700 px-2 py-1 rounded shadow-sm flex items-center gap-1">
+                                        <Film size={12} className="text-indigo-400"/> Total: <strong className="text-white">{videoSettings.multiPrompt?.reduce((a, b) => a + parseInt(b.duration || '0'), 0)}s</strong>
+                                    </span>
+                                </div>
+                                <div className="space-y-3">
+                                    {videoSettings.multiPrompt?.map((shot, idx) => (
+                                        <div key={idx} className="bg-slate-800 border border-slate-700 rounded-xl p-3 flex flex-col gap-2 relative group hover:border-indigo-500/50 transition-colors">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Shot 0{shot.index}</span>
+                                                {videoSettings.multiPrompt!.length > 1 && (
+                                                    <button onClick={() => {
+                                                        const newPrompts = videoSettings.multiPrompt!.filter((_, i) => i !== idx).map((s, i) => ({ ...s, index: i + 1 }));
+                                                        setVideoSettings({ ...videoSettings, multiPrompt: newPrompts });
+                                                    }} className="text-slate-500 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <textarea
+                                                value={shot.prompt}
+                                                onChange={(e) => {
+                                                    const newPrompts = [...videoSettings.multiPrompt!];
+                                                    newPrompts[idx].prompt = e.target.value;
+                                                    setVideoSettings({ ...videoSettings, multiPrompt: newPrompts });
+                                                }}
+                                                placeholder={`Action or scene description...`}
+                                                className="w-full bg-slate-900/50 text-white px-3 py-2 rounded-lg text-xs resize-none border border-slate-700 focus:border-indigo-500 outline-none"
+                                                rows={2}
+                                            />
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] text-slate-400 uppercase font-medium">Duration:</span>
+                                                <select
+                                                    value={shot.duration}
+                                                    onChange={(e) => {
+                                                        const newPrompts = [...videoSettings.multiPrompt!];
+                                                        newPrompts[idx].duration = e.target.value;
+                                                        setVideoSettings({ ...videoSettings, multiPrompt: newPrompts });
+                                                    }}
+                                                    className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs text-white outline-none focus:border-indigo-500 min-w-[60px]"
+                                                >
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(s => <option key={s} value={s.toString()}>{s}s</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                                 <button
-                                    key={item.label}
-                                    onClick={() => setVideoSettings(prev => ({
-                                        ...prev,
-                                        prompt: prev.prompt ? `${prev.prompt}, ${item.value}` : item.value
-                                    }))}
-                                    className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-full text-slate-300 transition-colors"
+                                    onClick={() => {
+                                        const newPrompts = [...(videoSettings.multiPrompt || []), { index: (videoSettings.multiPrompt?.length || 0) + 1, prompt: '', duration: '5' }];
+                                        setVideoSettings({ ...videoSettings, multiPrompt: newPrompts });
+                                    }}
+                                    className="w-full py-2.5 border border-dashed border-indigo-500/50 rounded-lg text-indigo-400 text-xs font-bold uppercase tracking-widest hover:bg-indigo-500/10 hover:border-indigo-400 flex items-center justify-center gap-2 transition-colors"
                                 >
-                                    + {item.label}
+                                    <Plus size={14} /> Add Segment
                                 </button>
-                            ))}
-                        </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Standard Prompt */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 uppercase mb-2">Prompt (Optional)</label>
+                                    <textarea
+                                        value={videoSettings.prompt}
+                                        onChange={(e) => setVideoSettings({ ...videoSettings, prompt: e.target.value })}
+                                        placeholder="Describe the camera movement or scene action..."
+                                        className="w-full bg-slate-800 text-white px-4 py-3 rounded-lg text-sm resize-none border border-slate-700 focus:border-indigo-500 focus:outline-none transition-colors"
+                                        rows={4}
+                                        maxLength={2500}
+                                    />
+                                </div>
+
+                                {/* Quick Prompts */}
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {[
+                                        { label: 'Zoom In', value: 'Slow smooth zoom in' },
+                                        { label: 'Zoom Out', value: 'Slow smooth zoom out' },
+                                        { label: 'Pan Left', value: 'Slow smooth pan left' },
+                                        { label: 'Pan Right', value: 'Slow smooth pan right' },
+                                        { label: 'Timelapse', value: 'Realistic day to midnight timelapse' },
+                                        { label: 'Drone Shot', value: 'Realistic drone shot establishing view' },
+                                        { label: 'Cinematic', value: 'Cinematic lighting, 8k, highly detailed' },
+                                        { label: 'Slow Motion', value: 'Slow motion movement' }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.label}
+                                            onClick={() => setVideoSettings(prev => ({
+                                                ...prev,
+                                                prompt: prev.prompt ? `${prev.prompt}, ${item.value}` : item.value
+                                            }))}
+                                            className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 rounded-full text-slate-300 transition-colors"
+                                        >
+                                            + {item.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
 
 
                         {/* Generate Button */}

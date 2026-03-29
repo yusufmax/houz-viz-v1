@@ -365,7 +365,8 @@ export interface HistoryItem {
 // Video Generation Types
 export enum KlingModel {
   V2_5_Turbo = 'kling-v2-5-turbo',
-  V2_1 = 'kling-v2-1'
+  V2_1 = 'kling-v2-1',
+  V3 = 'kling-v3'
 }
 
 export type CameraMovementType = 'simple' | 'down_back' | 'forward_up' | 'right_turn_forward' | 'left_turn_forward';
@@ -382,14 +383,22 @@ export interface CameraControlSettings {
   };
 }
 
+export interface MultiShotPrompt {
+  index: number;
+  prompt: string;
+  duration: string;
+}
+
 export interface VideoGenerationSettings {
   model: KlingModel;
-  duration: 5 | 10;
+  duration: number; // Allow arbitrary sum for multi-shot
   aspectRatio: '16:9' | '9:16' | '1:1' | '4:3' | '3:4';
   prompt: string;
   cfgScale?: number;
   cameraControl?: CameraControlSettings;
   mode?: 'std' | 'pro';
+  multiShot?: boolean;
+  multiPrompt?: MultiShotPrompt[];
 }
 
 export interface VideoGeneration {

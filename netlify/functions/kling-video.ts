@@ -77,7 +77,8 @@ export const handler: Handler = async (event) => {
                 'kling-v1': 'kling-v1',
                 'kling-v1-5': 'kling-v1-5',
                 'kling-v2-1': 'kling-v2-1',
-                'kling-v2-5-turbo': 'kling-v2-5-turbo'
+                'kling-v2-5-turbo': 'kling-v2-5-turbo',
+                'kling-v3': 'kling-v3'
             };
 
             // Build request body according to official API spec
@@ -164,6 +165,13 @@ export const handler: Handler = async (event) => {
             // negative_prompt if provided
             if (params.negativePrompt) {
                 requestBody.negative_prompt = params.negativePrompt;
+            }
+
+            // multi_shot if provided
+            if (params.multiShot) {
+                requestBody.multi_shot = "true";
+                requestBody.shot_type = "customize"; // Hardcoded as requested
+                requestBody.multi_prompt = params.multiPrompt || [];
             }
 
 
