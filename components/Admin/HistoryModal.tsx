@@ -56,7 +56,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                                 {history.map((item, index) => (
                                     <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg flex flex-col">
                                         <div className="aspect-square relative flex-shrink-0 overflow-hidden bg-slate-950">

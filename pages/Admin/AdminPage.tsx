@@ -30,6 +30,7 @@ const AdminPage: React.FC = () => {
     const [endDate, setEndDate] = useState<string>('');
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
+    const [globalQuota, setGlobalQuota] = useState(() => Number(localStorage.getItem('admin_global_quota')) || 900);
 
     // Format cost to 22,8 style (1 decimal, comma separator)
     const formatCost = (val: number | undefined | null) => {
@@ -611,25 +612,38 @@ const AdminPage: React.FC = () => {
                                             <AlertTriangle className="text-red-500" size={18} />
                                             <h3 className="font-bold text-red-500 uppercase tracking-tight">Overspending Alerts</h3>
                                         </div>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Global Quota</span>
+                                            <input 
+                                                type="number" 
+                                                value={globalQuota} 
+                                                onChange={(e) => {
+                                                    const v = Number(e.target.value);
+                                                    setGlobalQuota(v);
+                                                    localStorage.setItem('admin_global_quota', v.toString());
+                                                }}
+                                                className="w-20 bg-slate-950 border border-red-900/50 rounded flex items-center justify-end px-2 py-1 text-xs text-white font-bold outline-none focus:border-red-500 text-right"
+                                            />
+                                        </div>
                                     </div>
                                     <div className="p-4 flex-1">
                                         <div className="space-y-2">
                                             {(() => {
-                                                const overspenders = users.filter(u => u.generations_used >= (u.generation_quota || 0) * 0.9).sort((a,b) => b.generations_used - a.generations_used);
+                                                const overspenders = users.filter(u => u.generations_used >= globalQuota * 0.9).sort((a,b) => b.generations_used - a.generations_used);
                                                 if (overspenders.length === 0) {
                                                     return <div className="p-4 text-center text-slate-500 italic text-sm">No users near quota limit</div>;
                                                 }
                                                 return overspenders.map(u => {
-                                                    const pct = u.generation_quota ? Math.round((u.generations_used / u.generation_quota) * 100) : 100;
+                                                    const pct = globalQuota > 0 ? Math.round((u.generations_used / globalQuota) * 100) : 100;
                                                     const isOver = pct >= 100;
                                                     return (
                                                         <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border ${isOver ? 'bg-red-950/40 border-red-900/50' : 'bg-yellow-950/20 border-yellow-900/30'}`}>
                                                             <div className="flex flex-col">
                                                                 <span className="font-bold text-white text-sm max-w-[120px] truncate">{u.display_name || u.full_name || 'Anonymous'}</span>
-                                                                <span className={`text-[10px] font-black uppercase ${isOver ? 'text-red-400' : 'text-yellow-500'}`}>{pct}% Quota</span>
+                                                                <span className={`text-[10px] font-black uppercase ${isOver ? 'text-red-400' : 'text-yellow-500'}`}>{pct}% of Limit</span>
                                                             </div>
                                                             <div className="text-right">
-                                                                <div className="text-sm font-black text-white">{u.generations_used} <span className="text-slate-500 text-xs font-normal">/ {u.generation_quota}</span></div>
+                                                                <div className="text-sm font-black text-white">{u.generations_used} <span className="text-slate-500 text-xs font-normal">/ {globalQuota}</span></div>
                                                             </div>
                                                         </div>
                                                     );
