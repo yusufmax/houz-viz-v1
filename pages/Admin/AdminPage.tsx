@@ -26,8 +26,11 @@ const AdminPage: React.FC = () => {
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editQuota, setEditQuota] = useState<number>(0);
-    const [startDate, setStartDate] = useState<string>('');
-    const [endDate, setEndDate] = useState<string>('');
+    // Default to last 7 days
+    const defaultEndDate = new Date().toISOString().split('T')[0];
+    const defaultStartDate = new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const [startDate, setStartDate] = useState<string>(defaultStartDate);
+    const [endDate, setEndDate] = useState<string>(defaultEndDate);
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [loadingStats, setLoadingStats] = useState(false);
     const [globalQuota, setGlobalQuota] = useState(() => Number(localStorage.getItem('admin_global_quota')) || 900);
@@ -491,19 +494,23 @@ const AdminPage: React.FC = () => {
                                     </h3>
                                     <p className="text-xs text-slate-500 font-medium">System performance and usage metrics</p>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-                                        Filters controlled at Chart level below
-                                    </span>
-                                    {(startDate || endDate) && (
-                                        <button
-                                            onClick={() => { setStartDate(''); setEndDate(''); }}
-                                            className="p-2 text-slate-500 hover:text-white transition-colors"
-                                            title="Clear Filters"
-                                        >
-                                            <X size={16} />
-                                        </button>
-                                    )}
+                                <div className="flex items-center gap-3 ml-auto">
+                                    <DateRangePicker 
+                                        startDate={startDate}
+                                        endDate={endDate}
+                                        onChange={(start, end) => {
+                                            setStartDate(start);
+                                            setEndDate(end);
+                                        }}
+                                    />
+                                    <button
+                                        onClick={loadStats}
+                                        disabled={loadingStats}
+                                        className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2 disabled:opacity-50 shrink-0"
+                                    >
+                                        {loadingStats ? <Loader2 size={14} className="animate-spin" /> : <TrendingUp size={14} />}
+                                        <span className="hidden sm:inline">Refresh</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -665,26 +672,8 @@ const AdminPage: React.FC = () => {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-white uppercase tracking-tight leading-none text-sm md:text-base">Usage & Cost Analytics</h3>
-                                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-1">Growth Trends • {stats?.daily.length} Days Period</p>
+                                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-black mt-1">Growth Trends • {stats?.daily.length || 7} Days Period</p>
                                         </div>
-                                    </div>
-                                    <div className="flex items-center gap-3 ml-auto">
-                                        <DateRangePicker 
-                                            startDate={startDate}
-                                            endDate={endDate}
-                                            onChange={(start, end) => {
-                                                setStartDate(start);
-                                                setEndDate(end);
-                                            }}
-                                        />
-                                        <button
-                                            onClick={loadStats}
-                                            disabled={loadingStats}
-                                            className="h-10 px-6 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-black transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2 disabled:opacity-50"
-                                        >
-                                            {loadingStats ? <Loader2 size={14} className="animate-spin" /> : <TrendingUp size={14} />}
-                                            {loadingStats ? 'LOADING...' : 'REFRESH'}
-                                        </button>
                                     </div>
                                 </div>
 
