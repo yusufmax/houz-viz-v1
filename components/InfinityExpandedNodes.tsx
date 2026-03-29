@@ -1,6 +1,6 @@
 import React from 'react';
-import { Node, RenderStyle, AspectRatio } from '../types';
-import { Layers, Zap, Film, Box, Maximize2, Camera, User, TreePine } from 'lucide-react';
+import { Node, RenderStyle, AspectRatio, Atmosphere, CameraAngle } from '../types';
+import { Layers, Zap, Film, Box, Maximize2, Camera, User, TreePine, X, Plus } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 
 export const VideoNodePanel = ({ node, setNodes }: { node: Node, setNodes: any }) => {
@@ -137,6 +137,151 @@ export const UpscaleNodePanel = ({ node, setNodes }: { node: Node, setNodes: any
                     onMouseDown={(e) => e.stopPropagation()}
                 />
              </div>
+        </div>
+    );
+};
+
+export const ArchProcessorNodePanel = ({ node, setNodes, customReferenceImages }: { node: Node, setNodes: any, customReferenceImages: any[] }) => {
+    
+    // Toggle atmosphere micro-pills
+    const toggleNodeAtmosphere = (atm: Atmosphere) => {
+        setNodes((prev: Node[]) => prev.map(n => {
+            if (n.id === node.id && n.data.settings) {
+                const current = n.data.settings.atmosphere || [];
+                if (current.includes(atm)) {
+                    return { ...n, data: { ...n.data, settings: { ...n.data.settings, atmosphere: current.filter(a => a !== atm) } } };
+                }
+                if (current.length >= 3) return n;
+                return { ...n, data: { ...n.data, settings: { ...n.data.settings, atmosphere: [...current, atm] } } };
+            }
+            return n;
+        }));
+    };
+
+    return (
+        <div className="space-y-3">
+            <textarea
+                className="w-full min-h-[50px] bg-black/60 border border-white/5 rounded-lg p-2 text-[10px] text-zinc-300 resize-none focus:border-indigo-500 outline-none leading-relaxed transition-colors custom-scrollbar"
+                placeholder="Describe your scene in detail..."
+                value={node.data.settings?.prompt || ''}
+                onChange={(e) => {
+                    const v = e.target.value;
+                    setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, prompt: v } } } : n));
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+            />
+
+            {/* Compact Reference Strip */}
+            {customReferenceImages && customReferenceImages.length > 0 && (
+                <div className="space-y-1">
+                    <label className="text-[8px] text-slate-500 font-bold uppercase block tracking-wider">Style Reference</label>
+                    <div className="flex gap-1.5 overflow-x-auto custom-scrollbar pb-1">
+                        {customReferenceImages.map((ref, idx) => {
+                            const isSelected = node.data.settings?.styleReferenceImage === ref.image_url;
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { 
+                                            ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : ref.image_url } } 
+                                        } : n));
+                                    }}
+                                    className={`relative flex-shrink-0 w-8 h-8 rounded-full overflow-hidden border-2 transition-all duration-200 ${
+                                        isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/30 scale-105' : 'border-white/10 opacity-60 hover:opacity-100 hover:border-indigo-400'
+                                    }`}
+                                    title={ref.name}
+                                >
+                                    <img src={ref.image_url} alt={ref.name} className="w-full h-full object-cover" />
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-2">
+                {/* Minimal Grid: Camera & Style */}
+                <div className="space-y-1">
+                    <label className="text-[8px] text-slate-500 font-bold uppercase block tracking-wider">Angle</label>
+                    <select
+                        className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[9px] text-zinc-300 outline-none focus:border-indigo-500"
+                        value={node.data.settings?.camera}
+                        onChange={(e) => { setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, camera: e.target.value as CameraAngle } } } : n)) }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        {Object.values(CameraAngle).map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                
+                <div className="space-y-1">
+                    <label className="text-[8px] text-slate-500 font-bold uppercase block tracking-wider">Style</label>
+                    <select
+                        className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[9px] text-zinc-300 outline-none focus:border-indigo-500"
+                        value={node.data.settings?.style}
+                        onChange={(e) => { setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, style: e.target.value as RenderStyle } } } : n)) }}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        {Object.values(RenderStyle).map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                </div>
+            </div>
+
+            {/* Ultra-compact Aspect Ratio Box */}
+            <div className="bg-black/40 border border-white/5 rounded-lg p-1.5 flex items-center justify-between mt-2">
+                <span className="text-[8px] text-zinc-500 font-bold uppercase pl-1 tracking-wider">Aspect</span>
+                <div className="flex gap-0.5">
+                    {['16:9', '1:1', '9:16', '4:3', '3:4'].map(r => (
+                        <button
+                            key={r}
+                            onClick={(e) => { e.stopPropagation(); setNodes((prev: Node[]) => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, aspectRatio: r as AspectRatio } } } : n)) }}
+                            className={`px-1.5 py-0.5 text-[8px] rounded font-mono transition-colors ${node.data.settings?.aspectRatio === r ? 'bg-indigo-600 text-white' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'}`}
+                        >
+                            {r}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Atmosphere Redesign: Live Micro-Pills + Dropdown */}
+            <div className="space-y-1.5 border-t border-white/5 pt-2 mt-2">
+                <div className="flex justify-between items-center">
+                    <label className="text-[8px] text-slate-500 font-bold uppercase tracking-wider">Atmosphere {(node.data.settings?.atmosphere?.length || 0)}/3</label>
+                    {/* Add dropdown */}
+                    <div className="relative group">
+                        <select
+                            className="bg-transparent text-[8px] font-bold uppercase tracking-wider text-indigo-400 hover:text-indigo-300 outline-none cursor-pointer appearance-none text-right"
+                            value=""
+                            onChange={(e) => {
+                                if(e.target.value) toggleNodeAtmosphere(e.target.value as Atmosphere);
+                            }}
+                        >
+                            <option value="" disabled className="bg-black text-slate-500">＋ Add Filter</option>
+                            {Object.values(Atmosphere).filter(a => !(node.data.settings?.atmosphere || []).includes(a)).map(atm => (
+                                <option key={atm} value={atm} className="bg-zinc-950 text-zinc-300">{atm}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-1 min-h-[22px]">
+                    {(node.data.settings?.atmosphere || []).map(atm => (
+                        <div key={atm} className="flex items-center gap-1 bg-indigo-900/40 border border-indigo-500/30 rounded pl-1.5 pr-0.5 py-0.5 group/pill">
+                            <span className="text-[8px] text-indigo-200 uppercase truncate max-w-[80px]">{atm}</span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(atm); }}
+                                className="text-indigo-400/50 hover:text-white hover:bg-red-500/20 rounded p-0.5 transition-colors"
+                            >
+                                <X size={8} />
+                            </button>
+                        </div>
+                    ))}
+                    {(node.data.settings?.atmosphere?.length || 0) === 0 && (
+                        <div className="text-[8px] text-zinc-600 italic mt-0.5">No atmospheric active.</div>
+                    )}
+                </div>
+            </div>
+
         </div>
     );
 };

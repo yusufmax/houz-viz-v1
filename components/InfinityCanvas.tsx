@@ -22,7 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { quotaService } from '../services/quotaService';
 import { getHouzaiFilename } from '../utils/filenameUtils';
-import { VideoNodePanel, AdvancedRefNodePanel, UpscaleNodePanel } from './InfinityExpandedNodes';
+import { VideoNodePanel, AdvancedRefNodePanel, UpscaleNodePanel, ArchProcessorNodePanel } from './InfinityExpandedNodes';
 
 const STYLE_LIBRARY = [
     // Living Complex / House
@@ -1836,115 +1836,7 @@ const InfinityCanvas: React.FC = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <>
-                                                    <textarea
-                                                        className="w-full h-16 bg-black border border-white/5 rounded p-2 text-[10px] text-zinc-300 resize-none focus:border-indigo-500 outline-none"
-                                                        placeholder={t('nodePrompt')}
-                                                        value={node.data.settings.prompt}
-                                                        onChange={(e) => {
-                                                            const v = e.target.value;
-                                                            setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, prompt: v } } } : n));
-                                                        }}
-                                                        onMouseDown={(e) => e.stopPropagation()}
-                                                    />
-
-                                                    {/* Reference Image Selector */}
-                                                    <div className="space-y-1">
-                                                        <label className="text-[9px] text-slate-500 font-bold uppercase block">Style Reference (Optional)</label>
-                                                        <div className="grid grid-cols-5 gap-1">
-                                                            {(customReferenceImages.length > 0
-                                                                ? customReferenceImages.map(ref => ({ name: ref.name, url: ref.image_url }))
-                                                                : []
-                                                            ).map((styleRef, idx) => (
-                                                                <button
-                                                                    key={idx}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        const isSelected = node.data.settings?.styleReferenceImage === styleRef.url;
-                                                                        setNodes(prev => prev.map(n =>
-                                                                            n.id === node.id
-                                                                                ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, styleReferenceImage: isSelected ? null : styleRef.url } } }
-                                                                                : n
-                                                                        ));
-                                                                    }}
-                                                                    className={`relative aspect-square rounded overflow-hidden border ${node.data.settings?.styleReferenceImage === styleRef.url
-                                                                        ? 'border-indigo-500 ring-2 ring-indigo-500/50'
-                                                                        : 'border-white/10 hover:border-indigo-500'
-                                                                        } group transition-all`}
-                                                                    title={styleRef.name}
-                                                                >
-                                                                    <img src={styleRef.url} alt={styleRef.name} className="w-full h-full object-cover" />
-                                                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[7px] text-center text-white p-0.5 transition-opacity">
-                                                                        {styleRef.name}
-                                                                    </div>
-                                                                </button>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Aspect Ratio & Camera */}
-                                                    <div className="space-y-2">
-                                                        <div className="flex justify-between items-center">
-                                                            <label className="text-[9px] text-slate-500 font-bold uppercase">{t('aspectRatio')}</label>
-                                                            <label className="text-[9px] text-slate-500 font-bold uppercase">{t('camera')}</label>
-                                                        </div>
-                                                        <div className="flex items-start gap-2">
-                                                            <div className="flex flex-wrap gap-1 flex-1">
-                                                                {['16:9', '1:1', '9:16', '4:3', '3:4', 'Original'].map(r => (
-                                                                    <button
-                                                                        key={r}
-                                                                        onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, aspectRatio: r as AspectRatio } } } : n)) }}
-                                                                        className={`px-1.5 py-0.5 text-[9px] rounded border ${node.data.settings!.aspectRatio === r ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-black border-white/5 text-slate-500'}`}
-                                                                    >
-                                                                        {r}
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                            <select
-                                                                className="bg-black border border-white/5 rounded px-1 py-0.5 text-[9px] text-zinc-300 outline-none w-24"
-                                                                value={node.data.settings.camera}
-                                                                onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, camera: e.target.value as CameraAngle } } } : n)) }}
-                                                                onMouseDown={(e) => e.stopPropagation()}
-                                                            >
-                                                                {Object.values(CameraAngle).map(c => <option key={c} value={c}>{c}</option>)}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Dropdowns */}
-                                                    <div className="space-y-2">
-                                                        <div>
-                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('stylePreset')}</label>
-                                                            <select
-                                                                className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[10px] text-zinc-300 outline-none"
-                                                                value={node.data.settings.style}
-                                                                onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, style: e.target.value as RenderStyle } } } : n)) }}
-                                                                onMouseDown={(e) => e.stopPropagation()}
-                                                            >
-                                                                {Object.values(RenderStyle).map(s => <option key={s} value={s}>{t(s as any)}</option>)}
-                                                            </select>
-                                                        </div>
-                                                        <div>
-                                                            <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('atmosphere')}</label>
-                                                            {/* Multi-Select Grid for Node */}
-                                                            <div className="grid grid-cols-3 gap-1 overflow-hidden">
-                                                                {Object.values(Atmosphere).slice(0, 20).map(atm => {
-                                                                    const isSelected = (node.data.settings!.atmosphere || []).includes(atm);
-                                                                    return (
-                                                                        <button
-                                                                            key={atm}
-                                                                            onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(node.id, atm); }}
-                                                                            className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-black border-white/5 text-slate-500'}`}
-                                                                            title={atm}
-                                                                        >
-                                                                            <span className="truncate block">{t(atm as any)}</span>
-                                                                        </button>
-                                                                    )
-                                                                })}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </>
+                                                <ArchProcessorNodePanel node={node} setNodes={setNodes} customReferenceImages={customReferenceImages} />
                                             )}
 
                                             {/* Common Footer Actions */}
