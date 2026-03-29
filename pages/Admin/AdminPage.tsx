@@ -605,15 +605,15 @@ const AdminPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Overspending Alerts */}
-                                <div className="bg-slate-900 rounded-2xl border border-red-900/50 overflow-hidden shadow-2xl flex flex-col relative bg-gradient-to-br from-red-950/20 to-transparent">
-                                    <div className="p-6 border-b border-red-900/50 bg-red-950/30 flex items-center justify-between">
+                                {/* High Volume Usage */}
+                                <div className="bg-slate-900 rounded-2xl border border-indigo-900/50 overflow-hidden shadow-2xl flex flex-col relative bg-gradient-to-br from-indigo-950/20 to-transparent">
+                                    <div className="p-6 border-b border-indigo-900/50 bg-indigo-950/30 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <AlertTriangle className="text-red-500" size={18} />
-                                            <h3 className="font-bold text-red-500 uppercase tracking-tight">Overspending Alerts</h3>
+                                            <TrendingUp className="text-indigo-500" size={18} />
+                                            <h3 className="font-bold text-indigo-400 uppercase tracking-tight">High Volume Users</h3>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Global Quota</span>
+                                            <span className="text-[10px] font-black uppercase text-slate-500 tracking-widest">Threshold</span>
                                             <input 
                                                 type="number" 
                                                 value={globalQuota} 
@@ -622,28 +622,30 @@ const AdminPage: React.FC = () => {
                                                     setGlobalQuota(v);
                                                     localStorage.setItem('admin_global_quota', v.toString());
                                                 }}
-                                                className="w-20 bg-slate-950 border border-red-900/50 rounded flex items-center justify-end px-2 py-1 text-xs text-white font-bold outline-none focus:border-red-500 text-right"
+                                                className="w-20 bg-slate-950 border border-indigo-900/50 rounded flex items-center justify-end px-2 py-1 text-xs text-white font-bold outline-none focus:border-indigo-500 text-right"
                                             />
                                         </div>
                                     </div>
                                     <div className="p-4 flex-1">
-                                        <div className="space-y-2">
+                                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-800">
                                             {(() => {
-                                                const overspenders = users.filter(u => u.generations_used >= globalQuota * 0.9).sort((a,b) => b.generations_used - a.generations_used);
-                                                if (overspenders.length === 0) {
-                                                    return <div className="p-4 text-center text-slate-500 italic text-sm">No users near quota limit</div>;
+                                                const heavyUsers = users.filter(u => u.generations_used >= globalQuota).sort((a,b) => b.generations_used - a.generations_used);
+                                                if (heavyUsers.length === 0) {
+                                                    return <div className="p-4 text-center text-slate-500 italic text-sm">No active users above {globalQuota}</div>;
                                                 }
-                                                return overspenders.map(u => {
-                                                    const pct = globalQuota > 0 ? Math.round((u.generations_used / globalQuota) * 100) : 100;
-                                                    const isOver = pct >= 100;
+                                                return heavyUsers.map(u => {
                                                     return (
-                                                        <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border ${isOver ? 'bg-red-950/40 border-red-900/50' : 'bg-yellow-950/20 border-yellow-900/30'}`}>
+                                                        <div key={u.id} className="flex items-center justify-between p-3 rounded-lg border bg-indigo-950/20 border-indigo-900/30 shadow-sm">
                                                             <div className="flex flex-col">
-                                                                <span className="font-bold text-white text-sm max-w-[120px] truncate">{u.display_name || u.full_name || 'Anonymous'}</span>
-                                                                <span className={`text-[10px] font-black uppercase ${isOver ? 'text-red-400' : 'text-yellow-500'}`}>{pct}% of Limit</span>
+                                                                <span className="font-bold text-white text-sm max-w-[160px] truncate">{u.display_name || u.full_name || 'Anonymous'}</span>
+                                                                <span className="text-[10px] font-black uppercase text-indigo-400 mt-1">
+                                                                    Generated {u.generations_used}+ images
+                                                                </span>
                                                             </div>
-                                                            <div className="text-right">
-                                                                <div className="text-sm font-black text-white">{u.generations_used} <span className="text-slate-500 text-xs font-normal">/ {globalQuota}</span></div>
+                                                            <div className="text-right flex items-center gap-2">
+                                                                <div className="text-sm font-black text-white px-2 py-1 bg-indigo-900/40 rounded border border-indigo-800/50">
+                                                                    {u.generations_used} <span className="text-indigo-300 text-[10px] uppercase ml-1">Gens</span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     );
