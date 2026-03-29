@@ -704,6 +704,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const calculateCost = () => {
     if (model === 'gemini-2.5-flash-image') return 1;
+    if (model === 'gemini-3.1-flash-image-preview') {
+      let base = 4;
+      if (showAdvancedRefs) {
+        base += customReferences.filter(r => r.image).length * 2;
+      }
+      return base;
+    }
     if (model === 'gemini-3-pro-image-preview') {
       if (resolution === '1K' || resolution === 'Original') return 2;
       if (resolution === '2K') return 4;
@@ -1713,6 +1720,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                   {showAdvancedRefs && (
                     <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="text-[10px] text-yellow-500/80 mb-2 font-black tracking-widest uppercase">
+                        * Base cost: 4 credits. +2 credits per reference upload. Max 10.
+                      </div>
                       {customReferences.map((ref, i) => (
                         <div key={ref.id} className="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-3 relative group shadow-lg">
                           <button
@@ -1723,22 +1733,43 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                             <X size={12} />
                           </button>
                           
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Category:</span>
-                            <select
-                              value={ref.category}
-                              onChange={(e) => {
-                                const newRefs = [...customReferences];
-                                newRefs[i].category = e.target.value as any;
-                                setCustomReferences(newRefs);
-                              }}
-                              className="flex-1 bg-slate-950 text-indigo-300 rounded-lg px-3 py-1.5 text-xs font-bold border border-slate-700 focus:outline-none focus:border-indigo-500"
-                            >
-                              <option value="People">People</option>
-                              <option value="Environment">Environment</option>
-                              <option value="Architecture">Architecture</option>
-                              <option value="Atmosphere">General Atmosphere</option>
-                            </select>
+                          <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Category:</span>
+                              <select
+                                value={ref.category}
+                                onChange={(e) => {
+                                  const newRefs = [...customReferences];
+                                  newRefs[i].category = e.target.value as any;
+                                  if (e.target.value !== 'Custom') newRefs[i].customCategoryName = '';
+                                  setCustomReferences(newRefs);
+                                }}
+                                className="flex-1 bg-slate-950 text-indigo-300 rounded-lg px-3 py-1.5 text-xs font-bold border border-slate-700 focus:outline-none focus:border-indigo-500"
+                              >
+                                <option value="Greenery">Greenery</option>
+                                <option value="People">People</option>
+                                <option value="Materials">Materials</option>
+                                <option value="Atmosphere">Atmosphere</option>
+                                <option value="Custom">Custom</option>
+                              </select>
+                            </div>
+                            
+                            {ref.category === 'Custom' && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Name:</span>
+                                <input
+                                  type="text"
+                                  placeholder="E.g. Specific Object"
+                                  value={ref.customCategoryName || ''}
+                                  onChange={(e) => {
+                                    const newRefs = [...customReferences];
+                                    newRefs[i].customCategoryName = e.target.value;
+                                    setCustomReferences(newRefs);
+                                  }}
+                                  className="flex-1 bg-slate-950 text-slate-200 rounded-lg px-3 py-1.5 text-xs border border-slate-700 focus:outline-none focus:border-indigo-500"
+                                />
+                              </div>
+                            )}
                           </div>
 
                           <ImageUpload
@@ -1748,7 +1779,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                               newRefs[i].image = img;
                               setCustomReferences(newRefs);
                             }}
-                            label={"Upload " + ref.category + " Ref"}
+                            label={`Upload ${ref.category === 'Custom' ? (ref.customCategoryName || 'Custom') : ref.category} Ref`}
                             compact
                           />
 
@@ -1756,7 +1787,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                             <Pen size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input
                               type="text"
-                              placeholder={"E.g. Use this specific " + ref.category.toLowerCase() + " style"}
+                              placeholder={`E.g. Form, structure or style instructions`}
                               value={ref.prompt}
                               onChange={(e) => {
                                 const newRefs = [...customReferences];
@@ -1771,16 +1802,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                       <button
                         onClick={() => {
+                          if (customReferences.length >= 10) return;
                           setCustomReferences([...customReferences, {
                             id: Date.now().toString(),
-                            category: 'People',
+                            category: 'Greenery',
                             image: '',
                             prompt: ''
                           }]);
                         }}
-                        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl border border-dashed border-slate-600 transition-all hover:border-slate-400 active:scale-95"
+                        disabled={customReferences.length >= 10}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300 text-xs font-bold py-3 rounded-xl border border-dashed border-slate-600 transition-all hover:border-slate-400 active:scale-95"
                       >
-                        <Plus size={14} /> Add Categorical Reference
+                        <Plus size={14} /> Add Categorical Reference {customReferences.length}/10
                       </button>
                     </div>
                   )}

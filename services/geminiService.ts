@@ -558,11 +558,12 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         if (ref.image) {
           const { mimeType, data } = await toInlineData(ref.image);
           if (data) {
+            const categoryName = ref.category === 'Custom' ? (ref.customCategoryName || 'CUSTOM') : ref.category;
             parts.push({
               inlineData: { mimeType, data }
             });
             parts.push({
-              text: `STRICT INSTRUCTION - IMAGE (Above) [Category: ${ref.category.toUpperCase()}]: ${ref.prompt}`
+              text: `STRICT INSTRUCTION - IMAGE (Above) [Category: ${categoryName.toUpperCase()}]: ${ref.prompt}`
             });
           }
         }

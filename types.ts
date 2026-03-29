@@ -227,7 +227,8 @@ export interface GenerationSettings {
 
 export interface CustomReference {
   id: string;
-  category: 'People' | 'Environment' | 'Architecture' | 'Atmosphere';
+  category: 'Greenery' | 'People' | 'Materials' | 'Atmosphere' | 'Custom';
+  customCategoryName?: string;
   image: string;
   prompt: string; 
 }
