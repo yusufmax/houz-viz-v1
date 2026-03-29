@@ -19,7 +19,11 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
     React.useEffect(() => {
         if (isOpen) {
             setLoadingQueueIndex(0);
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
         }
+        return () => { document.body.style.overflow = ''; };
     }, [isOpen, user.id]);
 
     if (!isOpen) return null;
@@ -27,7 +31,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div className="relative bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-[95vw] lg:w-[90vw] max-w-none max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
 
                 {/* Header */}
                 <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
@@ -52,10 +56,10 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
                                 {history.map((item, index) => (
-                                    <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg">
-                                        <div className="aspect-square relative overflow-hidden bg-slate-950">
+                                    <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg flex flex-col">
+                                        <div className="aspect-square relative flex-shrink-0 overflow-hidden bg-slate-950">
                                             <img
                                                 src={index <= loadingQueueIndex ? historyService.getOptimizedUrl(item.image_url) : ''}
                                                 alt={item.prompt}
@@ -93,7 +97,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                                                     <Tag size={10} /> {item.style || 'Standard'}
                                                 </span>
                                             </div>
-                                            <p className="text-xs text-slate-300 line-clamp-3 leading-relaxed">
+                                            <p className="text-[10px] text-slate-300 line-clamp-2 leading-relaxed mt-1">
                                                 {item.prompt || 'No prompt provided'}
                                             </p>
                                         </div>
@@ -101,29 +105,30 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                                 ))}
                             </div>
 
-                            {hasMore && (
-                                <div className="flex justify-center pt-4">
-                                    <button
-                                        onClick={onLoadMore}
-                                        disabled={loadingMore}
-                                        className="px-6 py-2 bg-slate-800 hover:bg-indigo-600 text-slate-300 hover:text-white rounded-xl text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2"
-                                    >
-                                        {loadingMore ? (
-                                            <>Loading...</>
-                                        ) : (
-                                            <>Load More History</>
-                                        )}
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
 
                 {/* Footer */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-xs text-slate-500">
-                    <span>Showing {history.length} items</span>
-                    <span className="font-mono">{user.id}</span>
+                <div className="p-4 border-t border-slate-800 bg-slate-900 flex justify-between items-center text-xs text-slate-500 shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-20">
+                    <span className="w-1/3 text-left">Showing {history.length} items</span>
+                    
+                    <div className="w-1/3 flex justify-center">
+                        {hasMore && (
+                            <button
+                                onClick={onLoadMore}
+                                disabled={loadingMore}
+                                className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-black transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95"
+                            >
+                                {loadingMore ? 'LOADING...' : 'LOAD MORE HISTORY'}
+                            </button>
+                        )}
+                        {!hasMore && history.length > 0 && (
+                            <span className="text-slate-600 font-bold uppercase tracking-widest text-[10px]">End of History</span>
+                        )}
+                    </div>
+
+                    <span className="font-mono w-1/3 text-right">{user.id}</span>
                 </div>
             </div>
         </div>

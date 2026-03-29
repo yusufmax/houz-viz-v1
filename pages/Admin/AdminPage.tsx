@@ -9,6 +9,7 @@ import HistoryModal from '../../components/Admin/HistoryModal';
 import { uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
 import ImageUpload from '../../components/ImageUpload';
 import { historyService } from '../../services/historyService';
+import { DateRangePicker } from '../../components/Admin/DateRangePicker';
 
 const AdminPage: React.FC = () => {
     const { user } = useAuth();
@@ -525,18 +526,19 @@ const AdminPage: React.FC = () => {
                                     </div>
                                     <div className="text-3xl font-black text-white">{stats?.system.totalUsers.toLocaleString()}</div>
                                 </div>
-                                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-xl">
-                                    <div className="flex items-center gap-4 mb-2">
-                                        <div className="p-2 bg-amber-900/20 rounded-lg text-amber-400">
+                                <div className="bg-slate-900 p-6 rounded-2xl border-2 border-amber-500/30 shadow-[0_0_30px_rgba(245,158,11,0.1)] relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent"></div>
+                                    <div className="flex items-center gap-4 mb-2 relative z-10">
+                                        <div className="p-2 bg-amber-900/40 rounded-lg text-amber-400">
                                             <ShieldAlert size={20} />
                                         </div>
-                                        <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">Est. Total Cost (USD)</span>
+                                        <span className="text-amber-400 font-bold uppercase tracking-widest text-sm">Total Expenses (USD)</span>
                                     </div>
-                                    <div className="text-3xl font-black text-white">${formatCost(stats?.system.totalCostUSD)}</div>
+                                    <div className="text-4xl font-black text-amber-400 relative z-10 drop-shadow-lg">${formatCost(stats?.system.totalCostUSD)}</div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                 {/* Daily Usage */}
                                 <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
                                     <div className="p-6 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between">
@@ -601,6 +603,41 @@ const AdminPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* Overspending Alerts */}
+                                <div className="bg-slate-900 rounded-2xl border border-red-900/50 overflow-hidden shadow-2xl flex flex-col relative bg-gradient-to-br from-red-950/20 to-transparent">
+                                    <div className="p-6 border-b border-red-900/50 bg-red-950/30 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <AlertTriangle className="text-red-500" size={18} />
+                                            <h3 className="font-bold text-red-500 uppercase tracking-tight">Overspending Alerts</h3>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 flex-1">
+                                        <div className="space-y-2">
+                                            {(() => {
+                                                const overspenders = users.filter(u => u.generations_used >= (u.generation_quota || 0) * 0.9).sort((a,b) => b.generations_used - a.generations_used);
+                                                if (overspenders.length === 0) {
+                                                    return <div className="p-4 text-center text-slate-500 italic text-sm">No users near quota limit</div>;
+                                                }
+                                                return overspenders.map(u => {
+                                                    const pct = u.generation_quota ? Math.round((u.generations_used / u.generation_quota) * 100) : 100;
+                                                    const isOver = pct >= 100;
+                                                    return (
+                                                        <div key={u.id} className={`flex items-center justify-between p-3 rounded-lg border ${isOver ? 'bg-red-950/40 border-red-900/50' : 'bg-yellow-950/20 border-yellow-900/30'}`}>
+                                                            <div className="flex flex-col">
+                                                                <span className="font-bold text-white text-sm max-w-[120px] truncate">{u.display_name || u.full_name || 'Anonymous'}</span>
+                                                                <span className={`text-[10px] font-black uppercase ${isOver ? 'text-red-400' : 'text-yellow-500'}`}>{pct}% Quota</span>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <div className="text-sm font-black text-white">{u.generations_used} <span className="text-slate-500 text-xs font-normal">/ {u.generation_quota}</span></div>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             {/* Usage Analytics Charts */}
@@ -616,22 +653,14 @@ const AdminPage: React.FC = () => {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 ml-auto">
-                                        <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
-                                            <Calendar size={14} className="text-slate-500" />
-                                            <input
-                                                type="date"
-                                                value={startDate}
-                                                onChange={(e) => setStartDate(e.target.value)}
-                                                className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-[130px] cursor-pointer [color-scheme:dark]"
-                                            />
-                                            <span className="text-slate-700 mx-1">/</span>
-                                            <input
-                                                type="date"
-                                                value={endDate}
-                                                onChange={(e) => setEndDate(e.target.value)}
-                                                className="bg-transparent text-xs font-bold text-white outline-none focus:text-indigo-400 transition-colors w-[130px] cursor-pointer [color-scheme:dark]"
-                                            />
-                                        </div>
+                                        <DateRangePicker 
+                                            startDate={startDate}
+                                            endDate={endDate}
+                                            onChange={(start, end) => {
+                                                setStartDate(start);
+                                                setEndDate(end);
+                                            }}
+                                        />
                                         <button
                                             onClick={loadStats}
                                             disabled={loadingStats}
@@ -821,12 +850,39 @@ const AdminPage: React.FC = () => {
                                                             </div>
 
                                                             {/* X-AXIS TIMELINE */}
-                                                            <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                                                            <div className="flex justify-between items-center bg-slate-950/50 p-3 rounded-xl border border-slate-800 mt-4">
                                                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[0].date).toLocaleDateString('en-GB')}</span>
                                                                 <div className="flex-1 flex justify-center gap-1 opacity-10">
                                                                     {Array.from({ length: 15 }).map((_, i) => <div key={i} className="w-1 h-1 rounded-full bg-slate-500"></div>)}
                                                                 </div>
                                                                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{new Date(stats.daily[stats.daily.length - 1].date).toLocaleDateString('en-GB')}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* explicitly listed day by day statistics */}
+                                                        <div className="mt-8 bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
+                                                            <div className="p-6 border-b border-slate-800 bg-slate-950/50">
+                                                                <h3 className="font-bold text-white uppercase tracking-tight text-sm">Day-by-Day Detailed Statistics</h3>
+                                                            </div>
+                                                            <div className="overflow-x-auto max-h-[400px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700">
+                                                                <table className="w-full text-left text-sm relative">
+                                                                    <thead className="bg-slate-950 text-slate-500 uppercase font-black text-[10px] tracking-widest sticky top-0 z-10 shadow-md">
+                                                                        <tr>
+                                                                            <th className="px-6 py-4">Date</th>
+                                                                            <th className="px-6 py-4 text-center">Volume (Gens)</th>
+                                                                            <th className="px-6 py-4 text-right">Cost (USD)</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody className="divide-y divide-slate-800/50">
+                                                                        {[...stats.daily].reverse().map(day => (
+                                                                            <tr key={day.date} className="hover:bg-slate-800/30 transition-colors">
+                                                                                <td className="px-6 py-3 font-mono text-slate-300 text-xs">{new Date(day.date).toLocaleDateString('en-GB', {day: '2-digit', month: '2-digit', year: 'numeric'}).replace(/\//g, '.')}</td>
+                                                                                <td className="px-6 py-3 text-center font-black text-indigo-400">{day.count}</td>
+                                                                                <td className="px-6 py-3 text-right font-black text-emerald-500">${formatCost(day.cost)}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
                                                         </div>
                                                     </div>
