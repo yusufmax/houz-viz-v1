@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { quotaService } from '../services/quotaService';
 import { getHouzaiFilename } from '../utils/filenameUtils';
+import { VideoNodePanel, AdvancedRefNodePanel, UpscaleNodePanel } from './InfinityExpandedNodes';
 
 const STYLE_LIBRARY = [
     // Living Complex / House
@@ -838,7 +839,7 @@ const InfinityCanvas: React.FC = () => {
 
     // ---- Node Operations ----
 
-    const addNode = (type: Node['type'], subtype?: 'general' | 'arch' | 'product' | 'super') => {
+    const addNode = (type: Node['type'], subtype?: 'general' | 'arch' | 'product' | 'super' | 'video' | 'upscaler' | 'advanced_ref') => {
         if (!contextMenu) return;
         const worldX = (contextMenu.x - pan.x) / zoom;
         const worldY = (contextMenu.y - pan.y) / zoom;
@@ -849,6 +850,9 @@ const InfinityCanvas: React.FC = () => {
         if (type === 'input') data = { label: t('nodeInput') };
         if (type === 'prompt') data = { label: t('nodePrompt'), value: '' };
         if (type === 'output') data = { label: t('nodeOutput') };
+        if (type === 'video') data = { label: 'Video Synthesizer', subtype: 'video', videoSettings: { model_name: 'kling-v3', multi_shot: "false", shot_type: 'customize' } };
+        if (type === 'advanced_ref') data = { label: 'Categorical References', subtype: 'advanced_ref', customReferences: [] };
+        if (type === 'upscaler') data = { label: 'AI Upscaler', subtype: 'upscaler', upscaleSettings: { scale: 2, optimize_for: 'photography', resolution: '4K' } };
         if (type === 'processor') {
             const baseSettings: GenerationSettings = {
                 style: RenderStyle.None, atmosphere: [], camera: CameraAngle.Default, aspectRatio: '16:9', prompt: '',
@@ -902,7 +906,7 @@ const InfinityCanvas: React.FC = () => {
         const currentConnections = overrideConnections || connections;
 
         const node = currentNodes.find(n => n.id === nodeId);
-        if (!node || node.type !== 'processor') return;
+        if (!node || !['processor', 'video', 'upscaler'].includes(node.type)) return;
 
         setProcessingNodes(prev => new Set(prev).add(nodeId));
 
@@ -936,17 +940,98 @@ const InfinityCanvas: React.FC = () => {
             const settings: GenerationSettings = { ...node.data.settings, prompt: promptText };
 
             let result = '';
-            // Super Mode handle
-            if (node.data.subtype === 'super' && settings.superMode) {
-                if (sourceImg) {
+            
+            if (node.type === 'upscaler' && sourceImg) {
+                const { upscaleImageReplicate } = await import('../services/replicateService');
+                result = await upscaleImageReplicate(sourceImg);
+            } else if (node.type === 'video' && sourceImg) {
+                // Resize for Kling
+                const resizeImage = (imageSrc: string): Promise<string> => {
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.crossOrigin = "anonymous";
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            let width = img.width;
+                            let height = img.height;
+                            const maxDim = 2048;
+                            if (width > maxDim || height > maxDim) {
+                                if (width > height) {
+                                    height = Math.round((height * maxDim) / width);
+                                    width = maxDim;
+                                } else {
+                                    width = Math.round((width * maxDim) / height);
+                                    height = maxDim;
+                                }
+                            }
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            if (!ctx) return reject(new Error('Canvas ctx failed'));
+                            ctx.drawImage(img, 0, 0, width, height);
+                            resolve(canvas.toDataURL('image/jpeg', 0.9));
+                        };
+                        img.onerror = reject;
+                        img.src = imageSrc;
+                    });
+                };
+                
+                const processedImage = await resizeImage(sourceImg);
+                
+                const response = await fetch('/api/kling-video', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                       action: 'generate',
+                       image: processedImage,
+                       prompt: promptText || node.data.videoSettings?.prompt || '',
+                       model_name: node.data.videoSettings?.model_name || 'kling-v3',
+                       duration: node.data.videoSettings?.duration || '5',
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                
+                // Polling Loop
+                const taskId = data.task_id;
+                let isDone = false;
+                while (!isDone) {
+                    await new Promise(r => setTimeout(r, 4000));
+                    const pollRes = await fetch('/api/kling-video', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'poll', task_id: taskId })
+                    });
+                    const pollData = await pollRes.json();
+                    if (pollData.error) throw new Error(pollData.error);
+                    
+                    if (pollData.status === 'success' && pollData.video_url) {
+                        result = pollData.video_url;
+                        isDone = true;
+                    } else if (pollData.status === 'failed' || pollData.status === 99) {
+                        throw new Error('Video generation failed at remote server.');
+                    }
+                }
+            } else {
+                // Advanced Ref injection (Nano Banana defaults to customReferences if present)
+                if (node.data.customReferences && node.data.customReferences.length > 0) {
+                    settings.customReferences = node.data.customReferences;
+                    settings.model = 'gemini-3.1-flash-image-preview'; // Force Advanced format
+                }
+                
+                // Super Mode handle
+                if (node.data.subtype === 'super' && settings.superMode) {
+                    if (sourceImg) {
+                        result = await editImage(sourceImg, settings);
+                    } else {
+                        result = await generateImage(settings);
+                    }
+                } else if (sourceImg) {
                     result = await editImage(sourceImg, settings);
                 } else {
                     result = await generateImage(settings);
                 }
-            } else if (sourceImg) {
-                result = await editImage(sourceImg, settings);
-            } else {
-                result = await generateImage(settings);
             }
 
             // Increment quota after successful generation
@@ -1328,7 +1413,7 @@ const InfinityCanvas: React.FC = () => {
     return (
         <div
             ref={canvasRef}
-            className="relative w-full h-[calc(100vh-64px)] bg-slate-950 overflow-hidden grid-background cursor-grab active:cursor-grabbing"
+            className="relative w-full h-[calc(100vh-64px)] bg-black overflow-hidden grid-background cursor-grab active:cursor-grabbing"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
@@ -1346,12 +1431,12 @@ const InfinityCanvas: React.FC = () => {
             />
 
             {/* History Sidebar */}
-            <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/95 border-r border-slate-700 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
-                <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-                    <h3 className="font-bold text-slate-200 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
-                    <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-slate-800 rounded"><ChevronRight size={16} /></button>
+            <div className={`absolute left-0 top-4 bottom-4 bg-zinc-950/95 border-r border-white/10 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                    <h3 className="font-bold text-zinc-100 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
+                    <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-zinc-900 rounded"><ChevronRight size={16} /></button>
                 </div>
-                <div className="flex items-center justify-around p-2 border-b border-slate-800 bg-slate-950/50">
+                <div className="flex items-center justify-around p-2 border-b border-white/5 bg-black/50">
                     <button onClick={exportHistory} className="text-[10px] text-indigo-400 hover:text-indigo-300 flex flex-col items-center">
                         <Download size={12} /> {t('export')}
                     </button>
@@ -1362,10 +1447,10 @@ const InfinityCanvas: React.FC = () => {
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                     {history.map(item => (
-                        <div key={item.id} className="bg-slate-800 rounded border border-slate-700 overflow-hidden group relative">
+                        <div key={item.id} className="bg-zinc-900 rounded border border-white/10 overflow-hidden group relative">
                             <img src={item.url} alt="History" className="w-full h-32 object-cover" />
                             <div className="p-2">
-                                <p className="text-[10px] text-slate-400 line-clamp-2">{item.prompt}</p>
+                                <p className="text-[10px] text-zinc-500 line-clamp-2">{item.prompt}</p>
                             </div>
                             <button
                                 onClick={() => { addNode('input'); setNodes(prev => { const last = prev[prev.length - 1]; last.data.imageSrc = item.url; return [...prev]; }); setShowHistory(false); }}
@@ -1377,7 +1462,7 @@ const InfinityCanvas: React.FC = () => {
                     ))}
                 </div>
                 {history.length > 0 && (
-                    <div className="p-2 border-t border-slate-700">
+                    <div className="p-2 border-t border-white/10">
                         <button onClick={clearHistory} className="w-full flex items-center justify-center gap-2 text-xs text-red-400 hover:bg-red-900/20 p-2 rounded">
                             <Trash2 size={14} /> {t('clear')} {t('history')}
                         </button>
@@ -1389,19 +1474,19 @@ const InfinityCanvas: React.FC = () => {
             <div className="absolute top-4 left-4 z-20 flex gap-2">
                 <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
                 >
                     <HistoryIcon size={14} /> {t('history')}
                 </button>
                 <button
                     onClick={() => setProjectsMenu(!projectsMenu)}
-                    className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
                 >
                     <FolderOpen size={14} /> {t('projects')}
                 </button>
                 <button
                     onClick={saveProject}
-                    className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
                 >
                     <Save size={14} /> {t('save')}
                 </button>
@@ -1414,13 +1499,13 @@ const InfinityCanvas: React.FC = () => {
                 </button>
                 <button
                     onClick={exportProject}
-                    className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
                     title="Download Project File"
                 >
                     <Download size={14} />
                 </button>
                 <label
-                    className="flex items-center gap-2 bg-slate-800 text-slate-300 px-3 py-2 rounded-lg border border-slate-700 hover:bg-slate-700 text-xs cursor-pointer"
+                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs cursor-pointer"
                     title="Import Project File"
                 >
                     <Upload size={14} />
@@ -1429,12 +1514,12 @@ const InfinityCanvas: React.FC = () => {
             </div>
 
             {projectsMenu && (
-                <div className="absolute top-16 left-24 z-50 w-64 bg-slate-900 border border-slate-700 rounded-lg shadow-xl p-2">
-                    <h3 className="text-xs font-bold text-slate-400 mb-2 px-2">{t('savedProjects')} (Cloud)</h3>
+                <div className="absolute top-16 left-24 z-50 w-64 bg-zinc-950 border border-white/10 rounded-lg shadow-xl p-2">
+                    <h3 className="text-xs font-bold text-zinc-500 mb-2 px-2">{t('savedProjects')} (Cloud)</h3>
                     {dbProjects.length === 0 && <p className="text-xs text-slate-500 px-2">No projects found.</p>}
                     {dbProjects.map(p => (
-                        <div key={p.id} className="flex items-center justify-between hover:bg-slate-800 rounded p-2 group">
-                            <button onClick={() => loadDbProject(p)} className="text-left text-xs text-slate-300 flex-1">
+                        <div key={p.id} className="flex items-center justify-between hover:bg-zinc-900 rounded p-2 group">
+                            <button onClick={() => loadDbProject(p)} className="text-left text-xs text-zinc-300 flex-1">
                                 {p.name} <span className="text-[10px] text-slate-600 block">{new Date(p.updated_at).toLocaleDateString()}</span>
                             </button>
                         </div>
@@ -1480,7 +1565,7 @@ const InfinityCanvas: React.FC = () => {
                         <div
                             key={node.id}
                             className={`absolute rounded-xl border shadow-2xl flex flex-col z-10 cursor-default transition-all duration-200 ease-out
-                        ${isProcessor ? 'bg-slate-900 border-indigo-500/30' : 'bg-slate-900 border-slate-700'}
+                        ${isProcessor ? 'bg-zinc-950 border-indigo-500/30' : 'bg-zinc-950 border-white/10'}
                         hover:shadow-indigo-500/20 hover:border-indigo-500/50 hover:scale-[1.01]
                     `}
                             style={{
@@ -1492,8 +1577,8 @@ const InfinityCanvas: React.FC = () => {
                             onTouchStart={(e) => handleNodeTouchStart(e, node.id)}
                         >
                             {/* Node Header */}
-                            <div className="h-8 border-b border-slate-800 px-3 flex items-center justify-between bg-slate-900/50 rounded-t-xl flex-none">
-                                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <div className="h-8 border-b border-white/5 px-3 flex items-center justify-between bg-zinc-950/50 rounded-t-xl flex-none">
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
                                     {node.type === 'input' && <ImageIcon size={12} className="text-blue-400" />}
                                     {node.type === 'prompt' && <Type size={12} className="text-emerald-400" />}
                                     {node.type === 'output' && <Film size={12} className="text-pink-400" />}
@@ -1501,7 +1586,7 @@ const InfinityCanvas: React.FC = () => {
                                     {node.data.label}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <button onClick={(e) => { e.stopPropagation(); toggleNodeCollapse(node.id) }} className="text-slate-600 hover:text-slate-300">
+                                    <button onClick={(e) => { e.stopPropagation(); toggleNodeCollapse(node.id) }} className="text-slate-600 hover:text-zinc-300">
                                         {isCollapsed ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
                                     </button>
                                     <button onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.filter(n => n.id !== node.id)); }} className="text-slate-600 hover:text-red-400">
@@ -1517,9 +1602,9 @@ const InfinityCanvas: React.FC = () => {
                                     {/* Image Preview (Input/Output/Processor) */}
                                     {(node.type === 'input' || node.type === 'output' || (isProcessor && node.data.imageSrc)) && (
                                         <div className="flex flex-col gap-2 flex-1 min-h-[150px]">
-                                            <div className={`relative bg-slate-950 rounded border border-slate-800 overflow-hidden group flex-1`}>
+                                            <div className={`relative bg-black rounded border border-white/5 overflow-hidden group flex-1`}>
                                                 {processingNodes.has(node.id) ? (
-                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900 text-indigo-400">
+                                                    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-950 text-indigo-400">
                                                         <Loader2 size={32} className="animate-spin mb-2" />
                                                         <span className="text-xs font-medium animate-pulse">{t('generating')}</span>
                                                     </div>
@@ -1529,7 +1614,7 @@ const InfinityCanvas: React.FC = () => {
                                                     ) : (
                                                         <img
                                                             src={node.data.imageSrc}
-                                                            className="w-full h-full object-contain bg-slate-950"
+                                                            className="w-full h-full object-contain bg-black"
                                                             alt="content"
                                                             onError={(e) => console.error("Image failed to load:", node.data.imageSrc, e)}
                                                         />
@@ -1576,27 +1661,27 @@ const InfinityCanvas: React.FC = () => {
                                                                 // Do NOT fallback to window.open as per user request
                                                             }
                                                         }}
-                                                        className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]"
+                                                        className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-slate-700 text-zinc-300 rounded text-[10px]"
                                                         title={t('download')}
                                                     >
                                                         <Download size={10} />
                                                     </button>
                                                     <button
                                                         onClick={() => { setPreviewImage(node.data.imageSrc!); setPreviewBeforeImage(node.data.beforeImage); }}
-                                                        className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px]"
+                                                        className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-slate-700 text-zinc-300 rounded text-[10px]"
                                                     >
                                                         <Maximize size={10} /> {t('preview')}
                                                     </button>
                                                     <button
                                                         onClick={() => setDrawingNodeId(node.id)}
-                                                        className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-indigo-900/50 text-slate-300 hover:text-indigo-300 rounded text-[10px]"
+                                                        className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-indigo-900/50 text-zinc-300 hover:text-indigo-300 rounded text-[10px]"
                                                     >
                                                         <Pencil size={10} /> {t('drawEdit')}
                                                     </button>
                                                     {(isOutput || isProcessor) && (
                                                         <button
                                                             onClick={() => handleUpscale(node.id)}
-                                                            className="flex items-center gap-1 px-2 py-1 bg-slate-800 hover:bg-purple-900/50 text-slate-300 hover:text-purple-300 rounded text-[10px]"
+                                                            className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-purple-900/50 text-zinc-300 hover:text-purple-300 rounded text-[10px]"
                                                         >
                                                             <Zap size={10} /> {t('upscale')}
                                                         </button>
@@ -1620,7 +1705,7 @@ const InfinityCanvas: React.FC = () => {
                                                         <div className="space-y-1">
                                                             <label className="text-[9px] text-slate-500 font-bold uppercase block">Location</label>
                                                             <select
-                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none focus:border-indigo-500"
+                                                                className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[10px] text-zinc-300 outline-none focus:border-indigo-500"
                                                                 value={node.data.settings.superMode?.location || 'Studio'}
                                                                 onChange={(e) => {
                                                                     setNodes(prev => prev.map(n => n.id === node.id ? {
@@ -1643,7 +1728,7 @@ const InfinityCanvas: React.FC = () => {
                                                         <div className="space-y-1">
                                                             <label className="text-[9px] text-slate-500 font-bold uppercase block">Lighting</label>
                                                             <select
-                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none focus:border-indigo-500"
+                                                                className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[10px] text-zinc-300 outline-none focus:border-indigo-500"
                                                                 value={node.data.settings.superMode?.lighting}
                                                                 onChange={(e) => {
                                                                     setNodes(prev => prev.map(n => n.id === node.id ? {
@@ -1664,19 +1749,19 @@ const InfinityCanvas: React.FC = () => {
                                                     </div>
 
                                                     {/* Wardrobe (Outfit Builder) */}
-                                                    <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                                    <div className="space-y-2 border-t border-white/5/50 pt-3">
                                                         <div className="flex items-center justify-between">
                                                             <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Wardrobe</label>
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); addNodeGarmentSlot(node.id); }}
-                                                                className="text-[9px] font-black text-slate-400 hover:text-indigo-400 uppercase flex items-center gap-1"
+                                                                className="text-[9px] font-black text-zinc-500 hover:text-indigo-400 uppercase flex items-center gap-1"
                                                             >
                                                                 <Plus size={10} /> Add
                                                             </button>
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-2">
                                                             {node.data.settings.superMode?.garments?.map((slot) => (
-                                                                <div key={slot.id} className="relative group bg-slate-950/50 border border-slate-800 rounded-xl p-1.5 space-y-1.5 transition-all hover:border-indigo-500/30">
+                                                                <div key={slot.id} className="relative group bg-black/50 border border-white/5 rounded-xl p-1.5 space-y-1.5 transition-all hover:border-indigo-500/30">
                                                                     <div className="flex items-center justify-between px-0.5">
                                                                         <div className="flex items-center gap-1 min-w-0">
                                                                             <div className="text-indigo-400 opacity-80 flex-shrink-0">
@@ -1688,7 +1773,7 @@ const InfinityCanvas: React.FC = () => {
                                                                                 className="bg-transparent text-[8px] font-black text-slate-500 hover:text-indigo-300 uppercase tracking-widest outline-none border-none cursor-pointer truncate"
                                                                             >
                                                                                 {['Top', 'Bottom', 'Shoes', 'Accessories', 'Full Body', 'Other'].map(cat => (
-                                                                                    <option key={cat} value={cat} className="bg-slate-900 text-white">{cat}</option>
+                                                                                    <option key={cat} value={cat} className="bg-zinc-950 text-white">{cat}</option>
                                                                                 ))}
                                                                             </select>
                                                                         </div>
@@ -1699,7 +1784,7 @@ const InfinityCanvas: React.FC = () => {
                                                                             <Trash2 size={8} />
                                                                         </button>
                                                                     </div>
-                                                                    <div className="aspect-[3/4] rounded-lg overflow-hidden border border-slate-800/50">
+                                                                    <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/5/50">
                                                                         <ImageUpload
                                                                             compact
                                                                             selectedImage={slot.image}
@@ -1713,7 +1798,7 @@ const InfinityCanvas: React.FC = () => {
                                                     </div>
 
                                                     {/* Model Generator Summary */}
-                                                    <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                                    <div className="space-y-2 border-t border-white/5/50 pt-3">
                                                         <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">AI Model Gen</label>
                                                         <div className="grid grid-cols-2 gap-2 text-left">
                                                             {[
@@ -1725,7 +1810,7 @@ const InfinityCanvas: React.FC = () => {
                                                                 <div key={gen.k} className="space-y-1">
                                                                     <label className="text-[8px] text-slate-600 font-bold uppercase">{gen.l}</label>
                                                                     <select
-                                                                        className="w-full bg-slate-950 border border-slate-800 rounded px-1.5 py-1 text-[9px] text-slate-400 outline-none"
+                                                                        className="w-full bg-black border border-white/5 rounded px-1.5 py-1 text-[9px] text-zinc-500 outline-none"
                                                                         value={(node.data.settings?.superMode?.modelGen as any)?.[gen.k]}
                                                                         onChange={(e) => {
                                                                             setNodes(prev => prev.map(n => n.id === node.id ? {
@@ -1753,7 +1838,7 @@ const InfinityCanvas: React.FC = () => {
                                             ) : (
                                                 <>
                                                     <textarea
-                                                        className="w-full h-16 bg-slate-950 border border-slate-800 rounded p-2 text-[10px] text-slate-300 resize-none focus:border-indigo-500 outline-none"
+                                                        className="w-full h-16 bg-black border border-white/5 rounded p-2 text-[10px] text-zinc-300 resize-none focus:border-indigo-500 outline-none"
                                                         placeholder={t('nodePrompt')}
                                                         value={node.data.settings.prompt}
                                                         onChange={(e) => {
@@ -1784,7 +1869,7 @@ const InfinityCanvas: React.FC = () => {
                                                                     }}
                                                                     className={`relative aspect-square rounded overflow-hidden border ${node.data.settings?.styleReferenceImage === styleRef.url
                                                                         ? 'border-indigo-500 ring-2 ring-indigo-500/50'
-                                                                        : 'border-slate-700 hover:border-indigo-500'
+                                                                        : 'border-white/10 hover:border-indigo-500'
                                                                         } group transition-all`}
                                                                     title={styleRef.name}
                                                                 >
@@ -1809,14 +1894,14 @@ const InfinityCanvas: React.FC = () => {
                                                                     <button
                                                                         key={r}
                                                                         onClick={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, aspectRatio: r as AspectRatio } } } : n)) }}
-                                                                        className={`px-1.5 py-0.5 text-[9px] rounded border ${node.data.settings!.aspectRatio === r ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                                                                        className={`px-1.5 py-0.5 text-[9px] rounded border ${node.data.settings!.aspectRatio === r ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-black border-white/5 text-slate-500'}`}
                                                                     >
                                                                         {r}
                                                                     </button>
                                                                 ))}
                                                             </div>
                                                             <select
-                                                                className="bg-slate-950 border border-slate-800 rounded px-1 py-0.5 text-[9px] text-slate-300 outline-none w-24"
+                                                                className="bg-black border border-white/5 rounded px-1 py-0.5 text-[9px] text-zinc-300 outline-none w-24"
                                                                 value={node.data.settings.camera}
                                                                 onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, camera: e.target.value as CameraAngle } } } : n)) }}
                                                                 onMouseDown={(e) => e.stopPropagation()}
@@ -1831,7 +1916,7 @@ const InfinityCanvas: React.FC = () => {
                                                         <div>
                                                             <label className="text-[9px] text-slate-500 font-bold uppercase block mb-1">{t('stylePreset')}</label>
                                                             <select
-                                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[10px] text-slate-300 outline-none"
+                                                                className="w-full bg-black border border-white/5 rounded px-2 py-1 text-[10px] text-zinc-300 outline-none"
                                                                 value={node.data.settings.style}
                                                                 onChange={(e) => { e.stopPropagation(); setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, settings: { ...n.data.settings!, style: e.target.value as RenderStyle } } } : n)) }}
                                                                 onMouseDown={(e) => e.stopPropagation()}
@@ -1849,7 +1934,7 @@ const InfinityCanvas: React.FC = () => {
                                                                         <button
                                                                             key={atm}
                                                                             onClick={(e) => { e.stopPropagation(); toggleNodeAtmosphere(node.id, atm); }}
-                                                                            className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-slate-950 border-slate-800 text-slate-500'}`}
+                                                                            className={`px-1 py-1 text-[8px] rounded border truncate overflow-hidden ${isSelected ? 'bg-indigo-900/50 border-indigo-500 text-indigo-200' : 'bg-black border-white/5 text-slate-500'}`}
                                                                             title={atm}
                                                                         >
                                                                             <span className="truncate block">{t(atm as any)}</span>
@@ -1863,7 +1948,7 @@ const InfinityCanvas: React.FC = () => {
                                             )}
 
                                             {/* Common Footer Actions */}
-                                            <div className="space-y-2 border-t border-slate-800/50 pt-3">
+                                            <div className="space-y-2 border-t border-white/5/50 pt-3">
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <button
                                                         onClick={(e) => { e.stopPropagation(); runNode(node.id) }}
@@ -1877,7 +1962,7 @@ const InfinityCanvas: React.FC = () => {
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); run4Shot(node.id) }}
                                                             disabled={processingNodes.has(node.id)}
-                                                            className="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-indigo-500/30 rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
+                                                            className="bg-zinc-900 hover:bg-slate-700 text-indigo-400 border border-indigo-500/30 rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2 transition-all"
                                                         >
                                                             <Layers size={12} />
                                                             Sequence
@@ -1888,9 +1973,33 @@ const InfinityCanvas: React.FC = () => {
                                         </div>
                                     )}
 
+                                    {node.type === 'video' && node.data.videoSettings && (
+                                        <div className="flex flex-col flex-1 h-full min-h-[120px] pb-2">
+                                            <VideoNodePanel node={node} setNodes={setNodes} />
+                                            <button onClick={(e) => { e.stopPropagation(); runNode(node.id) }} disabled={processingNodes.has(node.id)} className="mt-3 bg-cyan-950 hover:bg-cyan-900 text-cyan-400 border border-cyan-500/30 rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2 transition-all">
+                                                {processingNodes.has(node.id) ? <Loader2 size={12} className="animate-spin" /> : <Film size={12} />} {t('generate')} Video
+                                            </button>
+                                        </div>
+                                    )}
+                                    
+                                    {node.type === 'advanced_ref' && (
+                                        <div className="flex flex-col flex-1 h-full min-h-[120px]">
+                                            <AdvancedRefNodePanel node={node} setNodes={setNodes} />
+                                        </div>
+                                    )}
+                                    
+                                    {node.type === 'upscaler' && node.data.upscaleSettings && (
+                                        <div className="flex flex-col flex-1 h-full min-h-[120px] pb-2">
+                                            <UpscaleNodePanel node={node} setNodes={setNodes} />
+                                            <button onClick={(e) => { e.stopPropagation(); runNode(node.id) }} disabled={processingNodes.has(node.id)} className="mt-3 bg-emerald-950 hover:bg-emerald-900 text-emerald-400 border border-emerald-500/30 rounded-lg py-2 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-2 transition-all">
+                                                {processingNodes.has(node.id) ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />} Upscale Render
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {node.type === 'prompt' && (
                                         <textarea
-                                            className="w-full h-24 bg-slate-950 border border-slate-800 rounded p-2 text-xs text-slate-300 resize-none focus:border-indigo-500 outline-none flex-1"
+                                            className="w-full h-24 bg-black border border-white/5 rounded p-2 text-xs text-zinc-300 resize-none focus:border-indigo-500 outline-none flex-1"
                                             value={node.data.value}
                                             onChange={(e) => setNodes(prev => prev.map(n => n.id === node.id ? { ...n, data: { ...n.data, value: e.target.value } } : n))}
                                             onMouseDown={(e) => e.stopPropagation()}
@@ -1904,7 +2013,7 @@ const InfinityCanvas: React.FC = () => {
                             {/* Input Ports */}
                             {node.type !== 'input' && (
                                 <div
-                                    className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
+                                    className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'input')}
                                     onMouseUp={(e) => handlePortMouseUp(e, node.id, 'input')}
                                     onTouchStart={(e) => handlePortTouchStart(e, node.id, 'input')}
@@ -1918,7 +2027,7 @@ const InfinityCanvas: React.FC = () => {
                             {/* Output Ports */}
                             {(node.type !== 'output' && node.type !== 'prompt') && (
                                 <div
-                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
+                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
                                     onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Output"
@@ -1930,7 +2039,7 @@ const InfinityCanvas: React.FC = () => {
                             {/* Prompt Nodes connect to input side logically, but visualize as output source */}
                             {node.type === 'prompt' && (
                                 <div
-                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-emerald-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
+                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-emerald-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
                                     onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Text Output"
@@ -1942,7 +2051,7 @@ const InfinityCanvas: React.FC = () => {
                             {/* Chain Result */}
                             {node.type === 'output' && (
                                 <div
-                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-slate-800 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
+                                    className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-zinc-900 rounded-full border-4 border-slate-950 hover:bg-indigo-500 cursor-pointer z-20 flex items-center justify-center transition-colors"
                                     onMouseDown={(e) => handlePortMouseDown(e, node.id, 'output')}
                                     onTouchStart={(e) => handlePortTouchStart(e, node.id, 'output')}
                                     title="Chain Result"
@@ -1953,7 +2062,7 @@ const InfinityCanvas: React.FC = () => {
 
                             {/* Resize Handle */}
                             <div
-                                className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize z-20 flex items-center justify-center text-slate-600 hover:text-slate-400"
+                                className="absolute bottom-0 right-0 w-5 h-5 cursor-nwse-resize z-20 flex items-center justify-center text-slate-600 hover:text-zinc-500"
                                 onMouseDown={(e) => handleResizeMouseDown(e, node.id)}
                                 onTouchStart={(e) => handleResizeTouchStart(e, node.id)}
                             >
@@ -1967,32 +2076,45 @@ const InfinityCanvas: React.FC = () => {
             {/* Context Menu */}
             {contextMenu && contextMenu.show && (
                 <div
-                    className="absolute z-50 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl p-1 min-w-[180px] flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100"
+                    className="absolute z-50 bg-zinc-950 border border-white/10 rounded-lg shadow-2xl p-1 min-w-[180px] flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100"
                     style={{ left: contextMenu.x, top: contextMenu.y }}
                     onMouseDown={(e) => e.stopPropagation()}
                 >
                     <div className="text-[10px] font-bold text-slate-500 px-3 py-1 uppercase tracking-wider">{t('addNode')}</div>
-                    <button onClick={() => addNode('input')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
+                    <button onClick={() => addNode('input')} className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-900 rounded text-xs text-left text-zinc-300 hover:text-white transition-colors">
                         <ImageIcon size={14} className="text-blue-400" /> {t('nodeInput')}
                     </button>
-                    <button onClick={() => addNode('prompt')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
+                    <button onClick={() => addNode('prompt')} className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-900 rounded text-xs text-left text-zinc-300 hover:text-white transition-colors">
                         <Type size={14} className="text-emerald-400" /> {t('nodePrompt')}
                     </button>
-                    <div className="h-px bg-slate-800 my-1"></div>
-                    <button onClick={() => addNode('processor', 'arch')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
+                    <div className="h-px bg-zinc-900 my-1"></div>
+                    <button onClick={() => addNode('processor', 'arch')} className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-900 rounded text-xs text-left text-zinc-300 hover:text-white transition-colors">
                         <Building size={14} className="text-purple-400" /> {t('nodeProcessor')}
                     </button>
-                    <button onClick={() => addNode('processor', 'product')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition-colors group">
+                    <button onClick={() => addNode('processor', 'product')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors group">
                         <Box size={14} className="text-amber-400 group-hover:scale-110 transition-transform" />
                         <span>Product Staging</span>
                     </button>
-                    <button onClick={() => addNode('processor', 'super')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:bg-slate-800 rounded-lg transition-colors group">
+                    <button onClick={() => addNode('processor', 'super')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors group">
                         <Sparkles size={14} className="text-indigo-400 group-hover:scale-110 transition-transform" />
                         <span>Marketing AI (Super)</span>
                     </button>
-                    <div className="h-px bg-slate-800 my-1"></div>
-                    <button onClick={() => addNode('output')} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 rounded text-xs text-left text-slate-300 hover:text-white transition-colors">
-                        <Film size={14} className="text-pink-400" /> {t('nodeOutput')}
+                    <div className="h-px bg-zinc-900 my-1"></div>
+                    <button onClick={() => addNode('video')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors group">
+                        <Film size={14} className="text-cyan-400 group-hover:scale-110 transition-transform" />
+                        <span>Kling V3 Video</span>
+                    </button>
+                    <button onClick={() => addNode('advanced_ref')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors group">
+                        <Layers size={14} className="text-yellow-400 group-hover:scale-110 transition-transform" />
+                        <span>Categorical References</span>
+                    </button>
+                    <button onClick={() => addNode('upscaler')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-900 rounded-lg transition-colors group">
+                        <Zap size={14} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+                        <span>AI Upscaler</span>
+                    </button>
+                    <div className="h-px bg-zinc-900 my-1"></div>
+                    <button onClick={() => addNode('output')} className="flex items-center gap-2 px-3 py-2 hover:bg-zinc-900 rounded text-xs text-left text-zinc-300 hover:text-white transition-colors">
+                        <Maximize2 size={14} className="text-pink-400" /> {t('nodeOutput')}
                     </button>
                 </div>
             )}

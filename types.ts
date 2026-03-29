@@ -291,13 +291,16 @@ export interface NodeData {
   imageSrc?: string;
   beforeImage?: string; // Source image for Before/After comparison
   settings?: GenerationSettings;
-  subtype?: 'general' | 'arch' | 'product' | 'super';
+  videoSettings?: VideoGenerationSettings;
+  upscaleSettings?: FreepikMagnificSettings;
+  customReferences?: CustomReference[];
+  subtype?: 'general' | 'arch' | 'product' | 'super' | 'video' | 'upscaler' | 'advanced_ref';
   collapsed?: boolean;
 }
 
 export interface Node {
   id: string;
-  type: 'input' | 'processor' | 'output' | 'prompt';
+  type: 'input' | 'processor' | 'output' | 'prompt' | 'video' | 'upscaler' | 'advanced_ref';
   x: number;
   y: number;
   width?: number;
