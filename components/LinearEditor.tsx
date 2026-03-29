@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
-  X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees,
+  X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees, Plus,
   Building2, Wind, Zap, Loader2, Pencil, Pen, Lock, LayoutTemplate, Grid,
   CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2, Globe, Info
 } from 'lucide-react';
@@ -12,7 +12,7 @@ import FullScreenPreview from './FullScreenPreview';
 import BatchImageUpload from './BatchImageUpload';
 import BatchResults from './BatchResults';
 import InteriorCustomization from './InteriorCustomization';
-import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens, Tag, FreepikMagnificSettings } from '../types';
+import { AspectRatio, RenderStyle, Atmosphere, CameraAngle, GenerationSettings, SceneElements, HistoryItem, KlingModel, VideoGenerationSettings, VideoQuota, InteriorSettings, CameraLens, Tag, FreepikMagnificSettings, CustomReference } from '../types';
 import {
   generateImage, editImage,
   enhancePrompt
@@ -299,6 +299,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [styleReferenceImage, setStyleReferenceImage] = useState<string | null>(null); // Legacy (kept for compatibility)
   const [atmosphereRefImage, setAtmosphereRefImage] = useState<string | null>(null);
   const [architectureRefImage, setArchitectureRefImage] = useState<string | null>(null);
+  const [customReferences, setCustomReferences] = useState<CustomReference[]>([]);
+  const [showAdvancedRefs, setShowAdvancedRefs] = useState<boolean>(false);
   const [resultImage, setResultImage] = useState<string | null>(null);
   const [multiResults, setMultiResults] = useState<{ url: string; settings: GenerationSettings }[]>([]);
   const [generationCount, setGenerationCount] = useState<number>(1);
@@ -539,6 +541,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           model,
           resolution,
           styleReferenceImage: (styleReferenceImage && !styleReferenceImage.startsWith('data:')) ? styleReferenceImage : undefined,
+          customReferences: customReferences,
           sourceImage: (sourceImage && !sourceImage.startsWith('data:')) ? sourceImage : undefined,
           lockCamera,
           lockInterior,
@@ -583,6 +586,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setAperture(item.metadata.aperture || '');
       setLockInterior(item.metadata.lockInterior || false);
 
+      if (item.metadata.customReferences) setCustomReferences(item.metadata.customReferences);
       if (item.metadata.styleReferenceImage) setStyleReferenceImage(item.metadata.styleReferenceImage);
       if (item.metadata.sourceImage) setSourceImage(item.metadata.sourceImage);
       if (item.metadata.interior) setInteriorSettings(item.metadata.interior);
@@ -629,6 +633,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           model,
           sourceImage,
           styleReferenceImage,
+          customReferences,
           resultImage,
           lockCamera,
           lens,
@@ -897,6 +902,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         setModel(state.model);
         setSourceImage(state.sourceImage);
         setStyleReferenceImage(state.styleReferenceImage);
+        if (state.customReferences) setCustomReferences(state.customReferences);
         setResultImage(state.resultImage);
         if (state.lockCamera !== undefined) setLockCamera(state.lockCamera);
         if (state.lens) setLens(state.lens as CameraLens);
@@ -952,6 +958,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage, // Legacy
       atmosphereReferenceImage: atmosphereRefImage,
       architectureReferenceImage: architectureRefImage,
+      customReferences: showAdvancedRefs ? customReferences : [],
       model,
       resolution,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false, // Only apply keepBuilding in exterior mode
@@ -970,7 +977,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     try {
       const src = overrideSource || sourceImage;
-      if (!prompt && !src && !styleReferenceImage && !settingsOverride?.prompt) {
+      const hasCustomRefs = showAdvancedRefs && customReferences.length > 0;
+      if (!prompt && !src && !styleReferenceImage && !hasCustomRefs && !settingsOverride?.prompt) {
         alert("Please provide at least a text prompt, an image, or a style reference.");
         setIsGenerating(false);
         return;
@@ -1091,6 +1099,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       styleReferenceImage, // Legacy
       atmosphereReferenceImage: atmosphereRefImage,
       architectureReferenceImage: architectureRefImage,
+      customReferences: showAdvancedRefs ? customReferences : [],
       model,
       resolution,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false,
@@ -1688,6 +1697,95 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <ImageUpload selectedImage={architectureRefImage} onImageSelected={setArchitectureRefImage} label="Upload Style Ref" compact />
                 </div>
               </div>
+
+              {model === 'gemini-3.1-flash-image-preview' && (
+                <div className="mt-4 border-t border-slate-800 pt-4">
+                  <button
+                    onClick={() => setShowAdvancedRefs(!showAdvancedRefs)}
+                    className="flex justify-between items-center w-full bg-slate-800/50 hover:bg-slate-700/50 px-3 py-2.5 rounded-xl text-sm text-yellow-500 font-bold transition-colors border border-yellow-500/20 shadow-inner group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Sparkles size={16} className="text-yellow-400 group-hover:animate-pulse" />
+                      Advanced Categorical References
+                    </div>
+                    {showAdvancedRefs ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                  </button>
+
+                  {showAdvancedRefs && (
+                    <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      {customReferences.map((ref, i) => (
+                        <div key={ref.id} className="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-3 relative group shadow-lg">
+                          <button
+                            onClick={() => setCustomReferences(prev => prev.filter(r => r.id !== ref.id))}
+                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-md"
+                            title="Remove Reference"
+                          >
+                            <X size={12} />
+                          </button>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Category:</span>
+                            <select
+                              value={ref.category}
+                              onChange={(e) => {
+                                const newRefs = [...customReferences];
+                                newRefs[i].category = e.target.value as any;
+                                setCustomReferences(newRefs);
+                              }}
+                              className="flex-1 bg-slate-950 text-indigo-300 rounded-lg px-3 py-1.5 text-xs font-bold border border-slate-700 focus:outline-none focus:border-indigo-500"
+                            >
+                              <option value="People">People</option>
+                              <option value="Environment">Environment</option>
+                              <option value="Architecture">Architecture</option>
+                              <option value="Atmosphere">General Atmosphere</option>
+                            </select>
+                          </div>
+
+                          <ImageUpload
+                            selectedImage={ref.image}
+                            onImageSelected={(img) => {
+                              const newRefs = [...customReferences];
+                              newRefs[i].image = img;
+                              setCustomReferences(newRefs);
+                            }}
+                            label={"Upload " + ref.category + " Ref"}
+                            compact
+                          />
+
+                          <div className="relative">
+                            <Pen size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input
+                              type="text"
+                              placeholder={"E.g. Use this specific " + ref.category.toLowerCase() + " style"}
+                              value={ref.prompt}
+                              onChange={(e) => {
+                                const newRefs = [...customReferences];
+                                newRefs[i].prompt = e.target.value;
+                                setCustomReferences(newRefs);
+                              }}
+                              className="w-full bg-slate-950 text-slate-200 rounded-lg pl-8 pr-3 py-2 text-xs border border-slate-700 focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={() => {
+                          setCustomReferences([...customReferences, {
+                            id: Date.now().toString(),
+                            category: 'People',
+                            image: '',
+                            prompt: ''
+                          }]);
+                        }}
+                        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-3 rounded-xl border border-dashed border-slate-600 transition-all hover:border-slate-400 active:scale-95"
+                      >
+                        <Plus size={14} /> Add Categorical Reference
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-3">

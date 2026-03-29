@@ -222,6 +222,14 @@ export interface GenerationSettings {
   sunPosition?: number;
   timeOfDay?: number;
   useGrounding?: boolean;
+  customReferences?: CustomReference[];
+}
+
+export interface CustomReference {
+  id: string;
+  category: 'People' | 'Environment' | 'Architecture' | 'Atmosphere';
+  image: string;
+  prompt: string; 
 }
 
 export type GarmentCategory = 'Top' | 'Bottom' | 'Shoes' | 'Accessories' | 'Full Body' | 'Other';
@@ -348,6 +356,7 @@ export interface Project {
     sunPosition?: number;
     timeOfDay?: number;
     useSunControl?: boolean;
+    customReferences?: CustomReference[];
   };
 }
 

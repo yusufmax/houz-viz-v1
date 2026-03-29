@@ -551,6 +551,24 @@ export const editImage = async (sourceImage: string | null, settings: Generation
       }
     }
 
+    // 2.4 Advanced Custom References (Nano Banana 2)
+    if (settings.customReferences && settings.customReferences.length > 0) {
+      for (let i = 0; i < settings.customReferences.length; i++) {
+        const ref = settings.customReferences[i];
+        if (ref.image) {
+          const { mimeType, data } = await toInlineData(ref.image);
+          if (data) {
+            parts.push({
+              inlineData: { mimeType, data }
+            });
+            parts.push({
+              text: `STRICT INSTRUCTION - IMAGE (Above) [Category: ${ref.category.toUpperCase()}]: ${ref.prompt}`
+            });
+          }
+        }
+      }
+    }
+
     // 3. Add the constructed prompt (Text + Interior Images)
     parts.push(...fullPromptParts);
 
