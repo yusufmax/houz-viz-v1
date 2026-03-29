@@ -708,6 +708,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   const calculateUSDCost = (modelName: string, res: string) => {
+    if (modelName === 'gemini-3.1-flash-image-preview') {
+      return 0.19;
+    }
     if (modelName === 'gemini-2.5-flash-image' || modelName === 'gemini-2.5-flash') {
       return 0.0401;
     }
