@@ -19,6 +19,7 @@ import {
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { upscaleImageFreepik } from '../services/freepikService';
+import { generateOpenAIImage, editOpenAIImage } from '../services/openAIService';
 import FreepikSettings from './FreepikSettings';
 import { RealtimeService } from '../services/realtimeService';
 import { AudioManager } from '../services/audioManager';
@@ -703,6 +704,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   const calculateCost = () => {
+    if (model === 'gpt-image-2') return 4;
     if (model === 'gemini-2.5-flash-image') return 1;
     if (model === 'gemini-3.1-flash-image-preview') {
       let base = 4;
@@ -720,6 +722,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   };
 
   const calculateUSDCost = (modelName: string, res: string) => {
+    if (modelName === 'gpt-image-2') return 0.04;
     if (modelName === 'gemini-3.1-flash-image-preview') {
       return 0.19;
     }
@@ -1001,10 +1004,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         await quotaService.incrementUsage(user.id, cost);
 
         let resultUrl = '';
-        if (src || styleReferenceImage) {
-          resultUrl = await editImage(src, settings);
+        if (settings.model === 'gpt-image-2') {
+          if (src || styleReferenceImage) {
+            resultUrl = await editOpenAIImage(src, settings);
+          } else {
+            resultUrl = await generateOpenAIImage(settings);
+          }
         } else {
-          resultUrl = await generateImage(settings);
+          if (src || styleReferenceImage) {
+            resultUrl = await editImage(src, settings);
+          } else {
+            resultUrl = await generateImage(settings);
+          }
         }
 
         results.push({ url: resultUrl, settings });
@@ -1662,6 +1673,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Zap size={14} /> Model</label>
                 <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
+                  <option value="gpt-image-2">GPT Image 2</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
                   <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
                   <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
