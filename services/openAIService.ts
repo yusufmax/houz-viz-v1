@@ -40,7 +40,6 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
     model: settings.model || 'gpt-image-2',
     prompt,
     size: (settings.resolution as any) || 'auto',
-    quality: (settings.quality as any) || 'auto',
     response_format: 'b64_json',
   });
 
@@ -84,7 +83,6 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
     image: imagesToSend.length === 1 ? imagesToSend[0] : imagesToSend as any,
     prompt,
     size: (settings.resolution as any) || 'auto',
-    quality: (settings.quality as any) || 'auto',
     response_format: 'b64_json',
   });
 
