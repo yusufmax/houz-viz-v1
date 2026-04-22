@@ -1691,24 +1691,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
               )}
 
-              {model === 'gpt-image-2' && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Size (Resolution) - 4 credits</label>
-                    <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
-                      <option value="auto">Auto (Default)</option>
-                      <option value="1024x1024">1024x1024 (Square)</option>
-                      <option value="1536x1024">1536x1024 (Landscape)</option>
-                      <option value="1024x1536">1024x1536 (Portrait)</option>
-                      <option value="2048x2048">2048x2048 (2K Square)</option>
-                      <option value="2048x1152">2048x1152 (2K Landscape)</option>
-                      <option value="3840x2160">3840x2160 (4K Landscape)</option>
-                      <option value="2160x3840">2160x3840 (4K Portrait)</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
               {model === 'gemini-3.1-flash-image-preview' && (
                 <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-800">
                   <div className="space-y-0.5">

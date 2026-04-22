@@ -39,8 +39,6 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
   const result = await openai.images.generate({
     model: settings.model || 'gpt-image-2',
     prompt,
-    size: (settings.resolution as any) || 'auto',
-    response_format: 'b64_json',
   });
 
   if (result.data && result.data[0] && result.data[0].b64_json) {
@@ -82,8 +80,6 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
     model: settings.model || 'gpt-image-2',
     image: imagesToSend.length === 1 ? imagesToSend[0] : imagesToSend as any,
     prompt,
-    size: (settings.resolution as any) || 'auto',
-    response_format: 'b64_json',
   });
 
   if (result.data && result.data[0] && result.data[0].b64_json) {
