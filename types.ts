@@ -213,6 +213,7 @@ export interface GenerationSettings {
   lens?: CameraLens;
   aperture?: string;
   resolution?: string;
+  quality?: string;
   keepBuilding?: boolean;
   lockCamera?: boolean;
   lockInterior?: boolean;

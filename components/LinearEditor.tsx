@@ -376,6 +376,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
   const [resolution, setResolution] = useState<string>('4K');
+  const [quality, setQuality] = useState<string>('auto');
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
   const [lens, setLens] = useState<CameraLens | undefined>(undefined);
@@ -971,6 +972,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       customReferences: showAdvancedRefs ? customReferences : [],
       model,
       resolution,
+      quality,
       keepBuilding: editorMode === 'exterior' ? keepBuilding : false, // Only apply keepBuilding in exterior mode
       lockCamera,
       lens,
@@ -1688,6 +1690,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <option value="2K">2K - 4 Credits</option>
                     <option value="4K">4K - 5 Credits</option>
                   </select>
+                </div>
+              )}
+
+              {model === 'gpt-image-2' && (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Size (Resolution) - 4 credits</label>
+                    <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
+                      <option value="auto">Auto (Default)</option>
+                      <option value="1024x1024">1024x1024 (Square)</option>
+                      <option value="1536x1024">1536x1024 (Landscape)</option>
+                      <option value="1024x1536">1024x1536 (Portrait)</option>
+                      <option value="2048x2048">2048x2048 (2K Square)</option>
+                      <option value="2048x1152">2048x1152 (2K Landscape)</option>
+                      <option value="3840x2160">3840x2160 (4K Landscape)</option>
+                      <option value="2160x3840">2160x3840 (4K Portrait)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Sparkles size={14} /> Quality</label>
+                    <select value={quality} onChange={(e) => setQuality(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
+                      <option value="auto">Auto (Default)</option>
+                      <option value="low">Low (Fast)</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
                 </div>
               )}
 
