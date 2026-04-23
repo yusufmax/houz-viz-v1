@@ -31,7 +31,6 @@ import { quotaService } from '../services/quotaService';
 import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
-import { Pannellum } from 'pannellum-react';
 // import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
@@ -2085,11 +2084,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
+              <div className={`space-y-2 ${model === 'gpt-image-2' ? 'opacity-50 pointer-events-none' : ''}`}>
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
+                  <LayoutTemplate size={14} /> {t('aspectRatio')}
+                  {model === 'gpt-image-2' && <span className="text-[10px] text-slate-500 ml-auto">(Controlled by Resolution)</span>}
+                </label>
                 <div className="grid grid-cols-3 gap-1">
                   {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                    <button key={ratio} disabled={model === 'gpt-image-2'} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
                   ))}
                 </div>
               </div>
@@ -2288,21 +2290,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
                         onClick={() => setResultImage(res.url)}
                       >
-                        {(resolution === '1536 768' || resolution === '1536x768') ? (
-                           <div className="w-full aspect-square relative">
-                            <Pannellum
-                              width="100%"
-                              height="100%"
-                              image={res.url}
-                              pitch={10}
-                              yaw={180}
-                              hfov={110}
-                              autoLoad
-                            />
-                          </div>
-                        ) : (
-                          <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
-                        )}
+                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
                         <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
                           <div className="space-y-2 overflow-hidden">
                             <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
@@ -2326,18 +2314,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               ) : resultImage ? (
                 sourceImage ? (
                   <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
-                ) : (resolution === '1536 768' || resolution === '1536x768') ? (
-                  <div className="w-full h-full relative">
-                    <Pannellum
-                      width="100%"
-                      height="100%"
-                      image={resultImage}
-                      pitch={10}
-                      yaw={180}
-                      hfov={110}
-                      autoLoad
-                    />
-                  </div>
                 ) : (
                   <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
                 )
