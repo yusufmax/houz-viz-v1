@@ -1672,13 +1672,31 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Zap size={14} /> Model</label>
-                <select value={model} onChange={(e) => setModel(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
+                <select value={model} onChange={(e) => {
+                  const newModel = e.target.value;
+                  setModel(newModel);
+                  if (newModel === 'gpt-image-2') {
+                    setResolution('1536 768');
+                  }
+                }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                   <option value="gpt-image-2">GPT Image 2</option>
                   <option value="gemini-2.5-flash-image">Gemini 2.5 Flash (Fast)</option>
                   <option value="gemini-3-pro-image-preview">Gemini 3 Pro (High Quality)</option>
                   <option value="gemini-3.1-flash-image-preview">Nano Banana 2</option>
                 </select>
               </div>
+
+              {model === 'gpt-image-2' && (
+                <div className="space-y-2 mt-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution</label>
+                  <button
+                    onClick={() => setResolution('1536 768')}
+                    className={`w-full px-3 py-2.5 text-xs font-bold rounded-lg border transition-all ${resolution === '1536 768' || resolution === '1536x768' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+                  >
+                    360
+                  </button>
+                </div>
+              )}
 
               {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && (
                 <div className="space-y-2">

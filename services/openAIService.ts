@@ -36,10 +36,15 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
   const openai = getOpenAIClient();
   const prompt = buildPrompt(settings);
 
-  const result = await openai.images.generate({
+  const options: any = {
     model: settings.model || 'gpt-image-2',
     prompt,
-  });
+  };
+  if (settings.resolution) {
+    options.size = settings.resolution.replace(' ', 'x');
+  }
+
+  const result = await openai.images.generate(options);
 
   if (result.data && result.data[0] && result.data[0].b64_json) {
     return `data:image/png;base64,${result.data[0].b64_json}`;
@@ -76,11 +81,16 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
     return generateOpenAIImage(settings);
   }
 
-  const result = await openai.images.edit({
+  const options: any = {
     model: settings.model || 'gpt-image-2',
     image: imagesToSend.length === 1 ? imagesToSend[0] : imagesToSend as any,
     prompt,
-  });
+  };
+  if (settings.resolution) {
+    options.size = settings.resolution.replace(' ', 'x');
+  }
+
+  const result = await openai.images.edit(options);
 
   if (result.data && result.data[0] && result.data[0].b64_json) {
     return `data:image/png;base64,${result.data[0].b64_json}`;

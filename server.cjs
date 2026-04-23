@@ -181,7 +181,8 @@ const server = http.createServer(async (req, res) => {
                     'kling-v1': 'kling-v1',
                     'kling-v1-5': 'kling-v1-5',
                     'kling-v2-1': 'kling-v2-1',
-                    'kling-v2-5-turbo': 'kling-v2-5-turbo'
+                    'kling-v2-5-turbo': 'kling-v2-5-turbo',
+                    'kling-v3': 'kling-v3'
                 };
 
                 let base64Image = params.image;

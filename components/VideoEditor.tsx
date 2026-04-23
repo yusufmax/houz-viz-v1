@@ -295,7 +295,7 @@ const VideoEditor: React.FC = () => {
                                     {videoSettings.mode === '4k' ? '4K' : videoSettings.mode === 'pro' ? '1080p' : '720p'}
                                 </span>
                             </div>
-                            <div className={`grid ${videoSettings.model === KlingModel.V3 ? 'grid-cols-3' : 'grid-cols-2'} gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700`}>
+                            <div className="grid grid-cols-2 gap-2 p-1 bg-slate-800 rounded-lg border border-slate-700">
                                 <button
                                     onClick={() => setVideoSettings({ ...videoSettings, mode: 'std' })}
                                     className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode !== 'pro' && videoSettings.mode !== '4k'
@@ -317,7 +317,7 @@ const VideoEditor: React.FC = () => {
                                 {videoSettings.model === KlingModel.V3 && (
                                     <button
                                         onClick={() => setVideoSettings({ ...videoSettings, mode: '4k' })}
-                                        className={`px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode === '4k'
+                                        className={`col-span-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode === '4k'
                                             ? 'bg-purple-600 text-white shadow-sm'
                                             : 'text-slate-400 hover:text-slate-300 hover:bg-slate-700/50'
                                             }`}
