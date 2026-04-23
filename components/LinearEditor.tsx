@@ -1686,25 +1686,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </select>
               </div>
 
-              {model === 'gpt-image-2' && (
-                <div className="space-y-2 mt-2">
-                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution</label>
-                  <button
-                    onClick={() => setResolution('1536 768')}
-                    className={`w-full px-3 py-2.5 text-xs font-bold rounded-lg border transition-all ${resolution === '1536 768' || resolution === '1536x768' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
-                  >
-                    360
-                  </button>
-                </div>
-              )}
-
-              {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && (
+              {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview' || model === 'gpt-image-2') && (
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)</label>
                   <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                     <option value="1K">1K (Square/Landscape) - 2 Credits</option>
                     <option value="2K">2K - 4 Credits</option>
                     <option value="4K">4K - 5 Credits</option>
+                    {model === 'gpt-image-2' && <option value="1536 768">360 (Panorama)</option>}
                   </select>
                 </div>
               )}
