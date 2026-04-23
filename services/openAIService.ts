@@ -40,7 +40,7 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
     model: settings.model || 'gpt-image-2',
     prompt,
   };
-  if (settings.resolution) {
+  if (settings.resolution && settings.resolution !== 'auto') {
     options.size = settings.resolution.replace(' ', 'x');
   }
 
@@ -86,7 +86,7 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
     image: imagesToSend.length === 1 ? imagesToSend[0] : imagesToSend as any,
     prompt,
   };
-  if (settings.resolution) {
+  if (settings.resolution && settings.resolution !== 'auto') {
     options.size = settings.resolution.replace(' ', 'x');
   }
 

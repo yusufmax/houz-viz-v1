@@ -31,6 +31,7 @@ import { quotaService } from '../services/quotaService';
 import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
 import { useSearchParams } from 'react-router-dom';
+import { Pannellum } from 'pannellum-react';
 // import { useAgentic } from '../contexts/AgenticContext';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { supabase } from '../lib/supabaseClient';
@@ -1677,6 +1678,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   setModel(newModel);
                   if (newModel === 'gpt-image-2') {
                     setResolution('1536 768');
+                  } else if (resolution.includes('x') || resolution === '1536 768') {
+                    setResolution('1K');
                   }
                 }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                   <option value="gpt-image-2">GPT Image 2</option>
@@ -1690,10 +1693,23 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)</label>
                   <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
-                    <option value="1K">1K (Square/Landscape) - 2 Credits</option>
-                    <option value="2K">2K - 4 Credits</option>
-                    <option value="4K">4K - 5 Credits</option>
-                    {model === 'gpt-image-2' && <option value="1536 768">360 (Panorama)</option>}
+                    {model === 'gpt-image-2' ? (
+                      <>
+                        <option value="auto">auto (default)</option>
+                        <option value="1024x1536">1024x1536 (portrait)</option>
+                        <option value="2048x2048">2048x2048 (2K square)</option>
+                        <option value="2048x1152">2048x1152 (2K landscape)</option>
+                        <option value="3840x2160">3840x2160 (4K landscape)</option>
+                        <option value="2160x3840">2160x3840 (4K portrait)</option>
+                        <option value="1536 768">360 (Panorama)</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="1K">1K (Square/Landscape) - 2 Credits</option>
+                        <option value="2K">2K - 4 Credits</option>
+                        <option value="4K">4K - 5 Credits</option>
+                      </>
+                    )}
                   </select>
                 </div>
               )}
@@ -2272,7 +2288,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         className={`group relative rounded-lg border-2 overflow-hidden transition-all cursor-pointer hover:scale-[1.02] ${resultImage === res.url ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' : 'border-slate-800 hover:border-slate-600'}`}
                         onClick={() => setResultImage(res.url)}
                       >
-                        <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                        {(resolution === '1536 768' || resolution === '1536x768') ? (
+                           <div className="w-full aspect-square relative">
+                            <Pannellum
+                              width="100%"
+                              height="100%"
+                              image={res.url}
+                              pitch={10}
+                              yaw={180}
+                              hfov={110}
+                              autoLoad
+                            />
+                          </div>
+                        ) : (
+                          <img src={res.url} alt={`Result ${idx + 1}`} className="w-full h-auto aspect-square object-cover" />
+                        )}
                         <div className="absolute inset-0 bg-slate-900/90 p-3 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between backdrop-blur-sm">
                           <div className="space-y-2 overflow-hidden">
                             <div className="flex items-center justify-between text-[10px] font-bold text-indigo-400 border-b border-indigo-500/20 pb-1">
@@ -2296,6 +2326,18 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               ) : resultImage ? (
                 sourceImage ? (
                   <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
+                ) : (resolution === '1536 768' || resolution === '1536x768') ? (
+                  <div className="w-full h-full relative">
+                    <Pannellum
+                      width="100%"
+                      height="100%"
+                      image={resultImage}
+                      pitch={10}
+                      yaw={180}
+                      hfov={110}
+                      autoLoad
+                    />
+                  </div>
                 ) : (
                   <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
                 )
