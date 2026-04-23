@@ -411,7 +411,7 @@ export interface VideoGenerationSettings {
   prompt: string;
   cfgScale?: number;
   cameraControl?: CameraControlSettings;
-  mode?: 'std' | 'pro';
+  mode?: 'std' | 'pro' | '4k';
   multiShot?: boolean;
   multiPrompt?: MultiShotPrompt[];
 }
