@@ -1491,9 +1491,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {!sourceImage && (
                   <button
                     onClick={() => setDrawingTarget('source')}
-                    className="flex items-center gap-1 text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+                    className="relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
                   >
-                    <Pencil size={12} /> {t('startBlank')}
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Pencil size={12} className="relative z-10" /> <span className="relative z-10">{t('startBlank')}</span>
                   </button>
                 )}
                 <button
@@ -1504,26 +1505,29 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setBatchResults([]);
                     }
                   }}
-                  className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${batchMode ? 'bg-indigo-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                  className={`relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 backdrop-blur-md border border-white/10 hover:border-white/20 rounded-md transition-all duration-300 ${batchMode ? 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30' : 'bg-white/5 hover:bg-white/10 text-slate-200'}`}
                   title="Toggle Batch Mode"
                 >
-                  <Layers size={12} /> {batchMode ? 'Batch Mode On' : 'Batch Mode'}
+                  <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
+                  <Layers size={12} className="relative z-10" /> <span className="relative z-10">{batchMode ? 'Batch Mode On' : 'Batch Mode'}</span>
                 </button>
                 {sourceImage && (
                   <button
                     onClick={() => setPreviewImage(sourceImage)}
-                    className="p-1 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    className="relative overflow-hidden group p-1 text-xs bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
                     title={t('fullScreen')}
                   >
-                    <Maximize size={12} />
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Maximize size={12} className="relative z-10" />
                   </button>
                 )}
                 {sourceImage && (
                   <button
                     onClick={() => setDrawingTarget('source')}
-                    className="flex items-center gap-1 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-2 py-1 rounded transition-colors"
+                    className="relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 bg-indigo-500/20 hover:bg-indigo-500/30 backdrop-blur-md border border-indigo-500/30 hover:border-indigo-400/50 text-indigo-200 rounded-md transition-all duration-300"
                   >
-                    <Pencil size={12} /> {t('drawEdit')}
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Pencil size={12} className="relative z-10" /> <span className="relative z-10">{t('drawEdit')}</span>
                   </button>
                 )}
               </div>
@@ -2187,20 +2191,24 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <>
                   <button
                     onClick={() => setPreviewImage(resultImage)}
-                    className="p-1.5 text-xs bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    className="relative overflow-hidden group p-1.5 text-xs bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
                     title={t('fullScreen')}
                   >
-                    <Maximize size={14} />
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Maximize size={14} className="relative z-10" />
                   </button>
                   {profile?.magnific_enabled && (
                     <div className="relative">
                       <button
                         onClick={() => setShowFreepikSettings(!showFreepikSettings)}
                         disabled={isUpscaling || isMagnificUpscaling}
-                        className="flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
+                        className="relative overflow-hidden group flex items-center gap-2 text-xs bg-gradient-to-r from-amber-600/80 to-orange-600/80 hover:from-amber-500 hover:to-orange-500 backdrop-blur-md border border-amber-500/30 text-white px-4 py-1.5 rounded-md transition-all shadow-lg shadow-amber-900/40 disabled:opacity-50 font-bold"
                         title="Configure & Run Magnific Upscale"
                       >
-                        {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                        <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
+                        <span className="relative z-10 flex items-center gap-2">
+                          {isMagnificUpscaling ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />} Magnific
+                        </span>
                       </button>
 
                       {showFreepikSettings && (
@@ -2219,9 +2227,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                   <button
                     onClick={() => setDrawingTarget('result')}
-                    className="flex items-center gap-2 text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition-colors"
+                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-indigo-600/80 hover:bg-indigo-500 backdrop-blur-md border border-indigo-500/30 text-white px-3 py-1.5 rounded-md transition-all"
                   >
-                    <Pencil size={14} /> {t('edit')}
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Pencil size={14} /> {t('edit')}
+                    </span>
                   </button>
 
                   <button
@@ -2242,9 +2253,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         alert(`Download failed: ${err.message} `);
                       }
                     }}
-                    className="flex items-center gap-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-colors"
+                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/30 text-white px-3 py-1.5 rounded-md transition-all"
                   >
-                    <Download size={14} /> {t('download')}
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
+                    <span className="relative z-10 flex items-center gap-2">
+                      <Download size={14} /> {t('download')}
+                    </span>
                   </button>
                 </>
               )}
