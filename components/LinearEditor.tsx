@@ -884,6 +884,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     try {
       const items = await historyService.getHistory(user.id, projectId || undefined);
       setHistory(items);
+      
+      const historyId = searchParams.get('historyId');
+      if (historyId && items.length > 0) {
+        const itemToLoad = items.find(item => item.id === historyId);
+        if (itemToLoad) {
+           handleLoadHistory(itemToLoad);
+           const newParams = new URLSearchParams(searchParams);
+           newParams.delete('historyId');
+           setSearchParams(newParams, { replace: true });
+        }
+      }
     } catch (e) {
       console.error("Failed to load history", e);
     }

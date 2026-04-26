@@ -305,7 +305,8 @@ const AppContent: React.FC = () => {
         <Route path="/playground" element={<GeminiPlayground />} />
         <Route path="/super" element={<SuperEditor />} />
         <Route path="/magnific" element={<MagnificPage />} />
-        <Route path="/" element={<Home />} />
+        <Route path="/editor" element={<Home />} />
+        <Route path="/" element={<ProfilePage />} />
         <Route path="*" element={<div className="p-10 text-center">404 - Page Not Found</div>} />
       </Routes>
     </Router>

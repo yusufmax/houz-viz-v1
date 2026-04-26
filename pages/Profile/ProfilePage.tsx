@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthProvider';
 import { supabase } from '../../lib/supabaseClient';
-import { Trash2, FolderOpen, Plus, Image as ImageIcon, Edit2, X, Zap } from 'lucide-react';
+import { Trash2, FolderOpen, Plus, Image as ImageIcon, Edit2, X, Zap, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { quotaService } from '../../services/quotaService';
 import CreditRequestModal from '../../components/CreditRequestModal';
+import { historyService } from '../../services/historyService';
+import { HistoryItem } from '../../types';
 
 interface Project {
     id: string;
@@ -34,6 +36,11 @@ const ProfilePage: React.FC = () => {
     const [editName, setEditName] = useState('');
     const [quota, setQuota] = useState<{ used: number; limit: number } | null>(null);
     const navigate = useNavigate();
+
+    // Project Generations Grid States
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [projectGenerations, setProjectGenerations] = useState<HistoryItem[]>([]);
+    const [loadingGenerations, setLoadingGenerations] = useState(false);
 
     const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
 
@@ -94,11 +101,22 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const openProject = (project: Project) => {
+    const openProject = async (project: Project) => {
         if (project.data?.type === 'linear') {
-            navigate(`/?mode=linear&projectId=${project.id}`);
+            setSelectedProject(project);
+            setLoadingGenerations(true);
+            try {
+                if (user) {
+                    const history = await historyService.getHistory(user.id, project.id);
+                    setProjectGenerations(history);
+                }
+            } catch (error) {
+                console.error('Error fetching project history:', error);
+            } finally {
+                setLoadingGenerations(false);
+            }
         } else {
-            navigate(`/?mode=infinity&projectId=${project.id}`);
+            navigate(`/editor?mode=infinity&projectId=${project.id}`);
         }
     };
 
@@ -227,6 +245,59 @@ const ProfilePage: React.FC = () => {
     });
 
     const [showRequestModal, setShowRequestModal] = useState(false);
+
+    if (selectedProject) {
+        return (
+            <div className="min-h-screen bg-slate-950 text-slate-200 p-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => setSelectedProject(null)} className="text-slate-400 hover:text-white flex items-center gap-2 bg-slate-900/50 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-800 transition-colors">
+                            <ChevronLeft size={16} /> Back to Projects
+                        </button>
+                        <h1 className="text-3xl font-black text-white">{selectedProject.name}</h1>
+                    </div>
+                    <button 
+                        onClick={() => navigate(`/editor?mode=${selectedProject.data?.type || 'linear'}&projectId=${selectedProject.id}`)} 
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-indigo-500/20 active:scale-95 transition-all"
+                    >
+                        <Edit2 size={16} /> Open in Editor
+                    </button>
+                </div>
+
+                {loadingGenerations ? (
+                    <div className="text-center text-slate-500 py-12">Loading generations...</div>
+                ) : projectGenerations.length === 0 ? (
+                    <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed">
+                        <ImageIcon size={48} className="mx-auto mb-4 text-slate-700" />
+                        <p className="text-slate-400 mb-4">No generations found for this project.</p>
+                        <button 
+                            onClick={() => navigate(`/editor?mode=${selectedProject.data?.type || 'linear'}&projectId=${selectedProject.id}`)}
+                            className="text-indigo-400 hover:text-indigo-300 font-medium"
+                        >
+                            Start Generating
+                        </button>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                        {projectGenerations.map(gen => (
+                            <div 
+                                key={gen.id} 
+                                className="relative group rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-indigo-500 transition-colors"
+                                onClick={() => navigate(`/editor?mode=${selectedProject.data?.type || 'linear'}&projectId=${selectedProject.id}&historyId=${gen.id}`)}
+                            >
+                                <img src={gen.url} alt={gen.prompt} className="w-full h-full object-cover aspect-square bg-slate-900" />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
+                                    <span className="text-white text-xs font-bold bg-indigo-600 px-3 py-1.5 rounded-full flex items-center gap-1">
+                                        <Edit2 size={12} /> Edit State
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200 p-8">
@@ -456,7 +527,7 @@ const ProfilePage: React.FC = () => {
             <div className="mb-8 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Your Projects</h2>
                 <button
-                    onClick={() => navigate('/')}
+                    onClick={() => navigate('/editor?mode=linear')}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                     <Plus size={16} /> New Project
@@ -469,7 +540,7 @@ const ProfilePage: React.FC = () => {
                 <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed">
                     <p className="text-slate-400 mb-4">No projects saved yet.</p>
                     <button
-                        onClick={() => navigate('/')}
+                        onClick={() => navigate('/editor?mode=linear')}
                         className="text-indigo-400 hover:text-indigo-300 font-medium"
                     >
                         Start creating

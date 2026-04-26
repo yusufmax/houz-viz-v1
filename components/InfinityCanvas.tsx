@@ -945,13 +945,21 @@ const InfinityCanvas: React.FC = () => {
                 } else if ((sourceNode?.type === 'input' || sourceNode?.type === 'output' || sourceNode?.type === 'processor') && sourceNode.data.imageSrc) {
                     const imgUrl = sourceNode.data.imageSrc;
                     
-                    if (conn.toPort === 'style') {
+                    if (conn.toPort === 'ref1') {
                         dynamicSettings.styleReferenceImage = imgUrl;
-                    } else if (conn.toPort === 'arch') {
+                    } else if (conn.toPort === 'ref2') {
                         dynamicSettings.architectureReferenceImage = imgUrl;
-                    } else if (conn.toPort === 'atmosphere') {
+                    } else if (conn.toPort === 'ref3') {
                         dynamicSettings.atmosphereReferenceImage = imgUrl;
-                    } else {
+                    } else if (conn.toPort === 'ref4' || conn.toPort === 'ref5') {
+                        if (!dynamicSettings.customReferences) dynamicSettings.customReferences = [];
+                        dynamicSettings.customReferences.push({
+                            id: Math.random().toString(),
+                            category: 'Custom',
+                            image: imgUrl,
+                            prompt: 'Additional Context Reference'
+                        });
+                    } else if (conn.toPort !== 'text') {
                         // Default fallback mapping is source image
                         sourceImg = imgUrl;
                     }
@@ -1562,9 +1570,12 @@ const InfinityCanvas: React.FC = () => {
                         if (toNode.type === 'processor') {
                             // Map explicit custom ports (top offset + 12px pin center)
                             if (conn.toPort === 'source') targetY = toNode.y + 72;
-                            else if (conn.toPort === 'style') targetY = toNode.y + 132;
-                            else if (conn.toPort === 'arch') targetY = toNode.y + 192;
-                            else if (conn.toPort === 'atmosphere') targetY = toNode.y + 252;
+                            else if (conn.toPort === 'text') targetY = toNode.y + 132;
+                            else if (conn.toPort === 'ref1') targetY = toNode.y + 192;
+                            else if (conn.toPort === 'ref2') targetY = toNode.y + 252;
+                            else if (conn.toPort === 'ref3') targetY = toNode.y + 312;
+                            else if (conn.toPort === 'ref4') targetY = toNode.y + 372;
+                            else if (conn.toPort === 'ref5') targetY = toNode.y + 432;
                             else targetY = toNode.y + 72; // Fallback to source
                         } else {
                             targetY = toNode.y + (toNode.height || 150) / 2; // For output nodes
@@ -1963,10 +1974,13 @@ const InfinityCanvas: React.FC = () => {
                             {node.type === 'processor' && (
                                 <>
                                     {[
-                                        { id: 'source', label: "Base Frame", color: "hover:bg-indigo-500", y: 60 },
-                                        { id: 'style', label: "Style Context", color: "hover:bg-pink-500", y: 120 },
-                                        { id: 'arch', label: "Arch Reference", color: "hover:bg-blue-500", y: 180 },
-                                        { id: 'atmosphere', label: "Env Reference", color: "hover:bg-emerald-500", y: 240 }
+                                        { id: 'source', label: "Image (Base)", color: "hover:bg-indigo-500", y: 60 },
+                                        { id: 'text', label: "Text (Prompt)", color: "hover:bg-amber-500", y: 120 },
+                                        { id: 'ref1', label: "Ref 1 (Style)", color: "hover:bg-slate-500", y: 180 },
+                                        { id: 'ref2', label: "Ref 2 (Arch)", color: "hover:bg-slate-500", y: 240 },
+                                        { id: 'ref3', label: "Ref 3 (Env)", color: "hover:bg-slate-500", y: 300 },
+                                        { id: 'ref4', label: "Ref 4 (Detail)", color: "hover:bg-slate-500", y: 360 },
+                                        { id: 'ref5', label: "Ref 5 (Custom)", color: "hover:bg-slate-500", y: 420 }
                                     ].map((port) => (
                                         <div
                                             key={port.id}
