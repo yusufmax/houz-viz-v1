@@ -1481,7 +1481,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       <div className="w-full lg:w-1/2 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
         <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
           {/* SOURCE SECTION */}
-          <section className="space-y-4">
+          <section className="flex flex-col flex-1 gap-4">
             <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
               <div className="flex items-center gap-2">
                 <ImageIcon size={18} />
@@ -1534,14 +1534,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
 
             {batchMode ? (
-              <div className="space-y-2">
+              <div className="flex flex-col flex-1 gap-2">
                 <p className="text-xs text-indigo-300/80 text-center animate-pulse">
                   Upload up to 10 images to process with same settings
                 </p>
-                <BatchImageUpload onImagesSelected={setBatchImages} maxImages={10} />
+                <div className="flex-1 flex flex-col">
+                  <BatchImageUpload onImagesSelected={setBatchImages} maxImages={10} />
+                </div>
               </div>
             ) : (
-              <div className="min-h-[250px] relative">
+              <div className="min-h-[250px] relative flex flex-col flex-1">
                 {showInstructions && <GuideTooltip text={t('guideSource')} className="top-2 right-2 z-10" side="bottom" />}
                 <ImageUpload
                   selectedImage={sourceImage}

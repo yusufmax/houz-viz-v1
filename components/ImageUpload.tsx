@@ -133,7 +133,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`relative flex flex-col items-center justify-center w-full ${compact ? 'h-32' : 'h-full min-h-[200px]'} 
+        className={`relative flex flex-col items-center justify-center w-full ${compact ? 'h-32' : 'flex-1 min-h-[200px]'} 
           border-2 border-dashed rounded-lg transition-all cursor-pointer
           ${isDragging ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
       >
