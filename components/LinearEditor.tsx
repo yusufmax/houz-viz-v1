@@ -615,7 +615,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     let name = currentProjectName;
     if (!name) {
-      name = prompt("Enter project name:", "My Design");
+      name = window.prompt("Enter project name:", "My Design");
       if (!name) return;
     }
 
@@ -949,11 +949,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const executeGeneration = async (overrideSource?: string, settingsOverride?: Partial<GenerationSettings>) => {
     if (!user) {
       alert("Please sign in to generate images.");
-      return;
-    }
-
-    if (!prompt && !settingsOverride?.prompt) {
-      alert(t('enterPrompt'));
       return;
     }
 
