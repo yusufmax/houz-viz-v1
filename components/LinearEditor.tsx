@@ -1488,6 +1488,19 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <h2>{t('source')}</h2>
               </div>
               <div className="flex gap-1">
+                <button
+                  onClick={() => {
+                    setBatchMode(!batchMode);
+                    if (batchMode) {
+                      setBatchImages([]);
+                      setBatchResults([]);
+                    }
+                  }}
+                  className={`flex items-center gap-1 text-xs px-2 py-1 rounded transition-colors ${batchMode ? 'bg-indigo-600 text-white' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                  title="Toggle Batch Mode"
+                >
+                  <Layers size={12} /> {batchMode ? 'Batch Mode On' : 'Batch Mode'}
+                </button>
                 {sourceImage && (
                   <button
                     onClick={() => setPreviewImage(sourceImage)}
@@ -1508,34 +1521,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             </div>
 
-            {/* Batch Mode Toggle */}
-            <div className="relative group">
-              <button
-                onClick={() => {
-                  setBatchMode(!batchMode);
-                  if (batchMode) {
-                    setBatchImages([]);
-                    setBatchResults([]);
-                  }
-                }}
-                className={`w-full py-2.5 px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 relative overflow-hidden ${batchMode
-                  ? 'bg-indigo-600/90 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] ring-1 ring-indigo-400'
-                  : 'bg-slate-800/50 backdrop-blur-md text-slate-300 hover:bg-slate-700/80 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
-                  } `}
-              >
-                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
-                <Layers size={16} className="relative z-10" />
-                <span className="relative z-10">{batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}</span>
-              </button>
-              {batchMode && (
-                <p className="text-xs text-indigo-300/80 mt-2 text-center animate-pulse">
+            {batchMode ? (
+              <div className="space-y-2">
+                <p className="text-xs text-indigo-300/80 text-center animate-pulse">
                   Upload up to 10 images to process with same settings
                 </p>
-              )}
-            </div>
-
-            {batchMode ? (
-              <BatchImageUpload onImagesSelected={setBatchImages} maxImages={10} />
+                <BatchImageUpload onImagesSelected={setBatchImages} maxImages={10} />
+              </div>
             ) : (
               <div className="min-h-[250px] relative">
                 {showInstructions && <GuideTooltip text={t('guideSource')} className="top-2 right-2 z-10" side="bottom" />}
