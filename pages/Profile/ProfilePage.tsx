@@ -312,7 +312,7 @@ const ProfilePage: React.FC = () => {
                                 className="relative group rounded-xl overflow-hidden cursor-pointer border border-slate-800 hover:border-indigo-500 transition-colors"
                                 onClick={() => navigate(`/editor?mode=${selectedProject.data?.type || 'linear'}&projectId=${selectedProject.id}&historyId=${gen.id}`)}
                             >
-                                <img src={gen.url} alt={gen.prompt} className="w-full h-full object-cover aspect-square bg-slate-900" />
+                                <img src={historyService.getOptimizedUrl(gen.url, 400)} alt={gen.prompt} loading="lazy" className="w-full h-full object-cover aspect-square bg-slate-900" />
                                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                     <span className="text-white text-xs font-bold bg-indigo-600 px-3 py-1.5 rounded-full flex items-center gap-1">
                                         <Edit2 size={12} /> Edit State
