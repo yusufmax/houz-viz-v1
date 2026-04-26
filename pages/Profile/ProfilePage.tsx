@@ -101,6 +101,33 @@ const ProfilePage: React.FC = () => {
         }
     };
 
+    const handleCreateProject = async () => {
+        if (!user) return;
+        const name = window.prompt("Enter new project name:", "New Project");
+        if (!name) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('projects')
+                .insert({
+                    name,
+                    user_id: user.id,
+                    data: { type: 'linear', linearState: {} },
+                    description: 'Created from Command Center'
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+            if (data) {
+                navigate(`/editor?mode=linear&projectId=${data.id}`);
+            }
+        } catch (error: any) {
+            console.error("Error creating project:", error);
+            alert("Failed to create project: " + error.message);
+        }
+    };
+
     const openProject = async (project: Project) => {
         if (project.data?.type === 'linear') {
             setSelectedProject(project);
@@ -527,7 +554,7 @@ const ProfilePage: React.FC = () => {
             <div className="mb-8 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Your Projects</h2>
                 <button
-                    onClick={() => navigate('/editor?mode=linear')}
+                    onClick={handleCreateProject}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                     <Plus size={16} /> New Project
@@ -540,7 +567,7 @@ const ProfilePage: React.FC = () => {
                 <div className="text-center py-12 bg-slate-900/50 rounded-2xl border border-slate-800 border-dashed">
                     <p className="text-slate-400 mb-4">No projects saved yet.</p>
                     <button
-                        onClick={() => navigate('/editor?mode=linear')}
+                        onClick={handleCreateProject}
                         className="text-indigo-400 hover:text-indigo-300 font-medium"
                     >
                         Start creating
