@@ -129,7 +129,9 @@ const ProfilePage: React.FC = () => {
     };
 
     const openProject = async (project: Project) => {
-        if (project.data?.type === 'linear') {
+        const type = project.data?.type || 'linear'; // Default to linear for legacy projects without an explicit type
+        
+        if (type === 'linear') {
             setSelectedProject(project);
             setLoadingGenerations(true);
             try {
@@ -143,7 +145,7 @@ const ProfilePage: React.FC = () => {
                 setLoadingGenerations(false);
             }
         } else {
-            navigate(`/editor?mode=infinity&projectId=${project.id}`);
+            navigate(`/editor?mode=${type}&projectId=${project.id}`);
         }
     };
 
