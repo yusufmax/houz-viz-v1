@@ -1488,6 +1488,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <h2>{t('source')}</h2>
               </div>
               <div className="flex gap-1">
+                {!sourceImage && (
+                  <button
+                    onClick={() => setDrawingTarget('source')}
+                    className="flex items-center gap-1 text-xs px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors"
+                  >
+                    <Pencil size={12} /> {t('startBlank')}
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setBatchMode(!batchMode);
@@ -1536,14 +1544,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   onImageSelected={setSourceImage}
                   label={t('dropSketch')}
                 />
-                {!sourceImage && (
-                  <button
-                    onClick={() => setDrawingTarget('source')}
-                    className="mt-4 w-full py-2 border border-dashed border-slate-600 rounded-lg text-slate-400 text-sm hover:text-indigo-400 hover:border-indigo-500 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Pencil size={14} /> {t('startBlank')}
-                  </button>
-                )}
               </div>
             )}
           </section>
