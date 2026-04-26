@@ -40,7 +40,7 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
     model: settings.model || 'gpt-image-2',
     prompt,
   };
-  if (settings.resolution && settings.resolution !== 'auto') {
+  if (settings.resolution) {
     options.size = settings.resolution.replace(' ', 'x');
   }
 
@@ -49,10 +49,10 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
   if (result.data && result.data[0] && result.data[0].b64_json) {
     return `data:image/png;base64,${result.data[0].b64_json}`;
   }
-  
+
   // Fallback if URL is returned instead
   if (result.data && result.data[0] && result.data[0].url) {
-      return result.data[0].url;
+    return result.data[0].url;
   }
 
   throw new Error('Failed to generate image via OpenAI');
@@ -61,9 +61,9 @@ export const generateOpenAIImage = async (settings: GenerationSettings): Promise
 export const editOpenAIImage = async (sourceImage: string | null, settings: GenerationSettings): Promise<string> => {
   const openai = getOpenAIClient();
   const prompt = buildPrompt(settings);
-  
+
   const imagesToSend: File[] = [];
-  
+
   if (sourceImage) {
     imagesToSend.push(dataURLtoFile(sourceImage, 'source.png'));
   }
@@ -86,7 +86,7 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
     image: imagesToSend.length === 1 ? imagesToSend[0] : imagesToSend as any,
     prompt,
   };
-  if (settings.resolution && settings.resolution !== 'auto') {
+  if (settings.resolution) {
     options.size = settings.resolution.replace(' ', 'x');
   }
 
@@ -95,9 +95,9 @@ export const editOpenAIImage = async (sourceImage: string | null, settings: Gene
   if (result.data && result.data[0] && result.data[0].b64_json) {
     return `data:image/png;base64,${result.data[0].b64_json}`;
   }
-  
+
   if (result.data && result.data[0] && result.data[0].url) {
-      return result.data[0].url;
+    return result.data[0].url;
   }
 
   throw new Error('Failed to edit image via OpenAI');

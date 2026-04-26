@@ -543,7 +543,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           resolution,
           styleReferenceImage: (styleReferenceImage && !styleReferenceImage.startsWith('data:')) ? styleReferenceImage : undefined,
           customReferences: customReferences,
-          sourceImage: (sourceImage && !sourceImage.startsWith('data:')) ? sourceImage : undefined,
+          sourceImage: sourceImage || undefined,
           lockCamera,
           lockInterior,
           interior: editorMode === 'interior' ? interiorSettings : undefined,
@@ -1409,8 +1409,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       )}
 
       {/* History Sidebar */}
-      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/95 border-r border-slate-700 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center">
+      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/60 backdrop-blur-2xl border-r border-white/5 shadow-2xl shadow-black/50 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+        <div className="p-4 border-b border-white/5 flex justify-between items-center">
           <h3 className="font-bold text-slate-200 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
           <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-slate-800 rounded"><ChevronRight size={16} /></button>
         </div>
@@ -1473,7 +1473,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 1: INPUT & CONTROLS (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-4 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40 rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
           {/* SOURCE SECTION */}
           <section className="space-y-4">
             <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
@@ -1677,8 +1677,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   setModel(newModel);
                   if (newModel === 'gpt-image-2') {
                     setResolution('1536 768');
-                  } else if (resolution.includes('x') || resolution === '1536 768') {
-                    setResolution('1K');
                   }
                 }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                   <option value="gpt-image-2">GPT Image 2</option>
@@ -1688,27 +1686,25 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </select>
               </div>
 
-              {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview' || model === 'gpt-image-2') && (
+              {model === 'gpt-image-2' && (
+                <div className="space-y-2 mt-2">
+                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution</label>
+                  <button
+                    onClick={() => setResolution('1536 768')}
+                    className={`w-full px-3 py-2.5 text-xs font-bold rounded-lg border transition-all ${resolution === '1536 768' || resolution === '1536x768' ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+                  >
+                    360
+                  </button>
+                </div>
+              )}
+
+              {(model === 'gemini-3-pro-image-preview' || model === 'gemini-3.1-flash-image-preview') && (
                 <div className="space-y-2">
                   <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Maximize size={14} /> Resolution (Cost: {calculateCost()} credits)</label>
                   <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
-                    {model === 'gpt-image-2' ? (
-                      <>
-                        <option value="auto">auto (default)</option>
-                        <option value="1024x1536">1024x1536 (portrait)</option>
-                        <option value="2048x2048">2048x2048 (2K square)</option>
-                        <option value="2048x1152">2048x1152 (2K landscape)</option>
-                        <option value="3840x2160">3840x2160 (4K landscape)</option>
-                        <option value="2160x3840">2160x3840 (4K portrait)</option>
-                        <option value="1536 768">360 (Panorama)</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="1K">1K (Square/Landscape) - 2 Credits</option>
-                        <option value="2K">2K - 4 Credits</option>
-                        <option value="4K">4K - 5 Credits</option>
-                      </>
-                    )}
+                    <option value="1K">1K (Square/Landscape) - 2 Credits</option>
+                    <option value="2K">2K - 4 Credits</option>
+                    <option value="4K">4K - 5 Credits</option>
                   </select>
                 </div>
               )}
@@ -1766,7 +1762,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                           >
                             <X size={12} />
                           </button>
-                          
+
                           <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Category:</span>
@@ -1787,7 +1783,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                                 <option value="Custom">Custom</option>
                               </select>
                             </div>
-                            
+
                             {ref.category === 'Custom' && (
                               <div className="flex items-center gap-2">
                                 <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Name:</span>
@@ -2084,14 +2080,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
 
             <div className="space-y-4">
-              <div className={`space-y-2 ${model === 'gpt-image-2' ? 'opacity-50 pointer-events-none' : ''}`}>
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2">
-                  <LayoutTemplate size={14} /> {t('aspectRatio')}
-                  {model === 'gpt-image-2' && <span className="text-[10px] text-slate-500 ml-auto">(Controlled by Resolution)</span>}
-                </label>
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
                 <div className="grid grid-cols-3 gap-1">
                   {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} disabled={model === 'gpt-image-2'} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
                   ))}
                 </div>
               </div>
@@ -2178,7 +2171,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 2: RESULT (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
-        <div className="bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl flex-1 flex flex-col relative overflow-hidden">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40 rounded-2xl flex-1 flex flex-col relative overflow-hidden">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
           <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">

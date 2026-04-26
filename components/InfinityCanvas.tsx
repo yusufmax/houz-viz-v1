@@ -1452,7 +1452,7 @@ const InfinityCanvas: React.FC = () => {
             />
 
             {/* History Sidebar */}
-            <div className={`absolute left-0 top-4 bottom-4 bg-zinc-950/95 border-r border-white/10 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+            <div className={`absolute left-0 top-4 bottom-4 bg-zinc-950/60 backdrop-blur-2xl border-r border-white/10 shadow-2xl shadow-black/50 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
                 <div className="p-4 border-b border-white/10 flex justify-between items-center">
                     <h3 className="font-bold text-zinc-100 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
                     <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-zinc-900 rounded"><ChevronRight size={16} /></button>
@@ -1495,38 +1495,38 @@ const InfinityCanvas: React.FC = () => {
             <div className="absolute top-4 left-4 z-20 flex gap-2">
                 <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
                 >
                     <HistoryIcon size={14} /> {t('history')}
                 </button>
                 <button
                     onClick={() => setProjectsMenu(!projectsMenu)}
-                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
                 >
                     <FolderOpen size={14} /> {t('projects')}
                 </button>
                 <button
                     onClick={saveProject}
-                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
                 >
                     <Save size={14} /> {t('save')}
                 </button>
                 <button
                     onClick={createNewProject}
-                    className="flex items-center gap-2 bg-emerald-700 text-white px-3 py-2 rounded-lg border border-emerald-600 hover:bg-emerald-600 text-xs"
+                    className="flex items-center gap-2 bg-emerald-600/80 backdrop-blur-md shadow-lg text-white px-3 py-2 rounded-lg border border-emerald-500 hover:bg-emerald-500 transition-all text-xs"
                     title="Create New Project"
                 >
                     <Plus size={14} /> New
                 </button>
                 <button
                     onClick={exportProject}
-                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs"
+                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
                     title="Download Project File"
                 >
                     <Download size={14} />
                 </button>
                 <label
-                    className="flex items-center gap-2 bg-zinc-900 text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-slate-700 text-xs cursor-pointer"
+                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs cursor-pointer"
                     title="Import Project File"
                 >
                     <Upload size={14} />
@@ -1535,8 +1535,8 @@ const InfinityCanvas: React.FC = () => {
             </div>
 
             {projectsMenu && (
-                <div className="absolute top-16 left-24 z-50 w-64 bg-zinc-950 border border-white/10 rounded-lg shadow-xl p-2">
-                    <h3 className="text-xs font-bold text-zinc-500 mb-2 px-2">{t('savedProjects')} (Cloud)</h3>
+                <div className="absolute top-16 left-24 z-50 w-64 bg-zinc-950/70 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 p-2">
+                    <h3 className="text-xs font-bold text-zinc-400 mb-2 px-2">{t('savedProjects')} (Cloud)</h3>
                     {dbProjects.length === 0 && <p className="text-xs text-slate-500 px-2">No projects found.</p>}
                     {dbProjects.map(p => (
                         <div key={p.id} className="flex items-center justify-between hover:bg-zinc-900 rounded p-2 group">
@@ -2039,7 +2039,7 @@ const InfinityCanvas: React.FC = () => {
             {/* Context Menu */}
             {contextMenu && contextMenu.show && (
                 <div
-                    className="absolute z-50 bg-zinc-950 border border-white/10 rounded-lg shadow-2xl p-1 min-w-[180px] flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100"
+                    className="absolute z-50 bg-zinc-950/70 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl shadow-black/50 p-1.5 min-w-[180px] flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100"
                     style={{ left: contextMenu.x, top: contextMenu.y }}
                     onMouseDown={(e) => e.stopPropagation()}
                 >

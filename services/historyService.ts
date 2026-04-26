@@ -65,6 +65,35 @@ export const historyService = {
             }
         }
 
+        // Check if metadata has a Base64 sourceImage and upload it
+        if (item.metadata && item.metadata.sourceImage && item.metadata.sourceImage.startsWith('data:image')) {
+            try {
+                const response = await fetch(item.metadata.sourceImage);
+                const blob = await response.blob();
+                const fileExt = item.metadata.sourceImage.split(';')[0].split('/')[1] || 'png';
+                const fileName = `${userId}/${Date.now()}-src-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('uploaded-images')
+                    .upload(fileName, blob, {
+                        contentType: `image/${fileExt}`,
+                        upsert: false
+                    });
+
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('uploaded-images')
+                    .getPublicUrl(fileName);
+
+                item.metadata.sourceImage = publicUrl;
+            } catch (err) {
+                console.error('Failed to upload source image to storage:', err);
+                // Non-fatal, just remove it to avoid massive base64 string in DB
+                delete item.metadata.sourceImage;
+            }
+        }
+
         const { error } = await supabase
             .from('generation_history')
             .insert({

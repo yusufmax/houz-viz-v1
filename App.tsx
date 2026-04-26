@@ -84,7 +84,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 flex flex-col">
 
       {/* Header */}
-      <header className="h-16 border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40 px-6 flex items-center justify-between flex-none">
+      <header className="h-16 border-b border-white/5 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none shadow-sm">
         <div
           className="flex items-center h-full cursor-pointer select-none active:scale-95 transition-transform"
           onClick={() => window.location.href = '/'}
@@ -93,17 +93,17 @@ const Home: React.FC = () => {
           <img
             src="/logo.png"
             alt="HOUZ.AI Logo"
-            className="h-10 w-auto object-contain brightness-110 contrast-110"
+            className="h-10 w-auto object-contain brightness-110 contrast-125 drop-shadow-sm hover:scale-105 transition-transform duration-300"
           />
         </div>
 
         {/* Mode Switcher */}
-        <div className="flex bg-slate-800 rounded-lg p-1 border border-slate-700">
+        <div className="flex bg-slate-950/80 backdrop-blur-md rounded-xl p-1.5 border border-white/5 shadow-inner">
           <button
             onClick={() => setMode(Mode.Linear)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Linear
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Linear
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
           >
             <Layers size={16} />
@@ -111,9 +111,9 @@ const Home: React.FC = () => {
           </button>
           <button
             onClick={() => setMode(Mode.Infinity)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Infinity
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Infinity
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
           >
             <GitBranch size={16} />
@@ -121,9 +121,9 @@ const Home: React.FC = () => {
           </button>
           <button
             onClick={() => setMode(Mode.Video)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === Mode.Video
-              ? 'bg-indigo-600 text-white shadow-md'
-              : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Video
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
+              : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
           >
             <Film size={16} />
@@ -134,17 +134,17 @@ const Home: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Credits Indicator */}
           {quota && (
-            <div className="hidden md:flex items-center gap-3 bg-slate-800/50 border border-slate-700/50 pl-3 pr-1 py-1 rounded-xl">
+            <div className="hidden md:flex items-center gap-3 bg-slate-950/50 backdrop-blur-md border border-white/5 pl-4 pr-1.5 py-1.5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="flex flex-col gap-1 w-24">
-                <div className="flex justify-between text-[8px] uppercase font-black tracking-tight text-slate-500">
+                <div className="flex justify-between text-[8px] uppercase font-black tracking-wider text-slate-400">
                   <span>Credits</span>
-                  <span className={quota.limit - quota.used <= 5 ? 'text-red-400' : 'text-indigo-400'}>
+                  <span className={quota.limit - quota.used <= 5 ? 'text-rose-400 drop-shadow-[0_0_2px_rgba(251,113,133,0.5)]' : 'text-indigo-400 drop-shadow-[0_0_2px_rgba(129,140,248,0.5)]'}>
                     {quota.limit - quota.used}
                   </span>
                 </div>
-                <div className="h-1 bg-slate-900 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-slate-900 shadow-inner rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${quota.limit - quota.used <= 5 ? 'bg-red-500' : 'bg-indigo-500'
+                    className={`h-full rounded-full transition-all duration-500 ease-out ${quota.limit - quota.used <= 5 ? 'bg-gradient-to-r from-rose-500 to-rose-400' : 'bg-gradient-to-r from-indigo-500 to-indigo-400'
                       }`}
                     style={{ width: `${Math.min(100, Math.max(0, (quota.used / quota.limit) * 100))}%` }}
                   />
@@ -152,7 +152,7 @@ const Home: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowRequestModal(true)}
-                className="px-2 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black rounded-lg transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
+                className="px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white text-[10px] font-black rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 tracking-wider ring-1 ring-white/10"
               >
                 REQUEST
               </button>
@@ -162,27 +162,27 @@ const Home: React.FC = () => {
           {/* Language Toggle */}
           <button
             onClick={toggleLang}
-            className="flex items-center gap-1 text-xs font-bold text-slate-400 hover:text-white transition-colors bg-slate-800 border border-slate-700 px-2 py-1 rounded uppercase"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-all bg-slate-950/50 backdrop-blur-md border border-white/5 hover:bg-white/5 px-2.5 py-1.5 rounded-xl uppercase shadow-sm"
           >
             <Globe size={14} /> {lang}
           </button>
 
-          <Link to="/profile" className="text-slate-400 hover:text-white transition-colors" title="Profile">
-            <User size={20} />
+          <Link to="/profile" className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-xl transition-all" title="Profile">
+            <User size={18} />
           </Link>
 
           {isAdmin && (
-            <Link to="/admin" className="text-slate-400 hover:text-white transition-colors" title="Admin Panel">
-              <Settings size={20} />
+            <Link to="/admin" className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-xl transition-all" title="Admin Panel">
+              <Settings size={18} />
             </Link>
           )}
 
           <button
             onClick={() => setShowInstructions(!showInstructions)}
-            className={`transition-colors ${showInstructions ? 'text-indigo-400' : 'text-slate-400 hover:text-white'}`}
+            className={`p-2 rounded-xl transition-all ${showInstructions ? 'text-indigo-400 bg-indigo-500/10 ring-1 ring-indigo-500/20' : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5'}`}
             title={showInstructions ? "Hide Instructions" : "Show Instructions"}
           >
-            <HelpCircle size={20} />
+            <HelpCircle size={18} />
           </button>
         </div>
       </header>
