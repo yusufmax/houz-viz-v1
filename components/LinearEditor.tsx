@@ -1487,14 +1487,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <ImageIcon size={18} />
                 <h2>{t('source')}</h2>
               </div>
-              <div className="flex gap-1">
+              <div className="flex gap-2">
                 {!sourceImage && (
                   <button
                     onClick={() => setDrawingTarget('source')}
-                    className="relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
+                    className="relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-md border border-slate-600 hover:border-indigo-400 text-slate-200 rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)]"
                   >
-                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
-                    <Pencil size={12} className="relative z-10" /> <span className="relative z-10">{t('startBlank')}</span>
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Pencil size={12} className="relative z-10" /> <span className="relative z-10 font-medium">Blank Canvas</span>
                   </button>
                 )}
                 <button
@@ -1505,11 +1505,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setBatchResults([]);
                     }
                   }}
-                  className={`relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 backdrop-blur-md border border-white/10 hover:border-white/20 rounded-md transition-all duration-300 ${batchMode ? 'bg-indigo-500/20 text-indigo-200 border-indigo-500/30' : 'bg-white/5 hover:bg-white/10 text-slate-200'}`}
+                  className={`relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 backdrop-blur-md border rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)] ${batchMode ? 'bg-indigo-600/80 border-indigo-400 text-white shadow-[0_0_15px_rgba(79,70,229,0.4)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`}
                   title="Toggle Batch Mode"
                 >
-                  <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
-                  <Layers size={12} className="relative z-10" /> <span className="relative z-10">{batchMode ? 'Batch Mode On' : 'Batch Mode'}</span>
+                  <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
+                  <Layers size={12} className="relative z-10" /> <span className="relative z-10 font-medium">{batchMode ? 'Batch Mode On' : 'Batch Mode'}</span>
                 </button>
                 {sourceImage && (
                   <button
