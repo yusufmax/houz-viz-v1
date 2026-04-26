@@ -1409,8 +1409,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       )}
 
       {/* History Sidebar */}
-      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/60 backdrop-blur-2xl border-r border-white/5 shadow-2xl shadow-black/50 z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
-        <div className="p-4 border-b border-white/5 flex justify-between items-center">
+      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10">
           <h3 className="font-bold text-slate-200 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
           <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-slate-800 rounded"><ChevronRight size={16} /></button>
         </div>
@@ -1473,7 +1473,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 1: INPUT & CONTROLS (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40 rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
           {/* SOURCE SECTION */}
           <section className="space-y-4">
             <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
@@ -1503,7 +1503,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
 
             {/* Batch Mode Toggle */}
-            <div>
+            <div className="relative group">
               <button
                 onClick={() => {
                   setBatchMode(!batchMode);
@@ -1512,16 +1512,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     setBatchResults([]);
                   }
                 }}
-                className={`w-full py-2 px-4 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${batchMode
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                className={`w-full py-2.5 px-4 rounded-xl font-bold transition-all flex items-center justify-center gap-2 relative overflow-hidden ${batchMode
+                  ? 'bg-indigo-600/90 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)] ring-1 ring-indigo-400'
+                  : 'bg-slate-800/50 backdrop-blur-md text-slate-300 hover:bg-slate-700/80 ring-1 ring-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
                   } `}
               >
-                <Layers size={16} />
-                {batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}
+                <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none"></div>
+                <Layers size={16} className="relative z-10" />
+                <span className="relative z-10">{batchMode ? 'Batch Mode Active' : 'Enable Batch Mode'}</span>
               </button>
               {batchMode && (
-                <p className="text-xs text-slate-400 mt-2 text-center">
+                <p className="text-xs text-indigo-300/80 mt-2 text-center animate-pulse">
                   Upload up to 10 images to process with same settings
                 </p>
               )}
@@ -1556,7 +1557,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <h2>{t('controls')}</h2>
             </div>
 
-            <div className="bg-slate-900 p-1 rounded-lg flex mb-6 border border-slate-700">
+            <div className="bg-slate-950/50 backdrop-blur-md p-1.5 rounded-2xl flex mb-6 shadow-[inset_0_1px_2px_rgba(255,255,255,0.05),0_2px_10px_rgba(0,0,0,0.3)] ring-1 ring-white/10 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
               {(['exterior', 'interior', 'general'] as EditorMode[]).map((mode) => (
                 <button
                   key={mode}
@@ -1566,7 +1568,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setStyle(RenderStyle.None);
                     }
                   }}
-                  className={`flex-1 py-1.5 text-xs font-medium rounded-md capitalize transition-all ${editorMode === mode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                  className={`flex-1 py-2 text-xs font-bold rounded-xl capitalize transition-all duration-300 relative z-10 ${editorMode === mode ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                 >
                   {mode}
                 </button>
@@ -1647,9 +1649,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </button>
                   </div>
                 </div>
-                <div className="relative">
-                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('instructionsPlaceholder')} className="w-full h-24 bg-slate-900/50 border border-slate-700 rounded-lg p-3 pr-10 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none" />
-                  <button onClick={handleVoiceInput} className={`absolute bottom-2 right-2 p-2 rounded-full transition-all ${isRecording ? 'bg-red-500/20 text-red-500 animate-pulse' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`} title={isRecording ? "Stop Recording" : "Voice Input"}>
+                <div className="relative group">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl blur-xl group-focus-within:opacity-100 opacity-0 transition-opacity duration-500 pointer-events-none"></div>
+                  <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder={t('instructionsPlaceholder')} className="w-full h-24 bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-xl p-3 pr-10 text-sm shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none relative z-10 text-slate-200 placeholder:text-slate-500 transition-all" />
+                  <button onClick={handleVoiceInput} className={`absolute bottom-3 right-3 p-2 rounded-full transition-all z-20 shadow-md ${isRecording ? 'bg-red-500/90 text-white shadow-red-500/50 animate-pulse ring-2 ring-red-400' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-indigo-600'}`} title={isRecording ? "Stop Recording" : "Voice Input"}>
                     {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
                 </div>
@@ -2082,9 +2085,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
-                <div className="grid grid-cols-3 gap-1">
+                <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-950/40 backdrop-blur-sm rounded-xl ring-1 ring-white/5 shadow-inner">
                   {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}>{ratio}</button>
+                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs font-bold rounded-lg transition-all ${aspectRatio === ratio ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-1 ring-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{ratio}</button>
                   ))}
                 </div>
               </div>
@@ -2092,12 +2095,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               {model === 'gemini-3.1-flash-image-preview' && (
                 <div className="space-y-2 bg-indigo-900/10 border border-indigo-500/20 p-3 rounded-xl backdrop-blur-sm">
                   <label className="text-[10px] font-black text-indigo-400 uppercase flex items-center gap-2 tracking-widest"><LayoutTemplate size={12} /> Panorama Mode</label>
-                  <div className="grid grid-cols-4 gap-1">
+                  <div className="grid grid-cols-4 gap-1.5 p-1 bg-black/20 rounded-lg ring-1 ring-white/5">
                     {['1:4', '4:1', '1:8', '8:1'].map((ratio) => (
                       <button
                         key={ratio}
                         onClick={() => setAspectRatio(ratio as AspectRatio)}
-                        className={`px-2 py-1.5 text-xs font-bold rounded border transition-all ${aspectRatio === ratio ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-900 border-slate-700 text-indigo-300 hover:bg-slate-800 hover:border-indigo-500/50'}`}
+                        className={`px-2 py-1.5 text-xs font-bold rounded-md transition-all ${aspectRatio === ratio ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/30 ring-1 ring-white/10' : 'text-indigo-300 hover:text-white hover:bg-white/10'}`}
                         title={`Panorama ${ratio}`}
                       >
                         {ratio}
@@ -2171,7 +2174,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 2: RESULT (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/5 shadow-2xl shadow-black/40 rounded-2xl flex-1 flex flex-col relative overflow-hidden">
+        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl flex-1 flex flex-col relative overflow-hidden">
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
           <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">

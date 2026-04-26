@@ -332,7 +332,7 @@ const DrawEditor: React.FC<DrawEditorProps> = ({ initialImage, onSave, onRender,
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center p-4">
-      <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 w-full max-w-6xl h-[90dvh] max-h-[95vh] flex flex-col overflow-hidden relative ring-1 ring-white/5">
+      <div className="bg-slate-900/80 backdrop-blur-xl border border-white/10 border-b-black/50 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] w-full max-w-6xl h-[90dvh] max-h-[95vh] flex flex-col overflow-hidden relative">
 
         {pdfFile && (
           <PdfPageSelector

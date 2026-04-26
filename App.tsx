@@ -84,7 +84,7 @@ const Home: React.FC = () => {
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 selection:text-indigo-200 flex flex-col">
 
       {/* Header */}
-      <header className="h-16 border-b border-white/5 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none shadow-sm">
+      <header className="h-16 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.08] before:to-transparent before:pointer-events-none">
         <div
           className="flex items-center h-full cursor-pointer select-none active:scale-95 transition-transform"
           onClick={() => window.location.href = '/'}
@@ -98,10 +98,10 @@ const Home: React.FC = () => {
         </div>
 
         {/* Mode Switcher */}
-        <div className="flex bg-slate-950/80 backdrop-blur-md rounded-xl p-1.5 border border-white/5 shadow-inner">
+        <div className="flex bg-slate-950/80 backdrop-blur-md rounded-xl p-1.5 ring-1 ring-white/10 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1),0_2px_10px_rgba(0,0,0,0.5)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:to-transparent before:pointer-events-none z-10">
           <button
             onClick={() => setMode(Mode.Linear)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Linear
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 relative z-20 ${mode === Mode.Linear
               ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
               : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
@@ -111,7 +111,7 @@ const Home: React.FC = () => {
           </button>
           <button
             onClick={() => setMode(Mode.Infinity)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Infinity
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 relative z-20 ${mode === Mode.Infinity
               ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
               : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
@@ -121,7 +121,7 @@ const Home: React.FC = () => {
           </button>
           <button
             onClick={() => setMode(Mode.Video)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ${mode === Mode.Video
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 relative z-20 ${mode === Mode.Video
               ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/10'
               : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
               }`}
@@ -134,7 +134,7 @@ const Home: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Credits Indicator */}
           {quota && (
-            <div className="hidden md:flex items-center gap-3 bg-slate-950/50 backdrop-blur-md border border-white/5 pl-4 pr-1.5 py-1.5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="hidden md:flex items-center gap-3 bg-slate-950/50 backdrop-blur-md border border-white/10 border-b-black/50 pl-4 pr-1.5 py-1.5 rounded-2xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_4px_15px_rgba(0,0,0,0.3)] transition-shadow relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none z-10">
               <div className="flex flex-col gap-1 w-24">
                 <div className="flex justify-between text-[8px] uppercase font-black tracking-wider text-slate-400">
                   <span>Credits</span>
@@ -162,9 +162,9 @@ const Home: React.FC = () => {
           {/* Language Toggle */}
           <button
             onClick={toggleLang}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-all bg-slate-950/50 backdrop-blur-md border border-white/5 hover:bg-white/5 px-2.5 py-1.5 rounded-xl uppercase shadow-sm"
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white transition-all bg-slate-950/50 backdrop-blur-md border border-white/10 border-b-black/50 hover:bg-white/10 px-2.5 py-1.5 rounded-xl uppercase shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_2px_10px_rgba(0,0,0,0.2)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/10 before:to-transparent before:pointer-events-none z-10"
           >
-            <Globe size={14} /> {lang}
+            <Globe size={14} className="relative z-10" /> <span className="relative z-10">{lang}</span>
           </button>
 
           <Link to="/profile" className="p-2 text-slate-400 hover:text-indigo-400 hover:bg-white/5 rounded-xl transition-all" title="Profile">
