@@ -914,17 +914,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       if (data && data.data && data.data.linearState) {
         const state = data.data.linearState;
-        setPrompt(state.prompt);
-        setStyle(state.style);
-        setAtmosphere(state.atmosphere);
-        setCamera(state.camera);
-        setAspectRatio(state.aspectRatio);
-        setSceneElements(state.sceneElements);
-        setModel(state.model);
-        setSourceImage(state.sourceImage);
-        setStyleReferenceImage(state.styleReferenceImage);
+        if (state.prompt !== undefined) setPrompt(state.prompt);
+        if (state.style !== undefined) setStyle(state.style);
+        if (state.atmosphere !== undefined) setAtmosphere(state.atmosphere);
+        if (state.camera !== undefined) setCamera(state.camera);
+        if (state.aspectRatio !== undefined) setAspectRatio(state.aspectRatio);
+        if (state.sceneElements !== undefined) setSceneElements(state.sceneElements);
+        if (state.model !== undefined) setModel(state.model);
+        if (state.sourceImage !== undefined) setSourceImage(state.sourceImage);
+        if (state.styleReferenceImage !== undefined) setStyleReferenceImage(state.styleReferenceImage);
         if (state.customReferences) setCustomReferences(state.customReferences);
-        setResultImage(state.resultImage);
+        if (state.resultImage !== undefined) setResultImage(state.resultImage);
         if (state.lockCamera !== undefined) setLockCamera(state.lockCamera);
         if (state.lens) setLens(state.lens as CameraLens);
         if (state.aperture) setAperture(state.aperture);
