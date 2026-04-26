@@ -71,31 +71,33 @@ const BeforeAfter: React.FC<BeforeAfterProps> = ({ beforeImage, afterImage }) =>
       ref={containerRef}
       className="relative w-full h-full select-none overflow-hidden rounded-lg cursor-col-resize group bg-slate-900 touch-pan-y"
       onMouseDown={handleMouseDown}
-    // Removed onTouchStart here to allow scrolling on the image
     >
       {/* After Image (Background) */}
       <img src={afterImage} alt="After" className="absolute inset-0 w-full h-full object-contain" draggable={false} />
 
       {/* Before Image (Foreground clipped) */}
-      <div
-        className="absolute inset-0 w-full h-full overflow-hidden border-r-2 border-white/50"
-        style={{ width: `${sliderPosition}%` }}
-      >
-        <img src={beforeImage} alt="Before" className="absolute inset-0 w-full h-full max-w-none object-contain" style={{ width: containerRef.current?.offsetWidth }} draggable={false} />
-      </div>
+      <img 
+        src={beforeImage} 
+        alt="Before" 
+        className="absolute inset-0 w-full h-full object-contain" 
+        style={{ clipPath: `polygon(0 0, ${sliderPosition}% 0, ${sliderPosition}% 100%, 0 100%)` }} 
+        draggable={false} 
+      />
+
+      {/* Divider Line */}
+      <div 
+        className="absolute top-0 bottom-0 w-0.5 bg-white/50 z-10 pointer-events-none" 
+        style={{ left: `calc(${sliderPosition}% - 1px)` }} 
+      />
 
       {/* Slider Handle */}
-      {/* Container for handle to increase touch target area */}
       <div
         className="absolute top-0 bottom-0 w-10 cursor-col-resize flex items-center justify-center -ml-5 z-20"
         style={{ left: `${sliderPosition}%` }}
         onTouchStart={handleTouchStart}
       >
-        {/* Visual Line */}
-        <div className="w-1 h-full bg-transparent flex items-center justify-center">
-          <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-900 transform scale-0 group-hover:scale-100 transition-transform">
-            <MoveHorizontal size={16} />
-          </div>
+        <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center text-slate-900 transform scale-0 group-hover:scale-100 transition-transform">
+          <MoveHorizontal size={16} />
         </div>
       </div>
 

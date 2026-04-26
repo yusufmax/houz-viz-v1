@@ -1399,7 +1399,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       <FullScreenPreview
         image={previewImage}
         beforeImage={previewImage === resultImage ? (sourceImage || undefined) : undefined}
-        onClose={() => setPreviewImage(null)}
+        onClose={() => setPreviewImage('')}
       />
 
       {/* Draw Editor Modal */}
