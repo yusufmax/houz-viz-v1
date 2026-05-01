@@ -249,7 +249,8 @@ const VideoEditor: React.FC = () => {
                                         @{idx+1}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                             {imageReferences.length < 6 && (
                                 <div className="aspect-video">
                                     <ImageUpload
