@@ -7,9 +7,10 @@ interface ImageUploadProps {
   selectedImage: string | null;
   label?: string;
   compact?: boolean;
+  acceptVideo?: boolean;
 }
 
-const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImage, label = "Upload Image", compact = false }) => {
+const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImage, label = "Upload Image", compact = false, acceptVideo = false }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -25,6 +26,21 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
     if (file.type === 'application/pdf') {
       setPdfFile(file);
       // Reset input value to allow re-selecting same file if cancelled
+      return;
+    }
+
+    if (file.type.startsWith('video/')) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onImageSelected(reader.result as string);
+        setIsProcessing(false);
+      };
+      reader.onerror = () => {
+        alert("Failed to read video file.");
+        setIsProcessing(false);
+      };
+      reader.readAsDataURL(file);
       return;
     }
 
@@ -106,12 +122,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
   }, [onImageSelected]);
 
   if (selectedImage) {
+    const isVideo = selectedImage.startsWith('data:video/');
     return (
       <div className={`relative group w-full ${compact ? 'h-32' : 'h-full'} rounded-lg overflow-hidden border border-slate-600 bg-slate-900`}>
-        <img src={selectedImage} alt="Selected" className="w-full h-full object-contain" />
+        {isVideo ? (
+          <video src={selectedImage} className="w-full h-full object-contain" controls />
+        ) : (
+          <img src={selectedImage} alt="Selected" className="w-full h-full object-contain" />
+        )}
         <button
           onClick={() => onImageSelected(null)}
-          className="absolute top-2 right-2 p-1 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 p-1 bg-red-500/80 text-white rounded-full hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100 z-10"
         >
           <X size={16} />
         </button>
@@ -139,7 +160,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
       >
         <input
           type="file"
-          accept="image/*,application/pdf"
+          accept={acceptVideo ? "image/*,application/pdf,video/*" : "image/*,application/pdf"}
           onChange={handleFileChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isProcessing}
@@ -154,7 +175,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
             <>
               {compact ? <Upload size={24} className="mb-2" /> : <ImageIcon size={48} className="mb-4 opacity-50" />}
               <p className={`text-sm font-medium ${compact ? 'text-xs' : ''}`}>{label}</p>
-              {!compact && <p className="text-xs text-slate-500 mt-2">Images or PDF</p>}
+              {!compact && <p className="text-xs text-slate-500 mt-2">{acceptVideo ? "Images, Videos, or PDF" : "Images or PDF"}</p>}
             </>
           )}
         </div>

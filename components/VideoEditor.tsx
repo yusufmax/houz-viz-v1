@@ -228,9 +228,15 @@ const VideoEditor: React.FC = () => {
                             <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-1 rounded border border-slate-700 shadow-sm">Tag with @1, @2 in Prompt</span>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                            {imageReferences.map((img, idx) => (
+                            {imageReferences.map((img, idx) => {
+                                const isVideo = img.startsWith('data:video/');
+                                return (
                                 <div key={idx} className="relative aspect-video bg-slate-800 rounded-lg overflow-hidden group shadow-md border border-slate-700">
-                                    <img src={img} alt={`Ref ${idx+1}`} className="w-full h-full object-cover" />
+                                    {isVideo ? (
+                                        <video src={img} className="w-full h-full object-cover" muted />
+                                    ) : (
+                                        <img src={img} alt={`Ref ${idx+1}`} className="w-full h-full object-cover" />
+                                    )}
                                     <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                         <button 
                                             onClick={() => setImageReferences(refs => refs.filter((_, i) => i !== idx))} 
@@ -250,6 +256,7 @@ const VideoEditor: React.FC = () => {
                                         selectedImage={null}
                                         onImageSelected={(img) => { if(img) setImageReferences([...imageReferences, img]) }}
                                         label="Add Reference"
+                                        acceptVideo={videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni || videoSettings.model === KlingModel.V3}
                                     />
                                 </div>
                             )}
@@ -268,6 +275,7 @@ const VideoEditor: React.FC = () => {
                                     selectedImage={sourceImage}
                                     onImageSelected={setSourceImage}
                                     label="Start Frame"
+                                    acceptVideo={videoSettings.model === KlingModel.V3}
                                 />
                             </div>
                         </div>
@@ -283,6 +291,7 @@ const VideoEditor: React.FC = () => {
                                     selectedImage={endImage}
                                     onImageSelected={setEndImage}
                                     label="End Frame"
+                                    acceptVideo={videoSettings.model === KlingModel.V3}
                                 />
                             </div>
                         </div>

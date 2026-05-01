@@ -196,7 +196,7 @@ const server = http.createServer(async (req, res) => {
                     const arrayBuffer = await imgRes.arrayBuffer();
                     base64Image = Buffer.from(arrayBuffer).toString('base64');
                 } else if (base64Image) {
-                    base64Image = base64Image.replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+                    base64Image = base64Image.replace(/^data:(image|video)\/\w+;base64,/, '').replace(/\s/g, '');
                 }
 
                 if (base64EndImage && (base64EndImage.startsWith('http://') || base64EndImage.startsWith('https://'))) {
@@ -204,7 +204,7 @@ const server = http.createServer(async (req, res) => {
                     const endArrayBuffer = await endImgRes.arrayBuffer();
                     base64EndImage = Buffer.from(endArrayBuffer).toString('base64');
                 } else if (base64EndImage) {
-                    base64EndImage = base64EndImage.replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+                    base64EndImage = base64EndImage.replace(/^data:(image|video)\/\w+;base64,/, '').replace(/\s/g, '');
                 }
 
                 const requestBody = {
@@ -231,7 +231,21 @@ const server = http.createServer(async (req, res) => {
                     };
                     
                     if (params.imageReferences && Array.isArray(params.imageReferences) && params.imageReferences.length > 0) {
-                         omniBody.image_list = params.imageReferences.map(url => ({ image_url: url }));
+                         const imageList = [];
+                         const videoList = [];
+                         params.imageReferences.forEach(url => {
+                             if (url.startsWith('data:video/')) {
+                                 videoList.push({ video_url: url.replace(/^data:video\/\w+;base64,/, '').replace(/\s/g, '') });
+                             } else {
+                                 let base64 = url;
+                                 if (!url.startsWith('http')) {
+                                     base64 = url.replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+                                 }
+                                 imageList.push({ image_url: base64 });
+                             }
+                         });
+                         if (imageList.length > 0) omniBody.image_list = imageList;
+                         if (videoList.length > 0) omniBody.video_list = videoList;
                     } else if (base64Image) {
                          omniBody.image_list = [{ image_url: base64Image, type: 'first_frame' }];
                          if (base64EndImage) {
