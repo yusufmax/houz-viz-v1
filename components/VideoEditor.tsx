@@ -10,6 +10,7 @@ const VideoEditor: React.FC = () => {
     const { user } = useAuth();
     const [sourceImage, setSourceImage] = useState<string | null>(null);
     const [endImage, setEndImage] = useState<string | null>(null);
+    const [imageReferences, setImageReferences] = useState<string[]>([]);
     const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
     const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
     const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
@@ -100,8 +101,32 @@ const VideoEditor: React.FC = () => {
                 return;
             }
 
-            // Resize/Process image before sending
-            const processedImage = await resizeImage(sourceImage);
+            const isOmniModel = videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni;
+
+            if (isOmniModel) {
+                if (imageReferences.length === 0) {
+                    alert('Please upload at least one image reference for Omni models.');
+                    setIsGeneratingVideo(false);
+                    return;
+                }
+            } else {
+                if (!sourceImage) {
+                    alert('Please upload a start frame.');
+                    setIsGeneratingVideo(false);
+                    return;
+                }
+            }
+
+            // Resize/Process image(s) before sending
+            let processedImage: string | undefined = undefined;
+            if (sourceImage) {
+                processedImage = await resizeImage(sourceImage);
+            }
+            
+            let processedImageReferences: string[] = [];
+            if (isOmniModel && imageReferences.length > 0) {
+                processedImageReferences = await Promise.all(imageReferences.map(img => resizeImage(img)));
+            }
 
             // Calculate duration (Sum customized multi_prompts if active)
             const durationToSend = (videoSettings.model === KlingModel.V3 && videoSettings.multiShot && videoSettings.multiPrompt)
@@ -114,14 +139,15 @@ const VideoEditor: React.FC = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     action: 'generate',
-                    image: processedImage,
+                    image: isOmniModel ? undefined : processedImage,
                     model: videoSettings.model,
                     duration: durationToSend,
                     aspectRatio: videoSettings.aspectRatio,
                     prompt: videoSettings.prompt,
                     cfgScale: videoSettings.cfgScale || 0.5,
                     mode: videoSettings.mode,
-                    end_image: endImage ? await resizeImage(endImage) : undefined,
+                    end_image: (!isOmniModel && endImage) ? await resizeImage(endImage) : undefined,
+                    imageReferences: isOmniModel ? processedImageReferences : undefined,
                     multiShot: videoSettings.model === KlingModel.V3 || videoSettings.model === KlingModel.V3_Omni ? videoSettings.multiShot : false,
                     multiPrompt: videoSettings.multiPrompt
                 })
@@ -191,38 +217,77 @@ const VideoEditor: React.FC = () => {
             {/* Left Column: Settings & Input */}
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
 
-                {/* Source & End Images */}
-                <div className="grid grid-cols-2 gap-4">
-                    {/* Source Image */}
+                {/* Image Input Section */}
+                {(videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni) ? (
                     <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                            <ImageIcon size={16} className="text-indigo-400" />
-                            Start Frame
-                        </h2>
-                        <div className="aspect-video">
-                            <ImageUpload
-                                selectedImage={sourceImage}
-                                onImageSelected={setSourceImage}
-                                label="Start Frame"
-                            />
+                        <div className="flex items-center justify-between mb-3">
+                            <h2 className="text-sm font-semibold text-white flex items-center gap-2">
+                                <ImageIcon size={16} className="text-indigo-400" />
+                                Image References
+                            </h2>
+                            <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-1 rounded border border-slate-700 shadow-sm">Tag with @1, @2 in Prompt</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                            {imageReferences.map((img, idx) => (
+                                <div key={idx} className="relative aspect-video bg-slate-800 rounded-lg overflow-hidden group shadow-md border border-slate-700">
+                                    <img src={img} alt={`Ref ${idx+1}`} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <button 
+                                            onClick={() => setImageReferences(refs => refs.filter((_, i) => i !== idx))} 
+                                            className="p-2 bg-red-500/80 text-white rounded-full hover:bg-red-500 transition-colors shadow-lg"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                    <div className="absolute top-2 left-2 bg-indigo-600 shadow-lg border border-indigo-400/30 text-white text-[10px] font-black px-2 py-0.5 rounded-md">
+                                        @{idx+1}
+                                    </div>
+                                </div>
+                            ))}
+                            {imageReferences.length < 6 && (
+                                <div className="aspect-video">
+                                    <ImageUpload
+                                        selectedImage={null}
+                                        onImageSelected={(img) => { if(img) setImageReferences([...imageReferences, img]) }}
+                                        label="Add Reference"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
+                ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Source Image */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                            <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                <ImageIcon size={16} className="text-indigo-400" />
+                                Start Frame
+                            </h2>
+                            <div className="aspect-video">
+                                <ImageUpload
+                                    selectedImage={sourceImage}
+                                    onImageSelected={setSourceImage}
+                                    label="Start Frame"
+                                />
+                            </div>
+                        </div>
 
-                    {/* End Image */}
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
-                        <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                            <ImageIcon size={16} className="text-pink-400" />
-                            End Frame (Opt)
-                        </h2>
-                        <div className="aspect-video">
-                            <ImageUpload
-                                selectedImage={endImage}
-                                onImageSelected={setEndImage}
-                                label="End Frame"
-                            />
+                        {/* End Image */}
+                        <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                            <h2 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                <ImageIcon size={16} className="text-pink-400" />
+                                End Frame (Opt)
+                            </h2>
+                            <div className="aspect-video">
+                                <ImageUpload
+                                    selectedImage={endImage}
+                                    onImageSelected={setEndImage}
+                                    label="End Frame"
+                                />
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
                 {/* Settings Panel */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 flex-1">
@@ -508,8 +573,8 @@ const VideoEditor: React.FC = () => {
                         {/* Generate Button */}
                         <button
                             onClick={handleGenerateVideo}
-                            disabled={!sourceImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)}
-                            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${!sourceImage || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)
+                            disabled={((videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni) ? imageReferences.length === 0 : !sourceImage) || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)}
+                            className={`w-full py-4 rounded-xl font-bold text-lg shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 ${((videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni) ? imageReferences.length === 0 : !sourceImage) || isGeneratingVideo || (videoQuota && videoQuota.used >= videoQuota.quota)
                                 ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
                                 : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-indigo-500/20'
                                 }`}
