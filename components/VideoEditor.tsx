@@ -84,8 +84,20 @@ const VideoEditor: React.FC = () => {
     };
 
     const handleGenerateVideo = async () => {
-        if (!sourceImage || !user) {
-            alert('Please upload an image first and sign in');
+        const isOmniModel = videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni;
+
+        if (!user) {
+            alert('Please sign in first');
+            return;
+        }
+
+        if (!isOmniModel && !sourceImage) {
+            alert('Please upload an image first');
+            return;
+        }
+
+        if (isOmniModel && imageReferences.length === 0) {
+            alert('Please upload at least one image reference for Omni models.');
             return;
         }
 
@@ -101,21 +113,7 @@ const VideoEditor: React.FC = () => {
                 return;
             }
 
-            const isOmniModel = videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni;
 
-            if (isOmniModel) {
-                if (imageReferences.length === 0) {
-                    alert('Please upload at least one image reference for Omni models.');
-                    setIsGeneratingVideo(false);
-                    return;
-                }
-            } else {
-                if (!sourceImage) {
-                    alert('Please upload a start frame.');
-                    setIsGeneratingVideo(false);
-                    return;
-                }
-            }
 
             // Resize/Process image(s) before sending
             let processedImage: string | undefined = undefined;
