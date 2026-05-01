@@ -381,7 +381,9 @@ export interface HistoryItem {
 export enum KlingModel {
   V2_5_Turbo = 'kling-v2-5-turbo',
   V2_1 = 'kling-v2-1',
-  V3 = 'kling-v3'
+  V3 = 'kling-v3',
+  V3_Omni = 'kling-v3-omni',
+  Omni_1 = 'kling-video-o1'
 }
 
 export type CameraMovementType = 'simple' | 'down_back' | 'forward_up' | 'right_turn_forward' | 'left_turn_forward';
@@ -414,6 +416,7 @@ export interface VideoGenerationSettings {
   mode?: 'std' | 'pro' | '4k';
   multiShot?: boolean;
   multiPrompt?: MultiShotPrompt[];
+  imageReferences?: string[];
 }
 
 export interface VideoGeneration {

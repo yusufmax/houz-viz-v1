@@ -155,6 +155,20 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
         setIsOpen(false);
     };
 
+    const handleThisMonth = () => {
+        const end = new Date();
+        const start = new Date(end.getFullYear(), end.getMonth(), 1);
+        
+        const formatDt = (dt: Date) => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        
+        const newStart = formatDt(start);
+        const newEnd = formatDt(end);
+        setSelectingStart(newStart);
+        setSelectingEnd(newEnd);
+        onChange(newStart, newEnd);
+        setIsOpen(false);
+    };
+
     return (
         <div className="relative" ref={popoverRef}>
             {/* Trigger Button */}
@@ -178,6 +192,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({ startDate, end
                         <button onClick={() => handleQuickSelect(1)} className="text-left text-xs text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors">Yesterday</button>
                         <button onClick={() => handleQuickSelect(7)} className="text-left text-xs text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors">Last 7 Days</button>
                         <button onClick={() => handleQuickSelect(30)} className="text-left text-xs text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors">Last 30 Days</button>
+                        <button onClick={handleThisMonth} className="text-left text-xs text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors">This Month</button>
                         <button onClick={() => handleQuickSelect(90)} className="text-left text-xs text-slate-400 hover:text-white hover:bg-slate-800 px-3 py-2 rounded-lg transition-colors">Last 90 Days</button>
                     </div>
 

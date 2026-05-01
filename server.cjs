@@ -182,7 +182,9 @@ const server = http.createServer(async (req, res) => {
                     'kling-v1-5': 'kling-v1-5',
                     'kling-v2-1': 'kling-v2-1',
                     'kling-v2-5-turbo': 'kling-v2-5-turbo',
-                    'kling-v3': 'kling-v3'
+                    'kling-v3': 'kling-v3',
+                    'kling-v3-omni': 'kling-v3-omni',
+                    'kling-video-o1': 'kling-video-o1'
                 };
 
                 let base64Image = params.image;
@@ -216,25 +218,66 @@ const server = http.createServer(async (req, res) => {
                 if (params.mode) requestBody.mode = params.mode;
                 if (params.negativePrompt) requestBody.negative_prompt = params.negativePrompt;
 
-                const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': authHeader
-                    },
-                    body: JSON.stringify(requestBody)
-                });
+                const isOmni = requestBody.model_name === 'kling-video-o1' || requestBody.model_name === 'kling-v3-omni';
+                
+                if (isOmni) {
+                    // Convert to Omni format
+                    const omniBody = {
+                        model_name: requestBody.model_name,
+                        duration: requestBody.duration,
+                        prompt: requestBody.prompt,
+                        mode: requestBody.mode || 'pro',
+                        aspect_ratio: params.aspectRatio || '16:9'
+                    };
+                    
+                    if (params.imageReferences && Array.isArray(params.imageReferences) && params.imageReferences.length > 0) {
+                         omniBody.image_list = params.imageReferences.map(url => ({ image_url: url }));
+                    } else if (base64Image) {
+                         omniBody.image_list = [{ image_url: base64Image, type: 'first_frame' }];
+                         if (base64EndImage) {
+                             omniBody.image_list.push({ image_url: base64EndImage, type: 'end_frame' });
+                         }
+                    }
+                    
+                    const response = await fetch(`${KLING_API_BASE}/videos/omni-video`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': authHeader
+                        },
+                        body: JSON.stringify(omniBody)
+                    });
+                    
+                    const data = await response.json();
+                    res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        task_id: data.data?.task_id,
+                        task_status: data.data?.task_status,
+                        error: data.code !== 0 ? data.message : undefined
+                    }));
+                } else {
+                    const response = await fetch(`${KLING_API_BASE}/videos/image2video`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': authHeader
+                        },
+                        body: JSON.stringify(requestBody)
+                    });
 
-                const data = await response.json();
-                res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({
-                    task_id: data.data?.task_id,
-                    task_status: data.data?.task_status,
-                    error: data.code !== 0 ? data.message : undefined
-                }));
+                    const data = await response.json();
+                    res.writeHead(response.ok ? 200 : response.status, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({
+                        task_id: data.data?.task_id,
+                        task_status: data.data?.task_status,
+                        error: data.code !== 0 ? data.message : undefined
+                    }));
+                }
 
             } else if (action === 'poll') {
-                const response = await fetch(`${KLING_API_BASE}/videos/image2video/${params.task_id}`, {
+                const isOmni = params.model === 'kling-video-o1' || params.model === 'kling-v3-omni';
+                const endpoint = isOmni ? 'omni-video' : 'image2video';
+                const response = await fetch(`${KLING_API_BASE}/videos/${endpoint}/${params.task_id}`, {
                     method: 'GET',
                     headers: { 'Authorization': authHeader }
                 });

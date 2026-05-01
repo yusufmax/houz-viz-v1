@@ -122,7 +122,7 @@ const VideoEditor: React.FC = () => {
                     cfgScale: videoSettings.cfgScale || 0.5,
                     mode: videoSettings.mode,
                     end_image: endImage ? await resizeImage(endImage) : undefined,
-                    multiShot: videoSettings.model === KlingModel.V3 ? videoSettings.multiShot : false,
+                    multiShot: videoSettings.model === KlingModel.V3 || videoSettings.model === KlingModel.V3_Omni ? videoSettings.multiShot : false,
                     multiPrompt: videoSettings.multiPrompt
                 })
             });
@@ -268,6 +268,8 @@ const VideoEditor: React.FC = () => {
                                 <option value={KlingModel.V2_5_Turbo}>Kling 2.5 Turbo (Faster)</option>
                                 <option value={KlingModel.V2_1}>Kling 2.1 (Higher Quality)</option>
                                 <option value={KlingModel.V3}>Kling 3.0 (Multi-Shot)</option>
+                                <option value={KlingModel.V3_Omni}>Kling 3.0 Omni</option>
+                                <option value={KlingModel.Omni_1}>Kling Omni O1</option>
                             </select>
                         </div>
 
@@ -314,7 +316,7 @@ const VideoEditor: React.FC = () => {
                                 >
                                     Professional
                                 </button>
-                                {videoSettings.model === KlingModel.V3 && (
+                                {(videoSettings.model === KlingModel.V3 || videoSettings.model === KlingModel.V3_Omni || videoSettings.model === KlingModel.Omni_1) && (
                                     <button
                                         onClick={() => setVideoSettings({ ...videoSettings, mode: '4k' })}
                                         className={`col-span-2 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${videoSettings.mode === '4k'
@@ -331,24 +333,22 @@ const VideoEditor: React.FC = () => {
                         {/* Duration Selector */}
                         {!videoSettings.multiShot && (
                             <div>
-                                <label className="block text-xs font-medium text-slate-400 uppercase mb-2">Duration</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button
-                                        onClick={() => setVideoSettings({ ...videoSettings, duration: 5 })}
-                                        className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 5
-                                            ? 'bg-indigo-600 border-indigo-500 text-white'
-                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                                    >
-                                        5 seconds
-                                    </button>
-                                    <button
-                                        onClick={() => setVideoSettings({ ...videoSettings, duration: 10 })}
-                                        className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 10
-                                            ? 'bg-indigo-600 border-indigo-500 text-white'
-                                            : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
-                                    >
-                                        10 seconds
-                                    </button>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="block text-xs font-medium text-slate-400 uppercase">Duration</label>
+                                    <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
+                                        {videoSettings.duration} sec
+                                    </span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="3" max="15" step="1"
+                                    value={videoSettings.duration}
+                                    onChange={(e) => setVideoSettings({ ...videoSettings, duration: parseInt(e.target.value) })}
+                                    className="w-full accent-indigo-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                                <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                                    <span>3s</span>
+                                    <span>15s</span>
                                 </div>
                             </div>
                         )}
