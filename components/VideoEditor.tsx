@@ -509,6 +509,31 @@ const VideoEditor: React.FC = () => {
                                                 className="w-full bg-slate-900/50 text-white px-3 py-2 rounded-lg text-xs resize-none border border-slate-700 focus:border-indigo-500 outline-none"
                                                 rows={2}
                                             />
+                                            
+                                            {/* Preview detected tags */}
+                                            {shot.prompt.match(/@\d+/g) && Array.from(new Set(shot.prompt.match(/@\d+/g)))
+                                                .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
+                                                .length > 0 && (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {Array.from(new Set(shot.prompt.match(/@\d+/g)))
+                                                        .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
+                                                        .map(tag => {
+                                                            const ref = imageReferences[parseInt(tag.substring(1)) - 1];
+                                                            const isVideo = ref.startsWith('data:video/');
+                                                            return (
+                                                                <div key={tag} className="flex items-center gap-1.5 bg-indigo-900/40 border border-indigo-500/50 rounded p-1 pr-2">
+                                                                    {isVideo ? (
+                                                                        <video src={ref} className="w-5 h-5 object-cover rounded-sm shadow-sm" muted />
+                                                                    ) : (
+                                                                        <img src={ref} className="w-5 h-5 object-cover rounded-sm shadow-sm" />
+                                                                    )}
+                                                                    <span className="text-[10px] font-bold text-indigo-300">{tag}</span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                </div>
+                                            )}
+
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] text-slate-400 uppercase font-medium">Duration:</span>
                                                 <select
@@ -549,6 +574,30 @@ const VideoEditor: React.FC = () => {
                                         rows={4}
                                         maxLength={2500}
                                     />
+                                    
+                                    {/* Preview detected tags */}
+                                    {videoSettings.prompt.match(/@\d+/g) && Array.from(new Set(videoSettings.prompt.match(/@\d+/g)))
+                                        .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
+                                        .length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {Array.from(new Set(videoSettings.prompt.match(/@\d+/g)))
+                                                .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
+                                                .map(tag => {
+                                                    const ref = imageReferences[parseInt(tag.substring(1)) - 1];
+                                                    const isVideo = ref.startsWith('data:video/');
+                                                    return (
+                                                        <div key={tag} className="flex items-center gap-2 bg-indigo-900/40 border border-indigo-500/50 rounded-md p-1.5 pr-3">
+                                                            {isVideo ? (
+                                                                <video src={ref} className="w-7 h-7 object-cover rounded shadow-sm" muted />
+                                                            ) : (
+                                                                <img src={ref} className="w-7 h-7 object-cover rounded shadow-sm" />
+                                                            )}
+                                                            <span className="text-xs font-bold text-indigo-300">{tag}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Quick Prompts */}
