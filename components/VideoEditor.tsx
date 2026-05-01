@@ -258,10 +258,15 @@ const VideoEditor: React.FC = () => {
                                 onChange={(e) => {
                                     const newModel = e.target.value as KlingModel;
                                     let newMode = videoSettings.mode;
-                                    if (newModel !== KlingModel.V3 && newMode === '4k') {
+                                    let newDuration = videoSettings.duration;
+                                    const isAdvancedModel = newModel === KlingModel.V3 || newModel === KlingModel.V3_Omni || newModel === KlingModel.Omni_1;
+                                    if (!isAdvancedModel && newMode === '4k') {
                                         newMode = 'pro';
                                     }
-                                    setVideoSettings({ ...videoSettings, model: newModel, mode: newMode });
+                                    if (!isAdvancedModel && newDuration !== 5 && newDuration !== 10) {
+                                        newDuration = 5;
+                                    }
+                                    setVideoSettings({ ...videoSettings, model: newModel, mode: newMode, duration: newDuration });
                                 }}
                                 className="w-full bg-slate-800 text-white px-3 py-2.5 rounded-lg border border-slate-700 focus:border-indigo-500 focus:outline-none transition-colors"
                             >
@@ -339,17 +344,40 @@ const VideoEditor: React.FC = () => {
                                         {videoSettings.duration} sec
                                     </span>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="3" max="15" step="1"
-                                    value={videoSettings.duration}
-                                    onChange={(e) => setVideoSettings({ ...videoSettings, duration: parseInt(e.target.value) })}
-                                    className="w-full accent-indigo-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
-                                />
-                                <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                                    <span>3s</span>
-                                    <span>15s</span>
-                                </div>
+                                {videoSettings.model === KlingModel.V3 || videoSettings.model === KlingModel.V3_Omni || videoSettings.model === KlingModel.Omni_1 ? (
+                                    <>
+                                        <input
+                                            type="range"
+                                            min="3" max="15" step="1"
+                                            value={videoSettings.duration}
+                                            onChange={(e) => setVideoSettings({ ...videoSettings, duration: parseInt(e.target.value) })}
+                                            className="w-full accent-indigo-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                        />
+                                        <div className="flex justify-between text-[10px] text-slate-500 mt-1">
+                                            <span>3s</span>
+                                            <span>15s</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            onClick={() => setVideoSettings({ ...videoSettings, duration: 5 })}
+                                            className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 5
+                                                ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                                        >
+                                            5 seconds
+                                        </button>
+                                        <button
+                                            onClick={() => setVideoSettings({ ...videoSettings, duration: 10 })}
+                                            className={`py-2.5 rounded-lg text-sm font-medium transition-colors border ${videoSettings.duration === 10
+                                                ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                : 'bg-slate-800 border-slate-700 text-slate-400 hover:bg-slate-700'}`}
+                                        >
+                                            10 seconds
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
 
