@@ -3,7 +3,8 @@ import { GenerationSettings } from '../types';
 
 const getOpenAIClient = () => {
   return new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
+    apiKey: 'proxy-key',
+    baseURL: window.location.origin + '/api/openai',
     dangerouslyAllowBrowser: true,
   });
 };

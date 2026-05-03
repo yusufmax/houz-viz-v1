@@ -821,12 +821,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     } else {
       // Start Recording
       try {
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-        if (!apiKey) {
-          alert("Gemini API Key is missing.");
-          return;
-        }
-
+        // Voice realtime proxy isn't fully supported via backend proxy yet,
+        // Using a dummy key for now to prevent exposing the real key.
+        const apiKey = 'proxy-key';
+        
         // Initialize services
         realtimeServiceRef.current = new RealtimeService(apiKey);
         audioManagerRef.current = new AudioManager((base64PCM) => {

@@ -147,8 +147,91 @@ const server = http.createServer(async (req, res) => {
         }
         return;
     }
+    // -------------------------------------------------------
+    // 3. API PROXY: Gemini
+    // -------------------------------------------------------
+    if (req.url.startsWith('/api/gemini/')) {
+        const targetPath = req.url.replace('/api/gemini', '');
+        const targetUrl = `https://generativelanguage.googleapis.com${targetPath}`;
+        const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+
+        if (!apiKey) {
+            console.error('❌ Missing VITE_GEMINI_API_KEY');
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing Gemini API Key' }));
+            return;
+        }
+
+        try {
+            const buffers = [];
+            for await (const chunk of req) {
+                buffers.push(chunk);
+            }
+            const body = Buffer.concat(buffers);
+
+            const proxyRes = await fetch(targetUrl, {
+                method: req.method,
+                headers: {
+                    'x-goog-api-key': apiKey,
+                    'Content-Type': req.headers['content-type'] || 'application/json'
+                },
+                body: ['GET', 'HEAD'].includes(req.method) ? undefined : body
+            });
+
+            res.writeHead(proxyRes.status, { 'Content-Type': 'application/json' });
+            const data = await proxyRes.text();
+            res.end(data);
+
+        } catch (err) {
+            console.error('❌ Gemini Proxy Error:', err);
+            res.writeHead(502);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
 
     // -------------------------------------------------------
+    // 4. API PROXY: OpenAI
+    // -------------------------------------------------------
+    if (req.url.startsWith('/api/openai/')) {
+        const targetPath = req.url.replace('/api/openai', '');
+        const targetUrl = `https://api.openai.com/v1${targetPath}`;
+        const apiKey = process.env.OPENAI_API_KEY || process.env.VITE_OPENAI_API_KEY;
+
+        if (!apiKey) {
+            console.error('❌ Missing VITE_OPENAI_API_KEY');
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Missing OpenAI API Key' }));
+            return;
+        }
+
+        try {
+            const buffers = [];
+            for await (const chunk of req) {
+                buffers.push(chunk);
+            }
+            const body = Buffer.concat(buffers);
+
+            const proxyRes = await fetch(targetUrl, {
+                method: req.method,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': req.headers['content-type'] || 'application/json'
+                },
+                body: ['GET', 'HEAD'].includes(req.method) ? undefined : body
+            });
+
+            res.writeHead(proxyRes.status, { 'Content-Type': 'application/json' });
+            const data = await proxyRes.text();
+            res.end(data);
+
+        } catch (err) {
+            console.error('❌ OpenAI Proxy Error:', err);
+            res.writeHead(502);
+            res.end(JSON.stringify({ error: err.message }));
+        }
+        return;
+    }
     // 3. API PROXY: Kling Video
     // -------------------------------------------------------
     if (req.url.startsWith('/api/kling-video')) {

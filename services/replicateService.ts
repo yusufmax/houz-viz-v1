@@ -4,10 +4,8 @@
  * Works in both development (via Vite proxy) and production (via Netlify function)
  */
 export const upscaleImageReplicate = async (image: string): Promise<string> => {
-    const token = import.meta.env.VITE_REPLICATE_API_TOKEN;
-    if (!token) {
-        throw new Error("Replicate API token not found");
-    }
+    // Token is injected by proxy
+
 
     console.log("[Replicate] Starting upscale...");
 

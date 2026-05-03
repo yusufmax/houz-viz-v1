@@ -3,9 +3,8 @@ import { AGENTIC_SYSTEM_INSTRUCTION } from './agenticSystemPrompt';
 import { AGENTIC_TOOLS } from './agenticTools';
 import html2canvas from 'html2canvas';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const HOST = 'generativelanguage.googleapis.com';
-const URI = `wss://${HOST}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
+const API_KEY = 'proxy-key';
+const PATH = '/api/gemini/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent';
 
 export interface RealtimeClientCallbacks {
     onText: (text: string) => void;
@@ -39,7 +38,8 @@ export class RealtimeClient {
 
         this.isManualDisconnect = false;
         this.callbacks.onStatusChange(this.reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
-        const url = `${URI}?key=${API_KEY}`;
+        const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const url = `${proto}//${window.location.host}${PATH}?key=${API_KEY}`;
         this.ws = new WebSocket(url);
 
         this.ws.onopen = () => {

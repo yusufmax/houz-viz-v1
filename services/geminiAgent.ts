@@ -1,12 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!API_KEY) {
-    console.error("Missing VITE_GEMINI_API_KEY in environment variables");
-}
-
-const ai = new GoogleGenAI({ apiKey: API_KEY || '' });
+// Keys are now handled securely by the backend proxy.
+const ai = new GoogleGenAI({ 
+  apiKey: 'proxy-key',
+  httpOptions: { baseUrl: window.location.origin + '/api/gemini' }
+});
 
 export interface AgentResponse {
     text: string;

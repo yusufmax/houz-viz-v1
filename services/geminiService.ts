@@ -3,7 +3,10 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import { GenerationSettings, RenderStyle, Atmosphere, CameraAngle, ModelGenSettings } from "../types";
 
 // Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+const ai = new GoogleGenAI({ 
+  apiKey: 'proxy-key',
+  httpOptions: { baseUrl: window.location.origin + '/api/gemini' }
+});
 
 /**
  * Helper to extract MIME type and base64 data from a Data URL
@@ -669,8 +672,10 @@ export const editImage = async (sourceImage: string | null, settings: Generation
 
 export const generateRaw = async (prompt: string, model: string, config: any) => {
   try {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-    const genAI = new GoogleGenAI({ apiKey });
+    const genAI = new GoogleGenAI({ 
+      apiKey: 'proxy-key',
+      httpOptions: { baseUrl: window.location.origin + '/api/gemini' }
+    });
     const response = await ai.models.generateContent({
       model: model,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],

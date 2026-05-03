@@ -9,12 +9,8 @@ export interface FreepikUpscaleResponse {
 }
 
 export const upscaleImageFreepik = async (image: string, settings?: Partial<FreepikMagnificSettings>): Promise<string> => {
+    // Key is injected by proxy (vite or server.cjs)
     const isDev = import.meta.env.DEV;
-    const apiKey = import.meta.env.VITE_FREEPIK_API_KEY;
-
-    if (!apiKey && isDev) {
-        throw new Error("Freepik API key not found in .env");
-    }
 
     console.log("[Freepik] Starting Magnific upscale...");
 
@@ -59,7 +55,7 @@ export const upscaleImageFreepik = async (image: string, settings?: Partial<Free
     const initResponse = await fetch('/api/freepik/ai/image-upscaler', {
         method: 'POST',
         headers: {
-            'x-freepik-api-key': apiKey, // Handled by Proxy (Vite or server.cjs)
+            // 'x-freepik-api-key': handled by Proxy (Vite or server.cjs)
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
