@@ -369,6 +369,7 @@ export interface Project {
 export interface HistoryItem {
   id: string;
   url: string;
+  thumbnailUrl?: string;
   prompt: string;
   timestamp: number;
   style: RenderStyle;

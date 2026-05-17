@@ -61,7 +61,7 @@ const HistoryModal: React.FC<HistoryModalProps> = ({ isOpen, onClose, user, hist
                                     <div key={item.id} className="bg-slate-850 rounded-xl border border-slate-800 overflow-hidden group hover:border-indigo-500/50 transition-all shadow-lg flex flex-col">
                                         <div className="aspect-square relative flex-shrink-0 overflow-hidden bg-slate-950">
                                             <img
-                                                src={index <= loadingQueueIndex ? historyService.getOptimizedUrl(item.image_url) : ''}
+                                                src={index <= loadingQueueIndex ? (item.thumbnail_url || historyService.getOptimizedUrl(item.image_url)) : ''}
                                                 alt={item.prompt}
                                                 className={`w-full h-full object-cover transition-all duration-500 ${index <= loadingQueueIndex ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
                                                 loading="eager"

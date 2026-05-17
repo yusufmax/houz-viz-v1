@@ -2,6 +2,77 @@
 import { supabase } from '../lib/supabaseClient';
 import { HistoryItem, RenderStyle } from '../types';
 
+/**
+ * Generate a JPEG thumbnail from a base64 data URL using an offscreen canvas.
+ * Returns a Blob suitable for uploading to storage.
+ */
+const generateThumbnailBlob = (dataUrl: string, maxWidth = 400, quality = 0.75): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const scale = Math.min(maxWidth / img.width, 1); // Never upscale
+            const width = Math.round(img.width * scale);
+            const height = Math.round(img.height * scale);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Canvas toBlob returned null'));
+                },
+                'image/jpeg',
+                quality
+            );
+        };
+        img.onerror = (err) => reject(err);
+        img.src = dataUrl;
+    });
+};
+
+/**
+ * Generate a thumbnail from a remote URL by fetching + canvas resizing.
+ */
+const generateThumbnailFromUrl = async (url: string, maxWidth = 400, quality = 0.75): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            const scale = Math.min(maxWidth / img.width, 1);
+            const width = Math.round(img.width * scale);
+            const height = Math.round(img.height * scale);
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+            }
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Canvas toBlob returned null'));
+                },
+                'image/jpeg',
+                quality
+            );
+        };
+        img.onerror = (err) => reject(err);
+        img.src = url;
+    });
+};
+
 export const historyService = {
     async getHistory(userId: string, projectId?: string): Promise<HistoryItem[]> {
         let query = supabase
@@ -25,6 +96,7 @@ export const historyService = {
         return data.map((item: any) => ({
             id: item.id,
             url: item.image_url,
+            thumbnailUrl: item.thumbnail_url || null,
             prompt: item.prompt,
             style: item.style as RenderStyle,
             timestamp: new Date(item.created_at).getTime(),
@@ -36,10 +108,32 @@ export const historyService = {
 
     async addToHistory(userId: string, item: HistoryItem, projectId?: string, userDisplayName?: string): Promise<void> {
         let imageUrl = item.url;
+        let thumbnailUrl: string | null = null;
 
         // Check if the URL is a Base64 string
         if (imageUrl.startsWith('data:image')) {
             try {
+                // 1. Generate thumbnail BEFORE uploading the original (while we still have the base64)
+                const thumbnailBlob = await generateThumbnailBlob(imageUrl);
+                const thumbFileName = `thumbnails/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+
+                const { error: thumbUploadError } = await supabase.storage
+                    .from('generated-images')
+                    .upload(thumbFileName, thumbnailBlob, {
+                        contentType: 'image/jpeg',
+                        upsert: false
+                    });
+
+                if (!thumbUploadError) {
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('generated-images')
+                        .getPublicUrl(thumbFileName);
+                    thumbnailUrl = publicUrl;
+                } else {
+                    console.warn('Thumbnail upload failed (non-critical):', thumbUploadError);
+                }
+
+                // 2. Upload the full-resolution original
                 const response = await fetch(imageUrl);
                 const blob = await response.blob();
                 const fileExt = imageUrl.split(';')[0].split('/')[1] || 'png';
@@ -62,6 +156,28 @@ export const historyService = {
             } catch (err) {
                 console.error('Failed to upload image to storage:', err);
                 throw new Error('Failed to upload generated image to storage.');
+            }
+        } else if (imageUrl.startsWith('http')) {
+            // External URL — try to generate thumbnail from the URL
+            try {
+                const thumbnailBlob = await generateThumbnailFromUrl(imageUrl);
+                const thumbFileName = `thumbnails/${userId}/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+
+                const { error: thumbUploadError } = await supabase.storage
+                    .from('generated-images')
+                    .upload(thumbFileName, thumbnailBlob, {
+                        contentType: 'image/jpeg',
+                        upsert: false
+                    });
+
+                if (!thumbUploadError) {
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('generated-images')
+                        .getPublicUrl(thumbFileName);
+                    thumbnailUrl = publicUrl;
+                }
+            } catch (err) {
+                console.warn('Thumbnail generation from URL failed (non-critical):', err);
             }
         }
 
@@ -99,6 +215,7 @@ export const historyService = {
             .insert({
                 user_id: userId,
                 image_url: imageUrl,
+                thumbnail_url: thumbnailUrl,
                 prompt: item.prompt,
                 style: item.style,
                 project_id: projectId,
