@@ -69,6 +69,21 @@ export const adminService = {
     },
 
     /**
+     * Toggle whether a user has access to 4K resolution
+     */
+    async toggleFourK(userId: string, isEnabled: boolean) {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ fourk_enabled: isEnabled })
+            .eq('id', userId);
+
+        if (error) {
+            console.error('Error toggling 4K permission:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Check if a user is an admin
      */
     async checkIsAdmin(userId: string): Promise<boolean> {

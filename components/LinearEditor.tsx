@@ -375,7 +375,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     enhanceFacade: false
   });
   const [model, setModel] = useState<string>('gemini-2.5-flash-image');
-  const [resolution, setResolution] = useState<string>('4K');
+  const [resolution, setResolution] = useState<string>('2K');
   const [keepBuilding, setKeepBuilding] = useState(false);
   const [lockCamera, setLockCamera] = useState(false);
   const [lens, setLens] = useState<CameraLens | undefined>(undefined);
@@ -581,7 +581,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       setAspectRatio(item.metadata.aspectRatio as AspectRatio);
       setSceneElements(item.metadata.sceneElements || { people: false, cars: false, clouds: false, vegetation: false, city: false, motionBlur: false, enhanceFacade: false });
       setModel(item.metadata.model || 'gemini-2.5-flash-image');
-      setResolution(item.metadata.resolution || '4K');
+      const restoredResolution = item.metadata.resolution || '2K';
+      setResolution(restoredResolution === '4K' && !profile?.fourk_enabled ? '2K' : restoredResolution);
       setLockCamera(item.metadata.lockCamera || false);
       setLens(item.metadata.lens as CameraLens);
       setAperture(item.metadata.aperture || '');
@@ -1679,9 +1680,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Zap size={14} /> Model</label>
                 <select value={model} onChange={(e) => {
                   const newModel = e.target.value;
-                  setModel(newModel);
+                 setModel(newModel);
                   if (newModel === 'gpt-image-2') {
                     setResolution('1536 768');
+                  } else if ((newModel === 'gemini-3-pro-image-preview' || newModel === 'gemini-3.1-flash-image-preview') && resolution === '4K' && !profile?.fourk_enabled) {
+                    setResolution('2K');
                   }
                 }} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                   <option value="gpt-image-2">GPT Image 2</option>
@@ -1709,7 +1712,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <select value={resolution} onChange={(e) => setResolution(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-300">
                     <option value="1K">1K (Square/Landscape) - 2 Credits</option>
                     <option value="2K">2K - 4 Credits</option>
-                    <option value="4K">4K - 5 Credits</option>
+                    {profile?.fourk_enabled && <option value="4K">4K - 5 Credits</option>}
                   </select>
                 </div>
               )}

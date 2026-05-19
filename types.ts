@@ -331,6 +331,7 @@ export interface Profile {
   is_admin?: boolean;
   is_banned?: boolean;
   magnific_enabled?: boolean;
+  fourk_enabled?: boolean;
 }
 export interface Project {
   id: string;

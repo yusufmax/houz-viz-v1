@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { adminService, AdminUser } from '../../services/adminService';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../contexts/AuthProvider';
-import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap, BarChart3, TrendingUp, Trophy, Calendar, LogOut, Sparkles } from 'lucide-react';
+import { Loader2, Users, Save, X, Edit2, ShieldAlert, Ban, Trash2, History, AlertTriangle, Zap, BarChart3, TrendingUp, Trophy, Calendar, LogOut, Sparkles, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import HistoryModal from '../../components/Admin/HistoryModal';
 import { uploadReferenceImage, deleteReferenceImage, ReferenceImage } from '../../services/referenceImageService';
@@ -231,6 +231,16 @@ const AdminPage: React.FC = () => {
         }
     };
 
+    const toggleFourKUser = async (u: AdminUser) => {
+        try {
+            const newState = !u.fourk_enabled;
+            await adminService.toggleFourK(u.id, newState);
+            setUsers(users.map(user => user.id === u.id ? { ...user, fourk_enabled: newState } : user));
+        } catch (error) {
+            alert("Failed to toggle 4K access: " + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    };
+
     const viewHistory = async (u: AdminUser) => {
         try {
             setSelectedUser(u);
@@ -408,6 +418,7 @@ const AdminPage: React.FC = () => {
                                                                     <button onClick={() => viewHistory(u)} className="p-2 text-slate-400 hover:text-white" title="History"><History size={18} /></button>
                                                                     <button onClick={() => startEditing(u)} className="p-2 text-slate-400 hover:text-white" title="Quota"><Edit2 size={18} /></button>
                                                                     <button onClick={() => toggleMagnificUser(u)} className={`p-2 transition-colors ${u.magnific_enabled ? 'text-amber-400 hover:text-amber-300' : 'text-slate-600 hover:text-amber-400/50'}`} title={`Magnific Upscale: ${u.magnific_enabled ? 'Enabled' : 'Disabled'}`}><Sparkles size={18} /></button>
+                                                                    <button onClick={() => toggleFourKUser(u)} className={`p-2 transition-colors ${u.fourk_enabled ? 'text-cyan-400 hover:text-cyan-300' : 'text-slate-600 hover:text-cyan-400/50'}`} title={`4K Resolution: ${u.fourk_enabled ? 'Enabled' : 'Disabled'}`}><Monitor size={18} /></button>
                                                                     <button onClick={() => handleBanUser(u)} className="p-2 text-red-400 hover:text-red-300 transition-colors" title="Permanent Ban"><Ban size={18} /></button>
                                                                     <button onClick={() => deleteUser(u)} className="p-2 text-slate-600 hover:text-red-500" title="Delete"><Trash2 size={18} /></button>
                                                                 </>
