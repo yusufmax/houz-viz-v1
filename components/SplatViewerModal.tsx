@@ -118,7 +118,8 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             patchedBytes.set(headerBytes);
             patchedBytes.set(view.subarray(headerEndIndex), headerBytes.length);
             
-            finalBlob = new Blob([patchedBytes.buffer], { type: 'application/octet-stream' });
+            console.log("[SplatViewer] PLY header successfully patched. New header length:", headerBytes.length, "bytes. Total file size:", patchedBytes.length, "bytes.");
+            finalBlob = new Blob([patchedBytes], { type: 'application/octet-stream' });
           } else {
             finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
           }
