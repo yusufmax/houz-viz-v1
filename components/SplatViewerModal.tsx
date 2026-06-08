@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, RotateCcw, Play, Pause, Camera, Download, Box, Layers, Video, Loader2 } from 'lucide-react';
+import { X, RotateCcw, Play, Pause, Camera, Download, Box, Layers, Video, Loader2, Wand2 } from 'lucide-react';
 import { TrellisResult } from '../services/splatService';
 
 interface SplatViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
   result: TrellisResult;
-  onCapture: (capturedDataUrl: string) => void;
+  onCapture: (capturedDataUrl: string, action: 'apply' | 'regenerate') => void;
   prompt: string;
 }
 
@@ -165,11 +165,11 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     }
   };
 
-  const handleCapture = async () => {
+  const handleCapture = async (action: 'apply' | 'regenerate') => {
     if (tab === 'splat') {
       captureRequestedRef.current = true;
       onCaptureCallbackRef.current = (dataUrl: string) => {
-        onCapture(dataUrl);
+        onCapture(dataUrl, action);
       };
     } else if (tab === 'mesh') {
       const viewer = modelViewerRef.current;
@@ -178,7 +178,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           const blob = await viewer.toBlob({ idealAspect: false });
           const reader = new FileReader();
           reader.onloadend = () => {
-            onCapture(reader.result as string);
+            onCapture(reader.result as string, action);
           };
           reader.readAsDataURL(blob);
         } catch (err) {
@@ -390,16 +390,26 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
                     <span className="text-xs font-bold">Change Perspective</span>
                   </div>
                   <p className="text-[11px] text-slate-400 leading-relaxed">
-                    Rotate the 3D model to your desired perspective and click the button below to capture it. The captured view will replace the current image in the editor and be saved to your design history.
+                    Rotate the 3D model to your desired perspective. You can either directly regenerate a new high-quality image from this angle or set it as the editor source image to modify it first.
                   </p>
                   
-                  <button
-                    onClick={handleCapture}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-indigo-900/40"
-                  >
-                    <Camera size={14} />
-                    Capture & Apply to Canvas
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => handleCapture('regenerate')}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 active:scale-[0.98] text-white text-xs font-bold rounded-lg transition-all shadow-lg shadow-orange-900/40"
+                    >
+                      <Wand2 size={14} />
+                      Regenerate from this Angle
+                    </button>
+
+                    <button
+                      onClick={() => handleCapture('apply')}
+                      className="w-full flex items-center justify-center gap-2 py-2 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white text-[11px] font-semibold rounded-lg transition-all border border-slate-700"
+                    >
+                      <Camera size={13} />
+                      Set as Editor Source Image
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

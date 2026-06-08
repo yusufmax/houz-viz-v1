@@ -1475,10 +1475,17 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           onClose={() => setIsSplatModalOpen(false)}
           result={splatResult}
           prompt={prompt}
-          onCapture={(capturedDataUrl) => {
-            setResultImage(capturedDataUrl);
-            saveToHistory(capturedDataUrl, "Perspective Change: " + prompt);
-            setIsSplatModalOpen(false);
+          onCapture={(capturedDataUrl, action) => {
+            if (action === 'regenerate') {
+              setSourceImage(capturedDataUrl);
+              setResultImage(null);
+              setIsSplatModalOpen(false);
+              executeGeneration(capturedDataUrl);
+            } else {
+              setSourceImage(capturedDataUrl);
+              setResultImage(null);
+              setIsSplatModalOpen(false);
+            }
           }}
         />
       )}
@@ -2302,7 +2309,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     onClick={handleGenerateSplat}
                     disabled={isGeneratingSplat || isUpscaling || isMagnificUpscaling}
                     className="relative overflow-hidden group flex items-center gap-2 text-xs bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 hover:from-fuchsia-500 hover:to-indigo-500 backdrop-blur-md border border-fuchsia-500/30 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-fuchsia-950/20 disabled:opacity-50 font-bold"
-                    title="Generate 3D Gaussian Splat & Mesh to change perspective"
+                    title="Generate 3D model to change perspective and regenerate"
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
                     <span className="relative z-10 flex items-center gap-2">
@@ -2314,7 +2321,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       ) : (
                         <>
                           <Box size={14} />
-                          3D Splat
+                          3D
                         </>
                       )}
                     </span>
