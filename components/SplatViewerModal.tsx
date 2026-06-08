@@ -80,12 +80,62 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         resize();
         window.addEventListener('resize', resize);
 
-        // Load .ply file
-        await SPLAT.PLYLoader.LoadAsync(result.gaussian_ply!, scene, (progress: number) => {
-          if (active) {
-            setLoadingProgress(Math.round(progress * 100));
+        // Load .ply file with header preprocessing to patch unsupported 'uint' properties to 'int'
+        const response = await fetch(result.gaussian_ply!);
+        const buffer = await response.arrayBuffer();
+        
+        const view = new Uint8Array(buffer);
+        const searchStr = "end_header";
+        let headerEndIndex = -1;
+        
+        for (let i = 0; i < view.length - searchStr.length; i++) {
+          let match = true;
+          for (let j = 0; j < searchStr.length; j++) {
+            if (view[i + j] !== searchStr.charCodeAt(j)) {
+              match = false;
+              break;
+            }
           }
-        });
+          if (match) {
+            headerEndIndex = i + searchStr.length;
+            // Find the exact end of newline
+            while (headerEndIndex < view.length && (view[headerEndIndex] === 10 || view[headerEndIndex] === 13)) {
+              headerEndIndex++;
+            }
+            break;
+          }
+        }
+
+        let finalBlob: Blob;
+        if (headerEndIndex !== -1) {
+          const headerText = new TextDecoder().decode(view.subarray(0, headerEndIndex));
+          if (headerText.includes("uint")) {
+            console.log("[SplatViewer] Found unsupported 'uint' in PLY header. Patching to 'int'...");
+            const modifiedHeader = headerText.replace(/\buint\b/g, "int");
+            const headerBytes = new TextEncoder().encode(modifiedHeader);
+            
+            const patchedBytes = new Uint8Array(headerBytes.length + (view.length - headerEndIndex));
+            patchedBytes.set(headerBytes);
+            patchedBytes.set(view.subarray(headerEndIndex), headerBytes.length);
+            
+            finalBlob = new Blob([patchedBytes.buffer], { type: 'application/octet-stream' });
+          } else {
+            finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
+          }
+        } else {
+          finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
+        }
+
+        const blobUrl = URL.createObjectURL(finalBlob);
+        try {
+          await SPLAT.PLYLoader.LoadAsync(blobUrl, scene, (progress: number) => {
+            if (active) {
+              setLoadingProgress(Math.round(progress * 100));
+            }
+          });
+        } finally {
+          URL.revokeObjectURL(blobUrl);
+        }
 
         if (!active) return;
         setIsModelLoading(false);
