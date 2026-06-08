@@ -18,7 +18,7 @@ export interface SplatPrediction {
 }
 
 export const startTrellisPrediction = async (imageUrl: string): Promise<SplatPrediction> => {
-  console.log("[SplatService] Requesting Trellis 3D generation for:", imageUrl);
+  console.log("[SplatService] Requesting SHARP Gaussian Splat generation for:", imageUrl);
 
   const response = await fetch('/api/replicate/predictions', {
     method: 'POST',
@@ -26,13 +26,9 @@ export const startTrellisPrediction = async (imageUrl: string): Promise<SplatPre
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      version: 'e8f6c45206993f297372f5436b90350817bd9b4a0d52d2a76df50c1c8afa2b3c',
+      version: '2be5eda5c0ed5eee96e94f7391fe407d070be0d0aa567437fe7940133c789c21',
       input: {
-        images: [imageUrl],
-        generate_model: true,
-        save_gaussian_ply: true,
-        texture_size: 1024, // Optimized for faster processing
-        mesh_simplify: 0.95
+        image: imageUrl
       }
     })
   });
@@ -43,10 +39,19 @@ export const startTrellisPrediction = async (imageUrl: string): Promise<SplatPre
   }
 
   const prediction = await response.json();
+  
+  let formattedOutput: TrellisResult | null = null;
+  if (prediction.output) {
+    const plyUrl = typeof prediction.output === 'string' ? prediction.output : (prediction.output[0] || null);
+    if (plyUrl) {
+      formattedOutput = { gaussian_ply: plyUrl };
+    }
+  }
+
   return {
     id: prediction.id,
     status: prediction.status,
-    output: prediction.output,
+    output: formattedOutput,
     error: prediction.error
   };
 };
@@ -66,10 +71,19 @@ export const getTrellisPredictionStatus = async (predictionId: string): Promise<
   }
 
   const prediction = await response.json();
+  
+  let formattedOutput: TrellisResult | null = null;
+  if (prediction.output) {
+    const plyUrl = typeof prediction.output === 'string' ? prediction.output : (prediction.output[0] || null);
+    if (plyUrl) {
+      formattedOutput = { gaussian_ply: plyUrl };
+    }
+  }
+
   return {
     id: prediction.id,
     status: prediction.status,
-    output: prediction.output,
+    output: formattedOutput,
     error: prediction.error
   };
 };
