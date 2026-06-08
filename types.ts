@@ -223,6 +223,7 @@ export interface GenerationSettings {
   timeOfDay?: number;
   useGrounding?: boolean;
   customReferences?: CustomReference[];
+  is3DRotatedView?: boolean;
 }
 
 export interface CustomReference {

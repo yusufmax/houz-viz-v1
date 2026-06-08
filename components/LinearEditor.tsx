@@ -332,10 +332,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
   const [show3DView, setShow3DView] = useState(false);
   const [splatStatusText, setSplatStatusText] = useState<string>('');
+  const [is3DRotatedView, setIs3DRotatedView] = useState(false);
 
   useEffect(() => {
     setSplatResult(null);
     setShow3DView(false);
+    setIs3DRotatedView(false);
   }, [resultImage]);
 
   // Video Generation
@@ -1000,6 +1002,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       sunPosition: useSunControl ? sunPosition : undefined,
       timeOfDay: useSunControl ? timeOfDay : undefined,
       useGrounding,
+      is3DRotatedView: settingsOverride?.is3DRotatedView !== undefined ? settingsOverride.is3DRotatedView : is3DRotatedView,
       ...settingsOverride
     };
 
@@ -2461,12 +2464,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setStyleReferenceImage(originalImage);
                       setArchitectureRefImage(originalImage);
                     }
+                    setIs3DRotatedView(true);
                     setResultImage(null);
                     setShow3DView(false);
                     if (action === 'regenerate') {
                       executeGeneration(capturedDataUrl, {
                         styleReferenceImage: originalImage || undefined,
-                        architectureReferenceImage: originalImage || undefined
+                        architectureReferenceImage: originalImage || undefined,
+                        is3DRotatedView: true
                       });
                     }
                   }}

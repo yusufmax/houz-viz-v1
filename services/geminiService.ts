@@ -227,11 +227,17 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     if (settings.lockInterior) {
       textParts.push("STRICT INSTRUCTION: DONT CHANGE CAMERA ANGLE OR ANY DETAILS, ONLY FOLLOW THE PROMPT STRICTLY. MAINTAIN THE EXACT PERSPECTIVE OF THE SOURCE IMAGE.");
     }
-    if (settings.keepBuilding) {
+    if (settings.keepBuilding && !settings.is3DRotatedView) {
       textParts.push("STRICT INSTRUCTION: MAINTAIN THE EXACT BUILDING SHAPE AND GEOMETRY. Do not alter the structural form. Only change materials, lighting, and environment.");
     }
-    if (settings.lockCamera) {
+    if (settings.lockCamera && !settings.is3DRotatedView) {
       textParts.push("STRICT INSTRUCTION: DO NOT CHANGE THE CAMERA ANGLE OR COMPOSITION. Maintain the exact viewpoint of the source image.");
+    }
+    if (settings.is3DRotatedView) {
+      textParts.push(`STRICT 3D ROTATION PERSPECTIVE INSTRUCTION:
+1. The primary source image (Image 1) is a rotated 3D perspective screenshot of the building. You MUST match this exact camera angle, rotation, perspective, and composition. The final building orientation MUST face exactly like the rotated building in Image 1.
+2. The style reference image (Image 2/3) is the original front-facing photo of the building. DO NOT copy the camera angle, orientation, or front-facing perspective of the style reference image. ONLY copy its materials, facade textures, lighting, trees, colors, and design styling to reconstruct the rotated building.
+3. Clean up and fill in any deflected, incomplete, or distorted areas of the building from Image 1, using the high-quality textures, panels, windows, and materials from the style reference image.`);
     }
   } else {
     textParts.push("MARKETING INSTRUCTION: Ensure the product is the hero of the image. Composition should be clean, balanced, and aesthetically pleasing for advertising.");
@@ -470,6 +476,10 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           parts.push({
             text: "IMAGE 1 (Above): PRODUCT REFERENCE. Maintain the exact design, shape, and details of this product. You ARE encouraged to change the camera angle as specified in secondary instructions."
           });
+        } else if (settings.is3DRotatedView) {
+          parts.push({
+            text: "IMAGE 1 (Above): ROTATED 3D PERSPECTIVE REFERENCE. This screenshot defines the exact camera angle, building rotation, and perspective that you MUST generate. Ignore all other camera orientations."
+          });
         } else {
           parts.push({
             text: "IMAGE 1 (Above): PRIMARY STRUCTURAL REFERENCE. Use this image's exact geometry, lines, and perspective. Do not alter the building shape."
@@ -533,7 +543,9 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           inlineData: { mimeType, data }
         });
         parts.push({
-          text: "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. YOU MUST ONLY extract the materials, facade details, and general architectural style from this image. YOU MUST COMPLETELY IGNORE the specific building shape, layout, or environment."
+          text: settings.is3DRotatedView
+            ? "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. Use this image ONLY for materials, facade textures, and architectural details. YOU MUST COMPLETELY IGNORE its camera angle, building shape, layout, or orientation."
+            : "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. YOU MUST ONLY extract the materials, facade details, and general architectural style from this image. YOU MUST COMPLETELY IGNORE the specific building shape, layout, or environment."
         });
       }
     }
@@ -549,7 +561,9 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           }
         });
         parts.push({
-          text: "IMAGE (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry."
+          text: settings.is3DRotatedView
+            ? "IMAGE (Above): STYLE REFERENCE ONLY. Use this image ONLY for textures, materials, and colors. YOU MUST COMPLETELY IGNORE its camera angle, position, and orientation."
+            : "IMAGE (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry."
         });
       }
     }
