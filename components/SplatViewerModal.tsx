@@ -68,7 +68,9 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         controls = new SPLAT.OrbitControls(camera, canvas);
 
         // Position camera nicely
-        camera.position.set(0, 1.5, 4);
+        camera.position.x = 0;
+        camera.position.y = 1.5;
+        camera.position.z = 4;
 
         const resize = () => {
           if (!canvas) return;
@@ -128,7 +130,9 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         // Reset camera control helper
         (window as any).resetSplatCamera = () => {
           theta = 0;
-          camera.position.set(0, 1.5, 4);
+          camera.position.x = 0;
+          camera.position.y = 1.5;
+          camera.position.z = 4;
           if (controls) controls.update();
         };
 
