@@ -52,11 +52,11 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     setLoadingProgress(0);
     setErrorMsg(null);
 
-    // Set a safety timeout of 15 seconds. If loading hasn't completed, warn about rebuilding/restarting.
+    // Set a safety timeout of 45 seconds. If loading hasn't completed, warn about rebuilding/restarting.
     timeoutId = setTimeout(() => {
       setIsModelLoading(false);
       setErrorMsg("Loading timed out. The 3D viewer assets could not be loaded. Please ensure you have run 'npm run build' and restarted the server ('pm2 restart all') to deploy the viewer assets.");
-    }, 15000);
+    }, 45000);
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -180,8 +180,9 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
                     try {
                       const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
                       if (iframeDoc) {
+                        const title = iframeDoc.title || "";
                         const bodyText = iframeDoc.body?.textContent || "";
-                        if (bodyText.includes("404") || bodyText.includes("Page Not Found") || iframeDoc.title.includes("404")) {
+                        if (title.includes("HOUZ.AI") || !title.includes("SuperSplat") || bodyText.includes("404") || bodyText.includes("Page Not Found") || title.includes("404")) {
                           setIsModelLoading(false);
                           setErrorMsg("404 Not Found: The 3D viewer assets have not been built or deployed on the server. Please SSH into the server, pull the latest code, run 'npm run build', and run 'pm2 restart all' to deploy the assets.");
                         }
