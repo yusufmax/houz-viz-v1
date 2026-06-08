@@ -30,6 +30,7 @@ export const startTrellisPrediction = async (imageUrl: string): Promise<SplatPre
       input: {
         images: [imageUrl],
         generate_model: true,
+        save_gaussian_ply: true,
         texture_size: 1024, // Optimized for faster processing
         mesh_simplify: 0.95
       }
