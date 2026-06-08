@@ -20,12 +20,13 @@ export interface SplatPrediction {
 export const startTrellisPrediction = async (imageUrl: string): Promise<SplatPrediction> => {
   console.log("[SplatService] Requesting Trellis 3D generation for:", imageUrl);
 
-  const response = await fetch('/api/replicate/models/firtoz/trellis/predictions', {
+  const response = await fetch('/api/replicate/predictions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
+      version: 'e8f6c45206993f297372f5436b90350817bd9b4a0d52d2a76df50c1c8afa2b3c',
       input: {
         images: [imageUrl],
         generate_model: true,
