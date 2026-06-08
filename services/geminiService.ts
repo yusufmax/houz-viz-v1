@@ -235,9 +235,9 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     }
     if (settings.is3DRotatedView) {
       textParts.push(`STRICT 3D ROTATION PERSPECTIVE INSTRUCTION:
-1. The primary source image (Image 1) is a rotated 3D perspective screenshot of the building. You MUST match this exact camera angle, rotation, perspective, and composition. The final building orientation and camera viewpoint MUST match the rotated building in Image 1.
-2. IMPORTANT - THE GEOMETRY AND LINES IN IMAGE 1 ARE BLURRY AND DISTORTED: The building columns, balconies, window frames, and facade lines in the rotated screenshot (Image 1) appear wavy, fuzzy, and paint-like due to 3D Gaussian Splatting artifacts. YOU MUST COMPLETELY CORRECT AND STRAIGHTEN THESE LINES. Render all columns, concrete edges, glass panels, window grids, and floors as perfectly straight, sharp, vertical, and horizontal architectural structures. Avoid any wavy, curved, or distorted structures.
-3. The style reference image (Image 2/3) is the original front-facing photo of the building. Use its materials, facade textures, lighting, trees, colors, and design styling to reconstruct the building. Do NOT copy the camera angle, orientation, or front-facing perspective of the style reference image. ONLY copy its materials, facade details, concrete panel grids, and clean design style to rebuild the rotated building.`);
+1. The primary source image (Image 1) is a GRAYSCALE (black and white) 3D perspective screenshot of the building. You MUST match this exact camera angle, rotation, perspective, and composition. The final building orientation and camera viewpoint MUST match the rotated building in Image 1.
+2. IMPORTANT - THE GEOMETRY AND LINES IN IMAGE 1 ARE BLURRY AND DISTORTED: The building columns, balconies, window frames, and facade lines in the grayscale screenshot (Image 1) appear wavy, fuzzy, and paint-like due to 3D Gaussian Splatting artifacts. YOU MUST COMPLETELY CORRECT AND STRAIGHTEN THESE LINES. Render all columns, concrete edges, glass panels, window grids, and floors as perfectly straight, sharp, vertical, and horizontal architectural structures. Avoid any wavy, curved, or distorted structures.
+3. APPLY COLOR AND MATERIALS FROM REFERENCE: You MUST generate a fully colored rendering. Image 1 is grayscale, so you MUST extract all colors, materials, paint, facade textures, lighting, trees, and design styling from the style reference image (Image 2/3, which is the original color photo of the building). Do NOT copy the camera angle, orientation, or front-facing perspective of the style reference image. Transfer its specific colors, wood/concrete/glass materials, panel grids, and clean design style onto the rotated building structure defined by Image 1.`);
     }
   } else {
     textParts.push("MARKETING INSTRUCTION: Ensure the product is the hero of the image. Composition should be clean, balanced, and aesthetically pleasing for advertising.");
@@ -478,7 +478,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           });
         } else if (settings.is3DRotatedView) {
           parts.push({
-            text: "IMAGE 1 (Above): ROTATED 3D PERSPECTIVE REFERENCE. This screenshot defines the camera angle and building rotation. Note that the building geometry, facade, and outlines in this screenshot are distorted, wavy, and paint-like; you MUST straighten all columns, walls, window grids, and floors to be perfectly vertical, horizontal, clean, and architecturally precise in the final output."
+            text: "IMAGE 1 (Above): ROTATED 3D PERSPECTIVE REFERENCE (GRAYSCALE). This grayscale screenshot defines the camera angle and building rotation. Note that the building geometry, facade, and outlines in this screenshot are distorted, wavy, and paint-like; you MUST straighten all columns, walls, window grids, and floors to be perfectly vertical, horizontal, clean, and architecturally precise in the final output. The output MUST be a fully colored image, NOT grayscale."
           });
         } else {
           parts.push({
@@ -544,7 +544,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         });
         parts.push({
           text: settings.is3DRotatedView
-            ? "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. Use this image ONLY for materials, facade textures, and architectural details. YOU MUST COMPLETELY IGNORE its camera angle, building shape, layout, or orientation."
+            ? "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL COLOR & STYLE REFERENCE. Use this color reference image to apply all materials, facade textures, architectural details, and colors to the grayscale rotated building. YOU MUST COMPLETELY IGNORE its camera angle, building shape, layout, or orientation."
             : "STRICT INSTRUCTION - IMAGE (Above): ARCHITECTURAL STYLE REFERENCE ONLY. YOU MUST ONLY extract the materials, facade details, and general architectural style from this image. YOU MUST COMPLETELY IGNORE the specific building shape, layout, or environment."
         });
       }
@@ -562,7 +562,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
         });
         parts.push({
           text: settings.is3DRotatedView
-            ? "IMAGE (Above): STYLE REFERENCE ONLY. Use this image ONLY for textures, materials, and colors. YOU MUST COMPLETELY IGNORE its camera angle, position, and orientation."
+            ? "IMAGE (Above): STYLE & COLOR REFERENCE. Use this image to extract the exact colors, textures, materials, and lighting mood to colorize the grayscale structure. YOU MUST COMPLETELY IGNORE its camera angle, position, and orientation."
             : "IMAGE (Above): STYLE REFERENCE ONLY. Use this image for colors, materials, and lighting mood. IGNORE its geometry."
         });
       }

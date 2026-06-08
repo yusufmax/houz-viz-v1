@@ -39,6 +39,41 @@ import { supabase } from '../lib/supabaseClient';
 import { promptTemplateService, PromptTemplate } from '../services/promptTemplateService';
 import SunPositionSelector from './SunPositionSelector';
 
+const convertToGrayscale = (dataUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        try {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+          for (let i = 0; i < data.length; i += 4) {
+            const brightness = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i] = brightness;
+            data[i + 1] = brightness;
+            data[i + 2] = brightness;
+          }
+          ctx.putImageData(imgData, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+        } catch (e) {
+          console.error("Grayscale pixel conversion failed:", e);
+          resolve(dataUrl);
+        }
+      } else {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 const STYLE_LIBRARY = [
   // Living Complex / House
   { name: 'Modern Villa', url: 'https://images.unsplash.com/photo-1600596542815-3ad196bb8700?w=200&q=80' },
@@ -2457,9 +2492,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   result={splatResult}
                   prompt={prompt}
                   inline={true}
-                  onCapture={(capturedDataUrl, action) => {
+                  onCapture={async (capturedDataUrl, action) => {
                     const originalImage = resultImage;
-                    setSourceImage(capturedDataUrl);
+                    const grayscaleDataUrl = await convertToGrayscale(capturedDataUrl);
+                    setSourceImage(grayscaleDataUrl);
                     if (originalImage) {
                       setStyleReferenceImage(originalImage);
                       setArchitectureRefImage(originalImage);
@@ -2468,7 +2504,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     setResultImage(null);
                     setShow3DView(false);
                     if (action === 'regenerate') {
-                      executeGeneration(capturedDataUrl, {
+                      executeGeneration(grayscaleDataUrl, {
                         styleReferenceImage: originalImage || undefined,
                         architectureReferenceImage: originalImage || undefined,
                         is3DRotatedView: true
