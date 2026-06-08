@@ -68,9 +68,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         controls = new SPLAT.OrbitControls(camera, canvas);
 
         // Position camera nicely
-        camera.position.x = 0;
-        camera.position.y = 1.5;
-        camera.position.z = 4;
+        camera.position = new SPLAT.Vector3(0, 1.5, 4);
 
         const resize = () => {
           if (!canvas) return;
@@ -163,10 +161,17 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             // Auto rotate camera gently around center
             theta += 0.005;
             const radius = 4;
-            camera.position.x = radius * Math.sin(theta);
-            camera.position.z = radius * Math.cos(theta);
-            camera.position.y = 1.5 + Math.sin(theta * 0.5) * 0.5;
-            camera.lookAt(new SPLAT.Vector3(0, 0.5, 0));
+            const px = radius * Math.sin(theta);
+            const pz = radius * Math.cos(theta);
+            const py = 1.5 + Math.sin(theta * 0.5) * 0.5;
+            camera.position = new SPLAT.Vector3(px, py, pz);
+            
+            // Re-calculate orientation to look at the target (0, 0.5, 0)
+            const target = new SPLAT.Vector3(0, 0.5, 0);
+            const toTarget = target.subtract(camera.position).normalize();
+            const pitch = Math.asin(-toTarget.y);
+            const yaw = Math.atan2(toTarget.x, toTarget.z);
+            camera.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(pitch, yaw, 0));
           } else {
             controls.update();
           }
@@ -195,9 +200,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         // Reset camera control helper
         (window as any).resetSplatCamera = () => {
           theta = 0;
-          camera.position.x = 0;
-          camera.position.y = 1.5;
-          camera.position.z = 4;
+          camera.position = new SPLAT.Vector3(0, 1.5, 4);
           if (controls) controls.update();
         };
 
