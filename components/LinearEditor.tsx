@@ -2442,11 +2442,19 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   prompt={prompt}
                   inline={true}
                   onCapture={(capturedDataUrl, action) => {
+                    const originalImage = resultImage;
                     setSourceImage(capturedDataUrl);
+                    if (originalImage) {
+                      setStyleReferenceImage(originalImage);
+                      setArchitectureRefImage(originalImage);
+                    }
                     setResultImage(null);
                     setShow3DView(false);
                     if (action === 'regenerate') {
-                      executeGeneration(capturedDataUrl);
+                      executeGeneration(capturedDataUrl, {
+                        styleReferenceImage: originalImage || undefined,
+                        architectureReferenceImage: originalImage || undefined
+                      });
                     }
                   }}
                 />

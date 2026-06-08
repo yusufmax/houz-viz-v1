@@ -3,7 +3,7 @@
   "tonemapping": "none",
   "highPrecisionRendering": false,
   "background": {
-    "color": [15, 23, 42]
+    "color": [0.058, 0.09, 0.164]
   },
   "postEffectSettings": {
     "sharpness": {
@@ -35,15 +35,7 @@
     }
   },
   "animTracks": [],
-  "cameras": [
-    {
-      "initial": {
-        "position": [0, 1.5, 4],
-        "target": [0, 1, 0],
-        "fov": 60
-      }
-    }
-  ],
+  "cameras": [],
   "annotations": [],
   "startMode": "default"
 }
