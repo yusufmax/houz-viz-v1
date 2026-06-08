@@ -331,6 +331,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [isGeneratingSplat, setIsGeneratingSplat] = useState(false);
   const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
   const [show3DView, setShow3DView] = useState(false);
+  const [splatStatusText, setSplatStatusText] = useState<string>('');
 
   useEffect(() => {
     setSplatResult(null);
@@ -1345,9 +1346,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     setIsGeneratingSplat(true);
     setSplatResult(null);
     setShow3DView(false);
+    setSplatStatusText("Sending request to Replicate API...");
     try {
       const prediction = await startTrellisPrediction(resultImage);
       console.log("[Splat] Generation started:", prediction.id);
+      setSplatStatusText("Prediction started. Polling status...");
 
       let finished = false;
       let attempts = 0;
@@ -1360,8 +1363,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         const status = await getTrellisPredictionStatus(prediction.id);
         console.log(`[Splat] Status (Attempt ${attempts}):`, status.status);
 
+        if (status.status === 'starting') {
+          setSplatStatusText(`Warming up GPU container (Cold start: ~2-3 mins. Attempt ${attempts})...`);
+        } else if (status.status === 'processing') {
+          setSplatStatusText(`Reconstructing 3D model (Attempt ${attempts})...`);
+        }
+
         if (status.status === 'succeeded') {
           finished = true;
+          setSplatStatusText("Success! Finalizing 3D Gaussian Splat...");
           if (status.output) {
             setSplatResult(status.output);
             setShow3DView(true);
@@ -1370,9 +1380,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           }
         } else if (status.status === 'failed') {
           finished = true;
+          setSplatStatusText("Generation failed.");
           throw new Error(status.error || "Trellis generation failed.");
         } else if (status.status === 'canceled') {
           finished = true;
+          setSplatStatusText("Generation canceled.");
           throw new Error("Trellis generation was canceled.");
         }
       }
@@ -1390,6 +1402,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
       alert(`3D Generation Failed:\n\n${userMessage}`);
     } finally {
       setIsGeneratingSplat(false);
+      setSplatStatusText("");
     }
   };
 
@@ -2458,6 +2471,20 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     }
                   }}
                 />
+              ) : isGeneratingSplat ? (
+                <div className="flex-1 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm p-8 text-center min-h-[300px]">
+                  <div className="relative mb-6">
+                    <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                    <Box className="absolute inset-0 m-auto text-fuchsia-400 animate-pulse animate-spin" style={{ animationDuration: '3s' }} size={24} />
+                  </div>
+                  <h3 className="text-sm font-semibold text-slate-200">Generating 3D Gaussian Splat</h3>
+                  <p className="text-xs text-slate-450 mt-2 max-w-sm font-mono bg-slate-900/50 px-3 py-1.5 rounded-lg border border-slate-800 text-indigo-400">
+                    {splatStatusText || "Initializing prediction..."}
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-4 leading-relaxed max-w-xs">
+                    💡 Replicate boots up a GPU container on demand. If idle recently, this cold-start can take 2-3 minutes. Subsequent runs are near-instant!
+                  </p>
+                </div>
               ) : resultImage ? (
                 sourceImage ? (
                   <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />
