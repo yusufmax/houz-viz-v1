@@ -3,7 +3,7 @@ import {
   Settings, Image as ImageIcon, Download, Maximize2, Maximize, Save,
   X, ChevronDown, ChevronRight, Palette, Sun, Cloud, Users, Car, Trees, Plus,
   Building2, Wind, Zap, Loader2, Pencil, Pen, Lock, LayoutTemplate, Grid,
-  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2, Globe, Info
+  CloudRain, CloudFog, Snowflake, Eye, CloudLightning, Flower, Leaf, ThermometerSun, History as HistoryIcon, Trash2, Upload, FileJson, Flame, Lightbulb, Coffee, Aperture, Sparkles, Layers, Film, Wand2, Mic, MicOff, Moon, CheckCircle2, Globe, Info, Box
 } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import BeforeAfter from './BeforeAfter';
@@ -19,6 +19,8 @@ import {
 } from '../services/geminiService';
 import { upscaleImageReplicate } from '../services/replicateService';
 import { upscaleImageFreepik } from '../services/freepikService';
+import { startTrellisPrediction, getTrellisPredictionStatus, TrellisResult } from '../services/splatService';
+import { SplatViewerModal } from './SplatViewerModal';
 import { generateOpenAIImage, editOpenAIImage } from '../services/openAIService';
 import FreepikSettings from './FreepikSettings';
 import { RealtimeService } from '../services/realtimeService';
@@ -324,6 +326,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     intricacy: 0,
     engine: 'automatic'
   });
+
+  // 3D Splat & Perspective Change State
+  const [isGeneratingSplat, setIsGeneratingSplat] = useState(false);
+  const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
+  const [isSplatModalOpen, setIsSplatModalOpen] = useState(false);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1328,6 +1335,54 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     }
   };
 
+  const handleGenerateSplat = async () => {
+    if (!resultImage) return;
+    setIsGeneratingSplat(true);
+    setSplatResult(null);
+    try {
+      const prediction = await startTrellisPrediction(resultImage);
+      console.log("[Splat] Generation started:", prediction.id);
+
+      let finished = false;
+      let attempts = 0;
+      const maxAttempts = 120; // 6 minutes max
+
+      while (!finished && attempts < maxAttempts) {
+        attempts++;
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        
+        const status = await getTrellisPredictionStatus(prediction.id);
+        console.log(`[Splat] Status (Attempt ${attempts}):`, status.status);
+
+        if (status.status === 'succeeded') {
+          finished = true;
+          if (status.output) {
+            setSplatResult(status.output);
+            setIsSplatModalOpen(true);
+          } else {
+            throw new Error("No output generated from Trellis 3D model.");
+          }
+        } else if (status.status === 'failed') {
+          finished = true;
+          throw new Error(status.error || "Trellis generation failed.");
+        } else if (status.status === 'canceled') {
+          finished = true;
+          throw new Error("Trellis generation was canceled.");
+        }
+      }
+
+      if (!finished) {
+        throw new Error("3D Generation timed out. Please try again later.");
+      }
+
+    } catch (e: any) {
+      console.error("3D Splat Generation failed", e);
+      alert(`3D Splat Generation failed: ${e.message}`);
+    } finally {
+      setIsGeneratingSplat(false);
+    }
+  };
+
   const handleDrawSave = (newImage: string) => {
     if (drawingTarget === 'source') {
       setSourceImage(newImage);
@@ -1410,6 +1465,21 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           onClose={() => setDrawingTarget(null)}
           selectedModel={model}
           onModelChange={setModel}
+        />
+      )}
+
+      {/* 3D Splat / Perspective Change Modal */}
+      {isSplatModalOpen && splatResult && (
+        <SplatViewerModal
+          isOpen={isSplatModalOpen}
+          onClose={() => setIsSplatModalOpen(false)}
+          result={splatResult}
+          prompt={prompt}
+          onCapture={(capturedDataUrl) => {
+            setResultImage(capturedDataUrl);
+            saveToHistory(capturedDataUrl, "Perspective Change: " + prompt);
+            setIsSplatModalOpen(false);
+          }}
         />
       )}
 
@@ -2227,6 +2297,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       )}
                     </div>
                   )}
+
+                  <button
+                    onClick={handleGenerateSplat}
+                    disabled={isGeneratingSplat || isUpscaling || isMagnificUpscaling}
+                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 hover:from-fuchsia-500 hover:to-indigo-500 backdrop-blur-md border border-fuchsia-500/30 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-fuchsia-950/20 disabled:opacity-50 font-bold"
+                    title="Generate 3D Gaussian Splat & Mesh to change perspective"
+                  >
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
+                    <span className="relative z-10 flex items-center gap-2">
+                      {isGeneratingSplat ? (
+                        <>
+                          <Loader2 size={14} className="animate-spin" />
+                          Generating 3D...
+                        </>
+                      ) : (
+                        <>
+                          <Box size={14} />
+                          3D Splat
+                        </>
+                      )}
+                    </span>
+                  </button>
 
                   <button
                     onClick={() => setDrawingTarget('result')}
