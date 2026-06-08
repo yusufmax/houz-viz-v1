@@ -598,6 +598,9 @@
 
                 // Notify parent window when the Gaussian Splat is loaded
                 if (viewer?.global?.events) {
+                    viewer.global.events.on('progress:changed', (progress) => {
+                        window.parent.postMessage({ type: 'supersplat-progress', progress }, '*');
+                    });
                     viewer.global.events.on('loaded:changed', (loaded) => {
                         if (loaded) {
                             window.parent.postMessage({ type: 'supersplat-loaded' }, '*');

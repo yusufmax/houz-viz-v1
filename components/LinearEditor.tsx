@@ -330,7 +330,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // 3D Splat & Perspective Change State
   const [isGeneratingSplat, setIsGeneratingSplat] = useState(false);
   const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
-  const [isSplatModalOpen, setIsSplatModalOpen] = useState(false);
+  const [show3DView, setShow3DView] = useState(false);
+
+  useEffect(() => {
+    setSplatResult(null);
+    setShow3DView(false);
+  }, [resultImage]);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1339,6 +1344,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     if (!resultImage) return;
     setIsGeneratingSplat(true);
     setSplatResult(null);
+    setShow3DView(false);
     try {
       const prediction = await startTrellisPrediction(resultImage);
       console.log("[Splat] Generation started:", prediction.id);
@@ -1358,7 +1364,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           finished = true;
           if (status.output) {
             setSplatResult(status.output);
-            setIsSplatModalOpen(true);
+            setShow3DView(true);
           } else {
             throw new Error("No output generated from Trellis 3D model.");
           }
@@ -1472,27 +1478,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         />
       )}
 
-      {/* 3D Splat / Perspective Change Modal */}
-      {isSplatModalOpen && splatResult && (
-        <SplatViewerModal
-          isOpen={isSplatModalOpen}
-          onClose={() => setIsSplatModalOpen(false)}
-          result={splatResult}
-          prompt={prompt}
-          onCapture={(capturedDataUrl, action) => {
-            if (action === 'regenerate') {
-              setSourceImage(capturedDataUrl);
-              setResultImage(null);
-              setIsSplatModalOpen(false);
-              executeGeneration(capturedDataUrl);
-            } else {
-              setSourceImage(capturedDataUrl);
-              setResultImage(null);
-              setIsSplatModalOpen(false);
-            }
-          }}
-        />
-      )}
+
 
       {/* History Sidebar */}
       <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
@@ -2310,10 +2296,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   )}
 
                   <button
-                    onClick={handleGenerateSplat}
+                    onClick={() => {
+                      if (splatResult) {
+                        setShow3DView(!show3DView);
+                      } else {
+                        handleGenerateSplat();
+                      }
+                    }}
                     disabled={isGeneratingSplat || isUpscaling || isMagnificUpscaling}
-                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 hover:from-fuchsia-500 hover:to-indigo-500 backdrop-blur-md border border-fuchsia-500/30 text-white px-3 py-1.5 rounded-md transition-all shadow-lg shadow-fuchsia-950/20 disabled:opacity-50 font-bold"
-                    title="Generate 3D model to change perspective and regenerate"
+                    className={`relative overflow-hidden group flex items-center gap-2 text-xs backdrop-blur-md px-3 py-1.5 rounded-md transition-all shadow-lg font-bold disabled:opacity-50 ${
+                      show3DView
+                        ? 'bg-gradient-to-r from-emerald-600/80 to-teal-600/80 border border-emerald-500/30 text-white shadow-emerald-950/20'
+                        : splatResult
+                        ? 'bg-gradient-to-r from-teal-600/80 to-indigo-600/80 border border-teal-500/30 text-white shadow-teal-950/20'
+                        : 'bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 border border-fuchsia-500/30 text-white shadow-fuchsia-950/20'
+                    }`}
+                    title={
+                      isGeneratingSplat
+                        ? "Generating 3D model..."
+                        : splatResult
+                        ? "Toggle between 3D and 2D view"
+                        : "Generate 3D model to change perspective and regenerate"
+                    }
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
                     <span className="relative z-10 flex items-center gap-2">
@@ -2321,6 +2325,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         <>
                           <Loader2 size={14} className="animate-spin" />
                           Generating 3D...
+                        </>
+                      ) : splatResult ? (
+                        <>
+                          <Box size={14} />
+                          {show3DView ? 'Show 2D' : 'Show 3D'}
                         </>
                       ) : (
                         <>
@@ -2425,6 +2434,22 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     ))}
                   </div>
                 </div>
+              ) : show3DView && splatResult ? (
+                <SplatViewerModal
+                  isOpen={show3DView}
+                  onClose={() => setShow3DView(false)}
+                  result={splatResult}
+                  prompt={prompt}
+                  inline={true}
+                  onCapture={(capturedDataUrl, action) => {
+                    setSourceImage(capturedDataUrl);
+                    setResultImage(null);
+                    setShow3DView(false);
+                    if (action === 'regenerate') {
+                      executeGeneration(capturedDataUrl);
+                    }
+                  }}
+                />
               ) : resultImage ? (
                 sourceImage ? (
                   <BeforeAfter beforeImage={sourceImage} afterImage={resultImage} />

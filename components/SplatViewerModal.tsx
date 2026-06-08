@@ -8,6 +8,7 @@ interface SplatViewerModalProps {
   result: TrellisResult;
   onCapture: (capturedDataUrl: string, action: 'apply' | 'regenerate') => void;
   prompt: string;
+  inline?: boolean;
 }
 
 export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
@@ -15,7 +16,8 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   onClose,
   result,
   onCapture,
-  prompt
+  prompt,
+  inline = false
 }) => {
   const [tab, setTab] = useState<'splat' | 'mesh' | 'video'>(
     result.gaussian_ply ? 'splat' : result.model_file ? 'mesh' : 'video'
@@ -31,10 +33,16 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   useEffect(() => {
     if (!isOpen || tab !== 'splat' || !result.gaussian_ply) return;
 
+    let timeoutId: NodeJS.Timeout;
+
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'supersplat-loaded') {
         console.log("[SplatViewerModal] SuperSplat model finished loading.");
         setIsModelLoading(false);
+        if (timeoutId) clearTimeout(timeoutId);
+      } else if (event.data?.type === 'supersplat-progress') {
+        const progress = Math.min(100, Math.max(0, Math.round(event.data.progress || 0)));
+        setLoadingProgress(progress);
       }
     };
 
@@ -44,8 +52,15 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     setLoadingProgress(0);
     setErrorMsg(null);
 
+    // Set a safety timeout of 15 seconds. If loading hasn't completed, warn about rebuilding/restarting.
+    timeoutId = setTimeout(() => {
+      setIsModelLoading(false);
+      setErrorMsg("Loading timed out. The 3D viewer assets could not be loaded. Please ensure you have run 'npm run build' and restarted the server ('pm2 restart all') to deploy the viewer assets.");
+    }, 15000);
+
     return () => {
       window.removeEventListener('message', handleMessage);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [isOpen, tab, result.gaussian_ply]);
 
@@ -125,10 +140,8 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="relative flex flex-col w-full max-w-6xl h-[85vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-        
+  const content = (
+    <>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
           <div>
@@ -142,6 +155,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           <button 
             onClick={onClose}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            title={inline ? "Exit 3D View" : "Close"}
           >
             <X size={18} />
           </button>
@@ -154,14 +168,30 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           <div className="flex-1 relative bg-slate-950 min-h-[300px] flex items-center justify-center">
             
             {tab === 'splat' && result.gaussian_ply && (
-              <div className="w-full h-full relative">
-                <iframe
-                  id="supersplat-iframe"
-                  src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
-                  className="w-full h-full border-0 bg-transparent block"
-                  allow="vr; xr-spatial-tracking"
-                />
-              </div>
+              <iframe
+                id="supersplat-iframe"
+                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
+                className="w-full h-full border-0 bg-transparent block"
+                allow="vr; xr-spatial-tracking"
+                onLoad={() => {
+                  // Wait a short duration, then check if same-origin document content is a 404 page
+                  setTimeout(() => {
+                    const iframe = document.getElementById('supersplat-iframe') as HTMLIFrameElement;
+                    try {
+                      const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+                      if (iframeDoc) {
+                        const bodyText = iframeDoc.body?.textContent || "";
+                        if (bodyText.includes("404") || bodyText.includes("Page Not Found") || iframeDoc.title.includes("404")) {
+                          setIsModelLoading(false);
+                          setErrorMsg("404 Not Found: The 3D viewer assets have not been built or deployed on the server. Please SSH into the server, pull the latest code, run 'npm run build', and run 'pm2 restart all' to deploy the assets.");
+                        }
+                      }
+                    } catch (e) {
+                      console.log("Could not inspect iframe due to same-origin restrictions, relying on timeout.");
+                    }
+                  }, 1000);
+                }}
+              />
             )}
 
             {tab === 'mesh' && result.model_file && (
@@ -382,7 +412,21 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           </div>
 
         </div>
+    </>
+  );
 
+  if (inline) {
+    return (
+      <div className="relative flex flex-col w-full h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+      <div className="relative flex flex-col w-full max-w-6xl h-[85vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+        {content}
       </div>
     </div>
   );
