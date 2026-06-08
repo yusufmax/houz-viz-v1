@@ -25,198 +25,27 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const modelViewerRef = useRef<any>(null);
-  
-  const autoRotateRef = useRef(autoRotate);
-  const captureRequestedRef = useRef(false);
-  const onCaptureCallbackRef = useRef<((dataUrl: string) => void) | null>(null);
 
-  // Sync autoRotate state to ref for animation loop
-  useEffect(() => {
-    autoRotateRef.current = autoRotate;
-  }, [autoRotate]);
-
-  // Handle loading and rendering of Gaussian Splat (gsplat.js)
+  // Handle message events from SuperSplat iframe
   useEffect(() => {
     if (!isOpen || tab !== 'splat' || !result.gaussian_ply) return;
 
-    let active = true;
-    let animationFrameId: number;
-    let renderer: any;
-    let scene: any;
-    let camera: any;
-    let controls: any;
-
-    async function initSplat() {
-      try {
-        setIsModelLoading(true);
-        setLoadingProgress(0);
-        setErrorMsg(null);
-
-        // Dynamically import gsplat.js from CDN to avoid build time or TS issues
-        const cdnUrl = 'https://cdn.jsdelivr.net/npm/gsplat@1.2.3';
-        const SPLAT = await import(/* @vite-ignore */ cdnUrl);
-        
-        if (!active) return;
-        if (!canvasRef.current) return;
-
-        const canvas = canvasRef.current;
-        renderer = new SPLAT.WebGLRenderer(canvas);
-        scene = new SPLAT.Scene();
-        camera = new SPLAT.Camera();
-        controls = new SPLAT.OrbitControls(camera, canvas);
-
-        // Position camera nicely
-        camera.position = new SPLAT.Vector3(0, 1.5, 4);
-
-        const resize = () => {
-          if (!canvas) return;
-          const rect = canvas.parentElement?.getBoundingClientRect();
-          renderer.setSize(rect?.width || 800, rect?.height || 600);
-        };
-        resize();
-        window.addEventListener('resize', resize);
-
-        // Load .ply file with header preprocessing to patch unsupported 'uint' properties to 'int'
-        const response = await fetch(result.gaussian_ply!);
-        const buffer = await response.arrayBuffer();
-        
-        const view = new Uint8Array(buffer);
-        const searchStr = "end_header";
-        let headerEndIndex = -1;
-        
-        for (let i = 0; i < view.length - searchStr.length; i++) {
-          let match = true;
-          for (let j = 0; j < searchStr.length; j++) {
-            if (view[i + j] !== searchStr.charCodeAt(j)) {
-              match = false;
-              break;
-            }
-          }
-          if (match) {
-            headerEndIndex = i + searchStr.length;
-            // Find the exact end of newline
-            while (headerEndIndex < view.length && (view[headerEndIndex] === 10 || view[headerEndIndex] === 13)) {
-              headerEndIndex++;
-            }
-            break;
-          }
-        }
-
-        let finalBlob: Blob;
-        if (headerEndIndex !== -1) {
-          const headerText = new TextDecoder().decode(view.subarray(0, headerEndIndex));
-          
-          // Parse lines and keep only "element vertex" and its properties to prevent:
-          // 1. Parser crashes on unsupported metadata types like uint or uchar (e.g. extrinsic, image_size, etc.)
-          // 2. Vertex binary data misalignment because gsplat.js sums all property sizes globally across all elements
-          const lines = headerText.split(/\r?\n/);
-          const sanitizedLines: string[] = [];
-          let keep = true;
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("element ") && !trimmed.startsWith("element vertex ")) {
-              keep = false;
-            }
-            if (trimmed === "end_header") {
-              keep = true;
-            }
-            if (keep) {
-              sanitizedLines.push(line);
-            }
-          }
-          const sanitizedHeader = sanitizedLines.join("\n");
-          console.log("[SplatViewer] PLY header sanitized to keep vertex element only.");
-          
-          const headerBytes = new TextEncoder().encode(sanitizedHeader);
-          const patchedBytes = new Uint8Array(headerBytes.length + (view.length - headerEndIndex));
-          patchedBytes.set(headerBytes);
-          patchedBytes.set(view.subarray(headerEndIndex), headerBytes.length);
-          
-          finalBlob = new Blob([patchedBytes], { type: 'application/octet-stream' });
-        } else {
-          finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
-        }
-
-        const blobUrl = URL.createObjectURL(finalBlob);
-        try {
-          await SPLAT.PLYLoader.LoadAsync(blobUrl, scene, (progress: number) => {
-            if (active) {
-              setLoadingProgress(Math.round(progress * 100));
-            }
-          });
-        } finally {
-          URL.revokeObjectURL(blobUrl);
-        }
-
-        if (!active) return;
-        setIsModelLoading(false);
-
-        let theta = 0;
-        const frame = () => {
-          if (!active) return;
-
-          if (autoRotateRef.current) {
-            // Auto rotate camera gently around center
-            theta += 0.005;
-            const radius = 4;
-            const px = radius * Math.sin(theta);
-            const pz = radius * Math.cos(theta);
-            const py = 1.5 + Math.sin(theta * 0.5) * 0.5;
-            camera.position = new SPLAT.Vector3(px, py, pz);
-            
-            // Re-calculate orientation to look at the target (0, 0.5, 0)
-            const target = new SPLAT.Vector3(0, 0.5, 0);
-            const toTarget = target.subtract(camera.position).normalize();
-            const pitch = Math.asin(-toTarget.y);
-            const yaw = Math.atan2(toTarget.x, toTarget.z);
-            camera.rotation = SPLAT.Quaternion.FromEuler(new SPLAT.Vector3(pitch, yaw, 0));
-          } else {
-            controls.update();
-          }
-
-          renderer.render(scene, camera);
-
-          // Handle screenshot capture
-          if (captureRequestedRef.current) {
-            try {
-              const dataUrl = canvas.toDataURL('image/png');
-              captureRequestedRef.current = false;
-              if (onCaptureCallbackRef.current) {
-                onCaptureCallbackRef.current(dataUrl);
-              }
-            } catch (err) {
-              console.error('Failed to capture canvas screenshot:', err);
-              captureRequestedRef.current = false;
-            }
-          }
-
-          animationFrameId = requestAnimationFrame(frame);
-        };
-
-        animationFrameId = requestAnimationFrame(frame);
-
-        // Reset camera control helper
-        (window as any).resetSplatCamera = () => {
-          theta = 0;
-          camera.position = new SPLAT.Vector3(0, 1.5, 4);
-          if (controls) controls.update();
-        };
-
-      } catch (err: any) {
-        console.error('Error rendering Splat:', err);
-        setErrorMsg('Failed to initialize or render 3D Gaussian Splat.');
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'supersplat-loaded') {
+        console.log("[SplatViewerModal] SuperSplat model finished loading.");
         setIsModelLoading(false);
       }
-    }
+    };
 
-    initSplat();
+    window.addEventListener('message', handleMessage);
+    
+    setIsModelLoading(true);
+    setLoadingProgress(0);
+    setErrorMsg(null);
 
     return () => {
-      active = false;
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      delete (window as any).resetSplatCamera;
+      window.removeEventListener('message', handleMessage);
     };
   }, [isOpen, tab, result.gaussian_ply]);
 
@@ -224,8 +53,10 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
 
   const handleResetCamera = () => {
     if (tab === 'splat') {
-      if ((window as any).resetSplatCamera) {
-        (window as any).resetSplatCamera();
+      const iframe = document.getElementById('supersplat-iframe') as HTMLIFrameElement;
+      const iframeWin = iframe?.contentWindow as any;
+      if (iframeWin?.viewer?.global?.events) {
+        iframeWin.viewer.global.events.fire('inputEvent', 'reset');
       }
     } else if (tab === 'mesh') {
       const viewer = modelViewerRef.current;
@@ -239,10 +70,22 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
 
   const handleCapture = async (action: 'apply' | 'regenerate') => {
     if (tab === 'splat') {
-      captureRequestedRef.current = true;
-      onCaptureCallbackRef.current = (dataUrl: string) => {
-        onCapture(dataUrl, action);
-      };
+      const iframe = document.getElementById('supersplat-iframe') as HTMLIFrameElement;
+      const iframeWin = iframe?.contentWindow as any;
+      if (iframeWin?.captureScreenshot) {
+        try {
+          setIsModelLoading(true);
+          const dataUrl = await iframeWin.captureScreenshot();
+          setIsModelLoading(false);
+          onCapture(dataUrl, action);
+        } catch (err) {
+          console.error('Failed to capture SuperSplat screenshot:', err);
+          setIsModelLoading(false);
+          alert('Failed to capture perspective. Please try again.');
+        }
+      } else {
+        alert('Viewer not fully loaded yet. Please wait.');
+      }
     } else if (tab === 'mesh') {
       const viewer = modelViewerRef.current;
       if (viewer) {
@@ -312,9 +155,11 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             
             {tab === 'splat' && result.gaussian_ply && (
               <div className="w-full h-full relative">
-                <canvas 
-                  ref={canvasRef} 
-                  className="w-full h-full block cursor-grab active:cursor-grabbing" 
+                <iframe
+                  id="supersplat-iframe"
+                  src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
+                  className="w-full h-full border-0 bg-transparent block"
+                  allow="vr; xr-spatial-tracking"
                 />
               </div>
             )}
@@ -439,17 +284,19 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
                       Reset View
                     </button>
 
-                    <button
-                      onClick={() => setAutoRotate(!autoRotate)}
-                      className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold border transition-all ${
-                        autoRotate 
-                          ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
-                          : 'bg-slate-850 hover:bg-slate-800 text-slate-300 border-slate-800'
-                      }`}
-                    >
-                      {autoRotate ? <Pause size={14} /> : <Play size={14} />}
-                      Auto Orbit
-                    </button>
+                    {tab === 'mesh' && (
+                      <button
+                        onClick={() => setAutoRotate(!autoRotate)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold border transition-all ${
+                          autoRotate 
+                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' 
+                            : 'bg-slate-850 hover:bg-slate-800 text-slate-300 border-slate-800'
+                        }`}
+                      >
+                        {autoRotate ? <Pause size={14} /> : <Play size={14} />}
+                        Auto Orbit
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
