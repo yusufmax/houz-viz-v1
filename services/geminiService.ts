@@ -235,9 +235,9 @@ ${garmentsToApply.length + 6}. The output should be a single high-quality market
     }
     if (settings.is3DRotatedView) {
       textParts.push(`STRICT 3D ROTATION PERSPECTIVE INSTRUCTION:
-1. The primary source image (Image 1) is a rotated 3D perspective screenshot of the building. You MUST match this exact camera angle, rotation, perspective, and composition. The final building orientation MUST face exactly like the rotated building in Image 1.
-2. The style reference image (Image 2/3) is the original front-facing photo of the building. DO NOT copy the camera angle, orientation, or front-facing perspective of the style reference image. ONLY copy its materials, facade textures, lighting, trees, colors, and design styling to reconstruct the rotated building.
-3. Clean up and fill in any deflected, incomplete, or distorted areas of the building from Image 1, using the high-quality textures, panels, windows, and materials from the style reference image.`);
+1. The primary source image (Image 1) is a rotated 3D perspective screenshot of the building. You MUST match this exact camera angle, rotation, perspective, and composition. The final building orientation and camera viewpoint MUST match the rotated building in Image 1.
+2. IMPORTANT - THE GEOMETRY AND LINES IN IMAGE 1 ARE BLURRY AND DISTORTED: The building columns, balconies, window frames, and facade lines in the rotated screenshot (Image 1) appear wavy, fuzzy, and paint-like due to 3D Gaussian Splatting artifacts. YOU MUST COMPLETELY CORRECT AND STRAIGHTEN THESE LINES. Render all columns, concrete edges, glass panels, window grids, and floors as perfectly straight, sharp, vertical, and horizontal architectural structures. Avoid any wavy, curved, or distorted structures.
+3. The style reference image (Image 2/3) is the original front-facing photo of the building. Use its materials, facade textures, lighting, trees, colors, and design styling to reconstruct the building. Do NOT copy the camera angle, orientation, or front-facing perspective of the style reference image. ONLY copy its materials, facade details, concrete panel grids, and clean design style to rebuild the rotated building.`);
     }
   } else {
     textParts.push("MARKETING INSTRUCTION: Ensure the product is the hero of the image. Composition should be clean, balanced, and aesthetically pleasing for advertising.");
@@ -478,7 +478,7 @@ export const editImage = async (sourceImage: string | null, settings: Generation
           });
         } else if (settings.is3DRotatedView) {
           parts.push({
-            text: "IMAGE 1 (Above): ROTATED 3D PERSPECTIVE REFERENCE. This screenshot defines the exact camera angle, building rotation, and perspective that you MUST generate. Ignore all other camera orientations."
+            text: "IMAGE 1 (Above): ROTATED 3D PERSPECTIVE REFERENCE. This screenshot defines the camera angle and building rotation. Note that the building geometry, facade, and outlines in this screenshot are distorted, wavy, and paint-like; you MUST straighten all columns, walls, window grids, and floors to be perfectly vertical, horizontal, clean, and architecturally precise in the final output."
           });
         } else {
           parts.push({
