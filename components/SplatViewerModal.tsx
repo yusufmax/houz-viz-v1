@@ -109,20 +109,34 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         let finalBlob: Blob;
         if (headerEndIndex !== -1) {
           const headerText = new TextDecoder().decode(view.subarray(0, headerEndIndex));
-          if (headerText.includes("uint")) {
-            console.log("[SplatViewer] Found unsupported 'uint' in PLY header. Patching to 'int'...");
-            const modifiedHeader = headerText.replace(/\buint\b/g, "int");
-            const headerBytes = new TextEncoder().encode(modifiedHeader);
-            
-            const patchedBytes = new Uint8Array(headerBytes.length + (view.length - headerEndIndex));
-            patchedBytes.set(headerBytes);
-            patchedBytes.set(view.subarray(headerEndIndex), headerBytes.length);
-            
-            console.log("[SplatViewer] PLY header successfully patched. New header length:", headerBytes.length, "bytes. Total file size:", patchedBytes.length, "bytes.");
-            finalBlob = new Blob([patchedBytes], { type: 'application/octet-stream' });
-          } else {
-            finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
+          
+          // Parse lines and keep only "element vertex" and its properties to prevent:
+          // 1. Parser crashes on unsupported metadata types like uint or uchar (e.g. extrinsic, image_size, etc.)
+          // 2. Vertex binary data misalignment because gsplat.js sums all property sizes globally across all elements
+          const lines = headerText.split(/\r?\n/);
+          const sanitizedLines: string[] = [];
+          let keep = true;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("element ") && !trimmed.startsWith("element vertex ")) {
+              keep = false;
+            }
+            if (trimmed === "end_header") {
+              keep = true;
+            }
+            if (keep) {
+              sanitizedLines.push(line);
+            }
           }
+          const sanitizedHeader = sanitizedLines.join("\n");
+          console.log("[SplatViewer] PLY header sanitized to keep vertex element only.");
+          
+          const headerBytes = new TextEncoder().encode(sanitizedHeader);
+          const patchedBytes = new Uint8Array(headerBytes.length + (view.length - headerEndIndex));
+          patchedBytes.set(headerBytes);
+          patchedBytes.set(view.subarray(headerEndIndex), headerBytes.length);
+          
+          finalBlob = new Blob([patchedBytes], { type: 'application/octet-stream' });
         } else {
           finalBlob = new Blob([buffer], { type: 'application/octet-stream' });
         }
