@@ -444,7 +444,8 @@ const server = http.createServer(async (req, res) => {
     // -------------------------------------------------------
     // 3. STATIC FILE SERVING
     // -------------------------------------------------------
-    let filePath = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+    const urlPath = req.url.split('?')[0];
+    let filePath = path.join(DIST_DIR, urlPath === '/' ? 'index.html' : urlPath);
     let extname = path.extname(filePath);
 
     // Security: Prevent directory traversal
