@@ -1377,7 +1377,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
     } catch (e: any) {
       console.error("3D Splat Generation failed", e);
-      alert(`3D Splat Generation failed: ${e.message}`);
+      let userMessage = e.message || "An unknown error occurred.";
+      if (userMessage.toLowerCase().includes("throttle") || userMessage.toLowerCase().includes("rate limit")) {
+        userMessage = "Replicate rate limit exceeded. Please wait a few seconds before trying again.\n\nNote: Replicate limits accounts with less than $5.00 in credits to 1 request at a time. Consider adding credits to your Replicate account.";
+      }
+      alert(`3D Generation Failed:\n\n${userMessage}`);
     } finally {
       setIsGeneratingSplat(false);
     }
