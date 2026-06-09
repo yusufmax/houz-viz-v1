@@ -74,6 +74,20 @@ const convertToGrayscale = (dataUrl: string): Promise<string> => {
   });
 };
 
+const normalizeUrl = (url: string | null | undefined): string => {
+  if (!url) return '';
+  try {
+    if (url.startsWith('data:')) return url;
+    const parsed = new URL(url);
+    return parsed.origin + parsed.pathname;
+  } catch (e) {
+    return url;
+  }
+};
+
+// Global cache for 3D Gaussian Splats to persist across all renders and state resets in the session
+const globalSplatCache: Record<string, TrellisResult> = {};
+
 const STYLE_LIBRARY = [
   // Living Complex / House
   { name: 'Modern Villa', url: 'https://images.unsplash.com/photo-1600596542815-3ad196bb8700?w=200&q=80' },
@@ -365,34 +379,34 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // 3D Splat & Perspective Change State
   const [isGeneratingSplat, setIsGeneratingSplat] = useState(false);
   const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
-  const [splatCache, setSplatCache] = useState<Record<string, TrellisResult>>({});
   const [show3DView, setShow3DView] = useState(false);
   const [splatStatusText, setSplatStatusText] = useState<string>('');
   const [is3DRotatedView, setIs3DRotatedView] = useState(false);
 
   // Helper to find any active/cached splat for the current view
   const getActiveSplat = (): TrellisResult | null => {
-    if (resultImage && splatCache[resultImage]) {
-      return splatCache[resultImage];
+    if (resultImage && globalSplatCache[normalizeUrl(resultImage)]) {
+      return globalSplatCache[normalizeUrl(resultImage)];
     }
-    if (styleReferenceImage && splatCache[styleReferenceImage]) {
-      return splatCache[styleReferenceImage];
+    if (styleReferenceImage && globalSplatCache[normalizeUrl(styleReferenceImage)]) {
+      return globalSplatCache[normalizeUrl(styleReferenceImage)];
     }
-    if (architectureReferenceImage && splatCache[architectureReferenceImage]) {
-      return splatCache[architectureReferenceImage];
+    if (architectureReferenceImage && globalSplatCache[normalizeUrl(architectureReferenceImage)]) {
+      return globalSplatCache[normalizeUrl(architectureReferenceImage)];
     }
     return splatResult;
   };
 
   useEffect(() => {
-    if (resultImage && splatCache[resultImage]) {
-      setSplatResult(splatCache[resultImage]);
+    const key = normalizeUrl(resultImage);
+    if (resultImage && globalSplatCache[key]) {
+      setSplatResult(globalSplatCache[key]);
     } else {
       setSplatResult(null);
       setShow3DView(false);
     }
     setIs3DRotatedView(false);
-  }, [resultImage, splatCache]);
+  }, [resultImage]);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1401,9 +1415,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const handleGenerateSplat = async () => {
     if (!resultImage) return;
 
+    const key = normalizeUrl(resultImage);
     // Check cache first!
-    if (splatCache[resultImage]) {
-      setSplatResult(splatCache[resultImage]);
+    if (globalSplatCache[key]) {
+      setSplatResult(globalSplatCache[key]);
       setShow3DView(true);
       return;
     }
@@ -1440,10 +1455,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           setSplatStatusText("Success! Finalizing 3D Gaussian Splat...");
           if (status.output) {
             setSplatResult(status.output);
-            setSplatCache(prev => ({
-              ...prev,
-              [currentInputImage]: status.output!
-            }));
+            globalSplatCache[normalizeUrl(currentInputImage)] = status.output;
             setShow3DView(true);
           } else {
             throw new Error("No output generated from Trellis 3D model.");
