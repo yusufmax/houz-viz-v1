@@ -365,15 +365,34 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   // 3D Splat & Perspective Change State
   const [isGeneratingSplat, setIsGeneratingSplat] = useState(false);
   const [splatResult, setSplatResult] = useState<TrellisResult | null>(null);
+  const [splatCache, setSplatCache] = useState<Record<string, TrellisResult>>({});
   const [show3DView, setShow3DView] = useState(false);
   const [splatStatusText, setSplatStatusText] = useState<string>('');
   const [is3DRotatedView, setIs3DRotatedView] = useState(false);
 
+  // Helper to find any active/cached splat for the current view
+  const getActiveSplat = (): TrellisResult | null => {
+    if (resultImage && splatCache[resultImage]) {
+      return splatCache[resultImage];
+    }
+    if (styleReferenceImage && splatCache[styleReferenceImage]) {
+      return splatCache[styleReferenceImage];
+    }
+    if (architectureReferenceImage && splatCache[architectureReferenceImage]) {
+      return splatCache[architectureReferenceImage];
+    }
+    return splatResult;
+  };
+
   useEffect(() => {
-    setSplatResult(null);
-    setShow3DView(false);
+    if (resultImage && splatCache[resultImage]) {
+      setSplatResult(splatCache[resultImage]);
+    } else {
+      setSplatResult(null);
+      setShow3DView(false);
+    }
     setIs3DRotatedView(false);
-  }, [resultImage]);
+  }, [resultImage, splatCache]);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1381,11 +1400,20 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const handleGenerateSplat = async () => {
     if (!resultImage) return;
+
+    // Check cache first!
+    if (splatCache[resultImage]) {
+      setSplatResult(splatCache[resultImage]);
+      setShow3DView(true);
+      return;
+    }
+
     setIsGeneratingSplat(true);
     setSplatResult(null);
     setShow3DView(false);
     setSplatStatusText("Sending request to Replicate API...");
     try {
+      const currentInputImage = resultImage;
       const prediction = await startTrellisPrediction(resultImage);
       console.log("[Splat] Generation started:", prediction.id);
       setSplatStatusText("Prediction started. Polling status...");
@@ -1412,6 +1440,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           setSplatStatusText("Success! Finalizing 3D Gaussian Splat...");
           if (status.output) {
             setSplatResult(status.output);
+            setSplatCache(prev => ({
+              ...prev,
+              [currentInputImage]: status.output!
+            }));
             setShow3DView(true);
           } else {
             throw new Error("No output generated from Trellis 3D model.");
@@ -1504,7 +1536,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     return groups;
   }, [availableStyles]);
 
-
+  const activeSplat = getActiveSplat();
 
   return (
     <div className="flex flex-col lg:flex-row h-full gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
@@ -2368,7 +2400,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                   <button
                     onClick={() => {
-                      if (splatResult) {
+                      if (activeSplat) {
                         setShow3DView(!show3DView);
                       } else {
                         handleGenerateSplat();
@@ -2378,14 +2410,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     className={`relative overflow-hidden group flex items-center gap-2 text-xs backdrop-blur-md px-3 py-1.5 rounded-md transition-all shadow-lg font-bold disabled:opacity-50 ${
                       show3DView
                         ? 'bg-gradient-to-r from-emerald-600/80 to-teal-600/80 border border-emerald-500/30 text-white shadow-emerald-950/20'
-                        : splatResult
+                        : activeSplat
                         ? 'bg-gradient-to-r from-teal-600/80 to-indigo-600/80 border border-teal-500/30 text-white shadow-teal-950/20'
                         : 'bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 border border-fuchsia-500/30 text-white shadow-fuchsia-950/20'
                     }`}
                     title={
                       isGeneratingSplat
                         ? "Generating 3D model..."
-                        : splatResult
+                        : activeSplat
                         ? "Toggle between 3D and 2D view"
                         : "Generate 3D model to change perspective and regenerate"
                     }
@@ -2397,7 +2429,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                           <Loader2 size={14} className="animate-spin" />
                           Generating 3D...
                         </>
-                      ) : splatResult ? (
+                      ) : activeSplat ? (
                         <>
                           <Box size={14} />
                           {show3DView ? 'Show 2D' : 'Show 3D'}
@@ -2505,11 +2537,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     ))}
                   </div>
                 </div>
-              ) : show3DView && splatResult ? (
+              ) : show3DView && activeSplat ? (
                 <SplatViewerModal
                   isOpen={show3DView}
                   onClose={() => setShow3DView(false)}
-                  result={splatResult}
+                  result={activeSplat}
                   prompt={prompt}
                   onPromptChange={setPrompt}
                   inline={true}
