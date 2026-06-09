@@ -2511,6 +2511,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   onClose={() => setShow3DView(false)}
                   result={splatResult}
                   prompt={prompt}
+                  onPromptChange={setPrompt}
                   inline={true}
                   onCapture={async (capturedDataUrl, action) => {
                     const originalImage = resultImage;

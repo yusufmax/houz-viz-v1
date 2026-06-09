@@ -8,6 +8,7 @@ interface SplatViewerModalProps {
   result: TrellisResult;
   onCapture: (capturedDataUrl: string, action: 'apply' | 'regenerate') => void;
   prompt: string;
+  onPromptChange?: (prompt: string) => void;
   inline?: boolean;
 }
 
@@ -17,6 +18,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   result,
   onCapture,
   prompt,
+  onPromptChange,
   inline = false
 }) => {
   const [tab, setTab] = useState<'splat' | 'mesh' | 'video'>(
@@ -144,17 +146,30 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     <>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
-          <div>
+          <div className="flex-1 min-w-0 mr-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Box className="text-indigo-400" size={20} />
               Interactive 3D Perspective Control
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">"{prompt}"</p>
+            {onPromptChange ? (
+              <div className="mt-2 max-w-3xl flex items-center gap-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">PROMPT:</span>
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => onPromptChange(e.target.value)}
+                  className="flex-1 bg-slate-950/80 hover:bg-slate-950 border border-slate-800 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-550 outline-none transition-all font-mono"
+                  placeholder="Enter prompt to regenerate..."
+                />
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">"{prompt}"</p>
+            )}
           </div>
           
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors shrink-0"
             title={inline ? "Exit 3D View" : "Close"}
           >
             <X size={18} />
