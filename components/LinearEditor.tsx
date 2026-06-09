@@ -1647,6 +1647,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <Pencil size={12} className="relative z-10" /> <span className="relative z-10">{t('drawEdit')}</span>
                   </button>
                 )}
+                {sourceImage && (
+                  <button
+                    onClick={() => setIs3DRotatedView(!is3DRotatedView)}
+                    className={`relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 backdrop-blur-md border rounded-md transition-all duration-300 ${is3DRotatedView ? 'bg-amber-500/20 border-amber-500 text-amber-250 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`}
+                    title="Fix distorted lines from 3D Gaussian Splats"
+                  >
+                    <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
+                    <Wand2 size={12} className={`relative z-10 ${is3DRotatedView ? 'animate-pulse text-amber-400' : ''}`} /> <span className="relative z-10 font-medium">Fix Distorted Lines</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1703,6 +1713,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               >
                 <Lock size={16} />
                 {keepBuilding ? 'Building Shape Locked' : 'Lock Building Shape & Details'}
+              </button>
+            )}
+
+            {sourceImage && (
+              <button
+                onClick={() => setIs3DRotatedView(!is3DRotatedView)}
+                className={`w-full mb-6 py-3 px-4 rounded-lg font-medium text-sm transition-all flex items-center justify-center gap-2 border ${is3DRotatedView ? 'bg-amber-900/40 border-amber-500 text-amber-250 shadow-lg shadow-amber-500/20' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'}`}
+              >
+                <Wand2 size={16} className={is3DRotatedView ? 'animate-pulse text-amber-400' : ''} />
+                {is3DRotatedView ? 'Fix Distorted Lines: Active' : 'Fix Distorted Lines (For 3D Splats)'}
               </button>
             )}
 
