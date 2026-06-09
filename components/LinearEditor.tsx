@@ -74,20 +74,6 @@ const convertToGrayscale = (dataUrl: string): Promise<string> => {
   });
 };
 
-const normalizeUrl = (url: string | null | undefined): string => {
-  if (!url) return '';
-  try {
-    if (url.startsWith('data:')) return url;
-    const parsed = new URL(url);
-    return parsed.origin + parsed.pathname;
-  } catch (e) {
-    return url;
-  }
-};
-
-// Global cache for 3D Gaussian Splats to persist across all renders and state resets in the session
-const globalSplatCache: Record<string, TrellisResult> = {};
-
 const STYLE_LIBRARY = [
   // Living Complex / House
   { name: 'Modern Villa', url: 'https://images.unsplash.com/photo-1600596542815-3ad196bb8700?w=200&q=80' },
@@ -382,31 +368,23 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const [show3DView, setShow3DView] = useState(false);
   const [splatStatusText, setSplatStatusText] = useState<string>('');
   const [is3DRotatedView, setIs3DRotatedView] = useState(false);
-
-  // Helper to find any active/cached splat for the current view
-  const getActiveSplat = (): TrellisResult | null => {
-    if (resultImage && globalSplatCache[normalizeUrl(resultImage)]) {
-      return globalSplatCache[normalizeUrl(resultImage)];
-    }
-    if (styleReferenceImage && globalSplatCache[normalizeUrl(styleReferenceImage)]) {
-      return globalSplatCache[normalizeUrl(styleReferenceImage)];
-    }
-    if (architectureReferenceImage && globalSplatCache[normalizeUrl(architectureReferenceImage)]) {
-      return globalSplatCache[normalizeUrl(architectureReferenceImage)];
-    }
-    return splatResult;
-  };
+  const [splatBaseImage, setSplatBaseImage] = useState<string | null>(null);
 
   useEffect(() => {
-    const key = normalizeUrl(resultImage);
-    if (resultImage && globalSplatCache[key]) {
-      setSplatResult(globalSplatCache[key]);
-    } else {
+    // Only reset splat result if we load a new non-null image (not when resultImage becomes null during generation)
+    if (resultImage) {
       setSplatResult(null);
+      setSplatBaseImage(null);
       setShow3DView(false);
+      setIs3DRotatedView(false);
+
+      // Load prompt of the selected result
+      const currentRes = multiResults.find(r => r.url === resultImage);
+      if (currentRes?.settings?.prompt) {
+        setPrompt(currentRes.settings.prompt);
+      }
     }
-    setIs3DRotatedView(false);
-  }, [resultImage]);
+  }, [resultImage, multiResults]);
 
   // Video Generation
   const [videoSettings, setVideoSettings] = useState<VideoGenerationSettings>({
@@ -1414,21 +1392,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
   const handleGenerateSplat = async () => {
     if (!resultImage) return;
-
-    const key = normalizeUrl(resultImage);
-    // Check cache first!
-    if (globalSplatCache[key]) {
-      setSplatResult(globalSplatCache[key]);
-      setShow3DView(true);
-      return;
-    }
-
     setIsGeneratingSplat(true);
     setSplatResult(null);
     setShow3DView(false);
     setSplatStatusText("Sending request to Replicate API...");
     try {
-      const currentInputImage = resultImage;
       const prediction = await startTrellisPrediction(resultImage);
       console.log("[Splat] Generation started:", prediction.id);
       setSplatStatusText("Prediction started. Polling status...");
@@ -1455,7 +1423,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           setSplatStatusText("Success! Finalizing 3D Gaussian Splat...");
           if (status.output) {
             setSplatResult(status.output);
-            globalSplatCache[normalizeUrl(currentInputImage)] = status.output;
+            setSplatBaseImage(resultImage);
             setShow3DView(true);
           } else {
             throw new Error("No output generated from Trellis 3D model.");
@@ -1548,7 +1516,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
     return groups;
   }, [availableStyles]);
 
-  const activeSplat = getActiveSplat();
+
 
   return (
     <div className="flex flex-col lg:flex-row h-full gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
@@ -2412,8 +2380,15 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                   <button
                     onClick={() => {
-                      if (activeSplat) {
+                      if (splatResult) {
                         setShow3DView(!show3DView);
+                        if (!show3DView) {
+                          setSplatBaseImage(resultImage);
+                          const currentResult = multiResults.find(r => r.url === resultImage);
+                          if (currentResult?.settings?.prompt) {
+                            setPrompt(currentResult.settings.prompt);
+                          }
+                        }
                       } else {
                         handleGenerateSplat();
                       }
@@ -2422,14 +2397,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     className={`relative overflow-hidden group flex items-center gap-2 text-xs backdrop-blur-md px-3 py-1.5 rounded-md transition-all shadow-lg font-bold disabled:opacity-50 ${
                       show3DView
                         ? 'bg-gradient-to-r from-emerald-600/80 to-teal-600/80 border border-emerald-500/30 text-white shadow-emerald-950/20'
-                        : activeSplat
+                        : splatResult
                         ? 'bg-gradient-to-r from-teal-600/80 to-indigo-600/80 border border-teal-500/30 text-white shadow-teal-950/20'
                         : 'bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 border border-fuchsia-500/30 text-white shadow-fuchsia-950/20'
                     }`}
                     title={
                       isGeneratingSplat
                         ? "Generating 3D model..."
-                        : activeSplat
+                        : splatResult
                         ? "Toggle between 3D and 2D view"
                         : "Generate 3D model to change perspective and regenerate"
                     }
@@ -2441,7 +2416,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                           <Loader2 size={14} className="animate-spin" />
                           Generating 3D...
                         </>
-                      ) : activeSplat ? (
+                      ) : splatResult ? (
                         <>
                           <Box size={14} />
                           {show3DView ? 'Show 2D' : 'Show 3D'}
@@ -2549,34 +2524,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     ))}
                   </div>
                 </div>
-              ) : show3DView && activeSplat ? (
-                <SplatViewerModal
-                  isOpen={show3DView}
-                  onClose={() => setShow3DView(false)}
-                  result={activeSplat}
-                  prompt={prompt}
-                  onPromptChange={setPrompt}
-                  inline={true}
-                  onCapture={async (capturedDataUrl, action) => {
-                    const originalImage = resultImage;
-                    const grayscaleDataUrl = await convertToGrayscale(capturedDataUrl);
-                    setSourceImage(grayscaleDataUrl);
-                    if (originalImage) {
-                      setStyleReferenceImage(originalImage);
-                      setArchitectureRefImage(originalImage);
-                    }
-                    setIs3DRotatedView(true);
-                    setResultImage(null);
-                    setShow3DView(false);
-                    if (action === 'regenerate') {
-                      executeGeneration(grayscaleDataUrl, {
-                        styleReferenceImage: originalImage || undefined,
-                        architectureReferenceImage: originalImage || undefined,
-                        is3DRotatedView: true
-                      });
-                    }
-                  }}
-                />
               ) : isGeneratingSplat ? (
                 <div className="flex-1 flex flex-col items-center justify-center bg-slate-950/80 backdrop-blur-sm p-8 text-center min-h-[300px]">
                   <div className="relative mb-6">
@@ -2607,6 +2554,37 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           </div>
         </div>
       </div>
+      
+      {show3DView && splatResult && (
+        <SplatViewerModal
+          isOpen={show3DView}
+          onClose={() => setShow3DView(false)}
+          result={splatResult}
+          prompt={prompt}
+          inline={false}
+          onCapture={async (capturedDataUrl, action) => {
+            const originalImage = splatBaseImage || resultImage;
+            const grayscaleDataUrl = await convertToGrayscale(capturedDataUrl);
+            setSourceImage(grayscaleDataUrl);
+            if (originalImage) {
+              setStyleReferenceImage(originalImage);
+              setArchitectureRefImage(originalImage);
+            }
+            setIs3DRotatedView(true);
+            setResultImage(null);
+            
+            if (action === 'regenerate') {
+              executeGeneration(grayscaleDataUrl, {
+                styleReferenceImage: originalImage || undefined,
+                architectureReferenceImage: originalImage || undefined,
+                is3DRotatedView: true
+              });
+            } else {
+              setShow3DView(false);
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

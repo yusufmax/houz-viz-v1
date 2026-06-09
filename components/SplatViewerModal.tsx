@@ -8,7 +8,6 @@ interface SplatViewerModalProps {
   result: TrellisResult;
   onCapture: (capturedDataUrl: string, action: 'apply' | 'regenerate') => void;
   prompt: string;
-  onPromptChange?: (prompt: string) => void;
   inline?: boolean;
 }
 
@@ -18,7 +17,6 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   result,
   onCapture,
   prompt,
-  onPromptChange,
   inline = false
 }) => {
   const [tab, setTab] = useState<'splat' | 'mesh' | 'video'>(
@@ -28,6 +26,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isQueued, setIsQueued] = useState(false);
 
   const modelViewerRef = useRef<any>(null);
 
@@ -95,6 +94,10 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           const dataUrl = await iframeWin.captureScreenshot();
           setIsModelLoading(false);
           onCapture(dataUrl, action);
+          if (action === 'regenerate') {
+            setIsQueued(true);
+            setTimeout(() => setIsQueued(false), 3000);
+          }
         } catch (err) {
           console.error('Failed to capture SuperSplat screenshot:', err);
           setIsModelLoading(false);
@@ -111,6 +114,10 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
           const reader = new FileReader();
           reader.onloadend = () => {
             onCapture(reader.result as string, action);
+            if (action === 'regenerate') {
+              setIsQueued(true);
+              setTimeout(() => setIsQueued(false), 3000);
+            }
           };
           reader.readAsDataURL(blob);
         } catch (err) {
@@ -146,30 +153,17 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
     <>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/50">
-          <div className="flex-1 min-w-0 mr-4">
+          <div>
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <Box className="text-indigo-400" size={20} />
               Interactive 3D Perspective Control
             </h2>
-            {onPromptChange ? (
-              <div className="mt-2 max-w-3xl flex items-center gap-2">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">PROMPT:</span>
-                <input
-                  type="text"
-                  value={prompt}
-                  onChange={(e) => onPromptChange(e.target.value)}
-                  className="flex-1 bg-slate-950/80 hover:bg-slate-950 border border-slate-800 focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/30 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-550 outline-none transition-all font-mono"
-                  placeholder="Enter prompt to regenerate..."
-                />
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">"{prompt}"</p>
-            )}
+            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic">"{prompt}"</p>
           </div>
           
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors shrink-0"
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
             title={inline ? "Exit 3D View" : "Close"}
           >
             <X size={18} />
@@ -367,6 +361,12 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
                       Regenerate from this Angle
                     </button>
 
+                    {isQueued && (
+                      <div className="text-center text-[10px] font-bold text-emerald-450 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-md animate-pulse">
+                        ✓ Generation queued in background!
+                      </div>
+                    )}
+
                     <button
                       onClick={() => handleCapture('apply')}
                       className="w-full flex items-center justify-center gap-2 py-2 bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-white text-[11px] font-semibold rounded-lg transition-all border border-slate-700"
@@ -440,8 +440,8 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
-      <div className="relative flex flex-col w-full max-w-6xl h-[85vh] bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+    <div className="fixed top-[76px] right-4 bottom-4 w-[50vw] min-w-[480px] max-w-[700px] z-[9999] pointer-events-none flex items-stretch justify-end">
+      <div className="relative flex flex-col w-full h-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-2xl pointer-events-auto ring-1 ring-white/10">
         {content}
       </div>
     </div>
