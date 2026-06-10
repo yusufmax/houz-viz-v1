@@ -43,6 +43,15 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
         console.log("[SplatViewerModal] SuperSplat model finished loading.");
         setIsModelLoading(false);
         if (timeoutId) clearTimeout(timeoutId);
+
+        // Backup send on load success
+        if (baseImageUrl) {
+          const iframe = document.getElementById('supersplat-iframe') as HTMLIFrameElement;
+          iframe?.contentWindow?.postMessage({
+            type: 'set-poster-url',
+            url: baseImageUrl
+          }, '*');
+        }
       } else if (event.data?.type === 'supersplat-progress') {
         const progress = Math.min(100, Math.max(0, Math.round(event.data.progress || 0)));
         setLoadingProgress(progress);
@@ -65,7 +74,30 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
       window.removeEventListener('message', handleMessage);
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [isOpen, tab, result.gaussian_ply]);
+  }, [isOpen, tab, result.gaussian_ply, baseImageUrl]);
+
+  // Send the poster baseImageUrl via postMessage on iframe load event
+  useEffect(() => {
+    if (!isOpen || !baseImageUrl || tab !== 'splat') return;
+
+    const iframe = document.getElementById('supersplat-iframe') as HTMLIFrameElement;
+    if (!iframe) return;
+
+    const sendPoster = () => {
+      iframe.contentWindow?.postMessage({
+        type: 'set-poster-url',
+        url: baseImageUrl
+      }, '*');
+    };
+
+    iframe.addEventListener('load', sendPoster);
+    // Send immediately in case iframe is already loaded
+    sendPoster();
+
+    return () => {
+      iframe?.removeEventListener('load', sendPoster);
+    };
+  }, [isOpen, baseImageUrl, tab, result.gaussian_ply]);
 
   if (!isOpen) return null;
 
@@ -181,7 +213,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             {tab === 'splat' && result.gaussian_ply && (
               <iframe
                 id="supersplat-iframe"
-                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true${baseImageUrl ? `&poster=${encodeURIComponent(baseImageUrl)}` : ''}`}
+                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
                 className="w-full h-full border-0 bg-transparent block"
                 allow="vr; xr-spatial-tracking"
                 onLoad={() => {

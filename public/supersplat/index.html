@@ -580,6 +580,21 @@
                 document.documentElement.style.setProperty('--canvas-opacity', '0');
             }
 
+            // Listen for set-poster-url message from the parent iframe/window
+            window.addEventListener('message', (event) => {
+                if (event.data?.type === 'set-poster-url' && event.data.url) {
+                    const url = event.data.url;
+                    const element = document.getElementById('poster');
+                    if (element) {
+                        element.style.setProperty('--poster-url', `url(${url})`);
+                        element.style.display = 'block';
+                        if (!element.style.filter) {
+                            element.style.filter = 'blur(40px)';
+                        }
+                    }
+                }
+            });
+
             document.addEventListener('DOMContentLoaded', async () => {
                 const canvas = document.getElementById('application-canvas');
                 const settingsJson = await settings;

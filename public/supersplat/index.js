@@ -88923,7 +88923,9 @@ class Viewer {
             RenderTarget.prototype.isColorBufferSrgb = function (index) {
                 return this === app.graphicsDevice.backBuffer ? true : origIsColorBufferSrgb.call(this, index);
             };
-            camera.camera.clearColor = new Color(background.color[0], background.color[1], background.color[2], 0);
+            const clr = (background && background.color) ? new Color(background.color) : new Color(0, 0, 0, 1);
+            clr.a = 0;
+            camera.camera.clearColor = clr;
         }
         else {
             // no post effects needed, destroy camera frame if it exists
@@ -88940,7 +88942,9 @@ class Viewer {
             RenderTarget.prototype.isColorBufferSrgb = origIsColorBufferSrgb;
             if (!app.xr.active) {
                 camera.camera.toneMapping = tonemapTable[settings.tonemapping];
-                camera.camera.clearColor = new Color(background.color[0], background.color[1], background.color[2], 0);
+                const clr = (background && background.color) ? new Color(background.color) : new Color(0, 0, 0, 1);
+                clr.a = 0;
+                camera.camera.clearColor = clr;
             }
         }
         // Mesh overlay bakes its vertex colors based on the current gamma
