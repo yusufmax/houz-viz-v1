@@ -84390,10 +84390,8 @@ class OrbitController {
         p.distance = Math.max(camera.distance, this.controller.zoomRange.x);
         this.controller.attach(p, false);
         
-        if (this._initialAngles === null) {
-            this._initialAngles = this.controller._rootPose.angles.clone();
-            this._initialDistance = this.controller._childPose.position.z;
-        }
+        this._initialAngles = this.controller._rootPose.angles.clone();
+        this._initialDistance = this.controller._childPose.position.z;
     }
 }
 
