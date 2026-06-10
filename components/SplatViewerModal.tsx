@@ -213,7 +213,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             {tab === 'splat' && result.gaussian_ply && (
               <iframe
                 id="supersplat-iframe"
-                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
+                src={`/supersplat/index.html?v=3&content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
                 className="w-full h-full border-0 bg-transparent block"
                 allow="vr; xr-spatial-tracking"
                 onLoad={() => {
