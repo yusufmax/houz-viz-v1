@@ -2562,6 +2562,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           result={splatResult}
           prompt={prompt}
           inline={false}
+          baseImageUrl={splatBaseImage || resultImage}
           onCapture={async (capturedDataUrl, action) => {
             const originalImage = splatBaseImage || resultImage;
             const grayscaleDataUrl = await convertToGrayscale(capturedDataUrl);

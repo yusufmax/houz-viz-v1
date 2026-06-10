@@ -81990,15 +81990,15 @@ const initAnnotationNav = (dom, events, state, annotations) => {
     // Initial state
     updateDisplay();
 };
-// update the poster image to start blurry and then resolve to sharp during loading
 const initPoster = (events) => {
     const poster = document.getElementById('poster');
     events.on('loaded:changed', () => {
-        poster.style.display = 'none';
+        poster.style.display = 'block';
+        poster.style.filter = 'blur(20px) scale(1.1)';
         document.documentElement.style.setProperty('--canvas-opacity', '1');
     });
     const blur = (progress) => {
-        poster.style.filter = `blur(${Math.floor((100 - progress) * 0.4)}px)`;
+        poster.style.filter = `blur(${Math.max(20, Math.floor((100 - progress) * 0.4))}px) scale(1.1)`;
     };
     events.on('progress:changed', blur);
 };
@@ -84318,6 +84318,8 @@ const p = new Pose();
 class OrbitController {
     controller;
     fov = 90;
+    _initialAngles = null;
+    _initialDistance = null;
     constructor() {
         this.controller = new OrbitController$1();
         this.controller.zoomRange = new Vec2(0.01, Infinity);
@@ -84331,7 +84333,47 @@ class OrbitController {
     }
     update(deltaTime, inputFrame, camera) {
         const pose = this.controller.update(inputFrame, deltaTime);
-        camera.position.copy(pose.position);
+        
+        if (this._initialAngles !== null) {
+            // Clamp pitch (angles.x) to +/- 30 degrees from initial pitch
+            let pitch = pose.angles.x;
+            const minPitch = this._initialAngles.x - 30;
+            const maxPitch = this._initialAngles.x + 30;
+            pitch = Math.max(minPitch, Math.min(maxPitch, pitch));
+            pose.angles.x = pitch;
+
+            // Clamp yaw (angles.y) to +/- 30 degrees from initial yaw
+            let yaw = pose.angles.y;
+            let yawDiff = yaw - this._initialAngles.y;
+            yawDiff = ((yawDiff + 180) % 360 + 360) % 360 - 180; // normalize to [-180, 180]
+            if (yawDiff < -30) yawDiff = -30;
+            if (yawDiff > 30) yawDiff = 30;
+            pose.angles.y = (this._initialAngles.y + yawDiff + 360) % 360;
+
+            // Sync back to controller internal states to avoid control fighting/drift
+            this.controller._targetRootPose.angles.copy(pose.angles);
+            this.controller._rootPose.angles.copy(pose.angles);
+        }
+
+        if (this._initialDistance !== null) {
+            // Clamp zoom/distance to +/- 30% of initial distance
+            const minDistance = this._initialDistance * 0.7;
+            const maxDistance = this._initialDistance * 1.3;
+            pose.distance = Math.max(minDistance, Math.min(maxDistance, pose.distance));
+
+            // Sync back to controller internal states
+            this.controller._targetChildPose.position.z = pose.distance;
+            this.controller._childPose.position.z = pose.distance;
+        }
+
+        // Recalculate camera position using the clamped angles and distance
+        const r = new Quat();
+        r.setFromEulerAngles(pose.angles.x, pose.angles.y, 0);
+        const o = new Vec3(0, 0, pose.distance);
+        r.transformVector(o, o);
+        const newPos = new Vec3().copy(this.controller._rootPose.position).add(o);
+
+        camera.position.copy(newPos);
         camera.angles.copy(pose.angles);
         camera.distance = pose.distance;
         camera.fov = this.fov;
@@ -84347,6 +84389,11 @@ class OrbitController {
         p.angles.copy(camera.angles);
         p.distance = Math.max(camera.distance, this.controller.zoomRange.x);
         this.controller.attach(p, false);
+        
+        if (this._initialAngles === null) {
+            this._initialAngles = this.controller._rootPose.angles.clone();
+            this._initialDistance = this.controller._childPose.position.z;
+        }
     }
 }
 
@@ -88876,7 +88923,7 @@ class Viewer {
             RenderTarget.prototype.isColorBufferSrgb = function (index) {
                 return this === app.graphicsDevice.backBuffer ? true : origIsColorBufferSrgb.call(this, index);
             };
-            camera.camera.clearColor = new Color(background.color);
+            camera.camera.clearColor = new Color(background.color[0], background.color[1], background.color[2], 0);
         }
         else {
             // no post effects needed, destroy camera frame if it exists
@@ -88893,7 +88940,7 @@ class Viewer {
             RenderTarget.prototype.isColorBufferSrgb = origIsColorBufferSrgb;
             if (!app.xr.active) {
                 camera.camera.toneMapping = tonemapTable[settings.tonemapping];
-                camera.camera.clearColor = new Color(background.color);
+                camera.camera.clearColor = new Color(background.color[0], background.color[1], background.color[2], 0);
             }
         }
         // Mesh overlay bakes its vertex colors based on the current gamma

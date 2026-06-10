@@ -9,6 +9,7 @@ interface SplatViewerModalProps {
   onCapture: (capturedDataUrl: string, action: 'apply' | 'regenerate') => void;
   prompt: string;
   inline?: boolean;
+  baseImageUrl?: string | null;
 }
 
 export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
@@ -17,7 +18,8 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   result,
   onCapture,
   prompt,
-  inline = false
+  inline = false,
+  baseImageUrl
 }) => {
   const [tab, setTab] = useState<'splat' | 'mesh' | 'video'>(
     result.gaussian_ply ? 'splat' : result.model_file ? 'mesh' : 'video'
@@ -179,7 +181,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
             {tab === 'splat' && result.gaussian_ply && (
               <iframe
                 id="supersplat-iframe"
-                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true`}
+                src={`/supersplat/index.html?content=${encodeURIComponent(result.gaussian_ply)}&noanim=true&noui=true&webgl=true${baseImageUrl ? `&poster=${encodeURIComponent(baseImageUrl)}` : ''}`}
                 className="w-full h-full border-0 bg-transparent block"
                 allow="vr; xr-spatial-tracking"
                 onLoad={() => {
