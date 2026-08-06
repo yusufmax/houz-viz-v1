@@ -1974,7 +1974,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <Sun size={14} className="text-amber-500" /> Atmosphere & Mood
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
                   { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None' },
                   { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny' },
@@ -2026,7 +2026,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
-            {/* Sun & Time Dial Section */}
+            {/* Sun & Time Dial Section (2-Grid Layout) */}
             {editorMode !== 'interior' && (
               <div className={isApple ? "apple-panel-group space-y-4 flex flex-col items-center" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center"}>
                 <div className="w-full flex items-center justify-between">
@@ -2042,10 +2042,12 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   </button>
                 </div>
 
-                <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
-                  <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+                <div className={`w-full grid grid-cols-1 sm:grid-cols-2 gap-4 items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
+                  <div className="flex flex-col items-center justify-center p-2">
+                    <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+                  </div>
 
-                  <div className="w-full space-y-2 pt-4 border-t border-black/05 mt-2">
+                  <div className="w-full space-y-2">
                     <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 uppercase tracking-widest">
                       <span>Time of Day</span>
                       <span className="text-blue-600">{Math.floor(timeOfDay)}:00</span>
