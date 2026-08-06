@@ -1934,7 +1934,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       title={tpl.prompt}
                     >
                       {tpl.name}
-{/* Web Grounding Toggle */}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {model === 'gemini-3.1-flash-image-preview' && (
               <div className={isApple ? "apple-panel-group flex items-center justify-between p-3" : "flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800"}>
                 <div className="space-y-0.5">
@@ -2216,7 +2220,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </button>
               </div>
             </div>
-          </div>
 
               <div className="relative pt-6 flex flex-col gap-2">
                 <div className="relative flex items-stretch gap-2">
