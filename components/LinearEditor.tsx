@@ -1934,180 +1934,48 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       title={tpl.prompt}
                     >
                       {tpl.name}
-                    </button>
-                  ))}
+{/* Web Grounding Toggle */}
+            {model === 'gemini-3.1-flash-image-preview' && (
+              <div className={isApple ? "apple-panel-group flex items-center justify-between p-3" : "flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800"}>
+                <div className="space-y-0.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase flex items-center gap-1.5"><Globe size={14} className="text-blue-500" /> Enable Web Grounding</label>
+                  <p className="text-[9px] text-slate-500 max-w-[200px] leading-tight flex items-center gap-1"><Info size={10} className="shrink-0" /> Uses real-time Google Search & Images for generation context.</p>
                 </div>
-              )}
-            </div>
-
-              {model === 'gemini-3.1-flash-image-preview' && (
-                <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-lg border border-slate-800">
-                  <div className="space-y-0.5">
-                    <label className="text-xs font-bold text-slate-300 uppercase flex items-center gap-1.5"><Globe size={14} className="text-blue-400" /> Enable Web Grounding</label>
-                    <p className="text-[9px] text-slate-500 max-w-[200px] leading-tight flex items-center gap-1"><Info size={10} className="shrink-0" /> Uses real-time Google Search & Images for generation context.</p>
-                  </div>
-                  <button
-                    onClick={() => setUseGrounding(!useGrounding)}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${useGrounding ? 'bg-blue-500' : 'bg-slate-700'}`}
-                  >
-                    <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useGrounding ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Palette size={14} /> Atmosphere Reference (Lighting/Mood)</label>
-                  <ImageUpload selectedImage={atmosphereRefImage} onImageSelected={setAtmosphereRefImage} label="Upload Atmosphere Ref" compact />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><Building2 size={14} /> Style Reference (Architecture/Material)</label>
-                  <ImageUpload selectedImage={architectureRefImage} onImageSelected={setArchitectureRefImage} label="Upload Style Ref" compact />
-                </div>
+                <button
+                  onClick={() => setUseGrounding(!useGrounding)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${useGrounding ? 'bg-blue-600' : 'bg-slate-300'}`}
+                >
+                  <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${useGrounding ? 'translate-x-4' : 'translate-x-0'}`} />
+                </button>
               </div>
+            )}
 
-              {model === 'gemini-3.1-flash-image-preview' && (
-                <div className="mt-4 border-t border-slate-800 pt-4">
-                  <button
-                    onClick={() => setShowAdvancedRefs(!showAdvancedRefs)}
-                    className="flex justify-between items-center w-full bg-slate-800/50 hover:bg-slate-700/50 px-3 py-2.5 rounded-xl text-sm text-yellow-500 font-bold transition-colors border border-yellow-500/20 shadow-inner group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-yellow-400 group-hover:animate-pulse" />
-                      Advanced Categorical References
-                    </div>
-                    {showAdvancedRefs ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                  </button>
-
-                  {showAdvancedRefs && (
-                    <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
-                      <div className="text-[10px] text-yellow-500/80 mb-2 font-black tracking-widest uppercase">
-                        * Base cost: 4 credits. +2 credits per reference upload. Max 10.
-                      </div>
-                      {customReferences.map((ref, i) => (
-                        <div key={ref.id} className="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-3 relative group shadow-lg">
-                          <button
-                            onClick={() => setCustomReferences(prev => prev.filter(r => r.id !== ref.id))}
-                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-400 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-md"
-                            title="Remove Reference"
-                          >
-                            <X size={12} />
-                          </button>
-
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Category:</span>
-                              <select
-                                value={ref.category}
-                                onChange={(e) => {
-                                  const newRefs = [...customReferences];
-                                  newRefs[i].category = e.target.value as any;
-                                  if (e.target.value !== 'Custom') newRefs[i].customCategoryName = '';
-                                  setCustomReferences(newRefs);
-                                }}
-                                className="flex-1 bg-slate-950 text-indigo-300 rounded-lg px-3 py-1.5 text-xs font-bold border border-slate-700 focus:outline-none focus:border-indigo-500"
-                              >
-                                <option value="Greenery">Greenery</option>
-                                <option value="People">People</option>
-                                <option value="Materials">Materials</option>
-                                <option value="Atmosphere">Atmosphere</option>
-                                <option value="Custom">Custom</option>
-                              </select>
-                            </div>
-
-                            {ref.category === 'Custom' && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 w-16 shrink-0">Name:</span>
-                                <input
-                                  type="text"
-                                  placeholder="E.g. Specific Object"
-                                  value={ref.customCategoryName || ''}
-                                  onChange={(e) => {
-                                    const newRefs = [...customReferences];
-                                    newRefs[i].customCategoryName = e.target.value;
-                                    setCustomReferences(newRefs);
-                                  }}
-                                  className="flex-1 bg-slate-950 text-slate-200 rounded-lg px-3 py-1.5 text-xs border border-slate-700 focus:outline-none focus:border-indigo-500"
-                                />
-                              </div>
-                            )}
-                          </div>
-
-                          <ImageUpload
-                            selectedImage={ref.image}
-                            onImageSelected={(img) => {
-                              const newRefs = [...customReferences];
-                              newRefs[i].image = img;
-                              setCustomReferences(newRefs);
-                            }}
-                            label={`Upload ${ref.category === 'Custom' ? (ref.customCategoryName || 'Custom') : ref.category} Ref`}
-                            compact
-                          />
-
-                          <div className="relative">
-                            <Pen size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                            <input
-                              type="text"
-                              placeholder={`E.g. Form, structure or style instructions`}
-                              value={ref.prompt}
-                              onChange={(e) => {
-                                const newRefs = [...customReferences];
-                                newRefs[i].prompt = e.target.value;
-                                setCustomReferences(newRefs);
-                              }}
-                              className="w-full bg-slate-950 text-slate-200 rounded-lg pl-8 pr-3 py-2 text-xs border border-slate-700 focus:outline-none focus:border-indigo-500"
-                            />
-                          </div>
-                        </div>
-                      ))}
-
-                      <button
-                        onClick={() => {
-                          if (customReferences.length >= 10) return;
-                          setCustomReferences([...customReferences, {
-                            id: Date.now().toString(),
-                            category: 'Greenery',
-                            image: '',
-                            prompt: ''
-                          }]);
-                        }}
-                        disabled={customReferences.length >= 10}
-                        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-300 text-xs font-bold py-3 rounded-xl border border-dashed border-slate-600 transition-all hover:border-slate-400 active:scale-95"
-                      >
-                        <Plus size={14} /> Add Categorical Reference {customReferences.length}/10
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Sun size={14} className="text-amber-400" /> Atmosphere & Mood
+            {/* Atmosphere & Mood Panel */}
+            <div className={isApple ? "apple-panel-group space-y-3" : "space-y-3 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <Sun size={14} className="text-amber-500" /> Atmosphere & Mood
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None', color: 'bg-slate-800' },
-                  { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny', color: 'bg-amber-500/20 text-amber-300 border-amber-500/50' },
-                  { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset', color: 'bg-orange-500/20 text-orange-300 border-orange-500/50' },
-                  { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight', color: 'bg-indigo-900/40 text-indigo-300 border-indigo-500/50' },
-                  { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog', color: 'bg-slate-500/20 text-slate-300 border-slate-500/50' },
-                  { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain', color: 'bg-blue-900/40 text-blue-300 border-blue-500/50' },
-                  { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow', color: 'bg-white/10 text-white border-white/30' },
-                  { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm', color: 'bg-indigo-950 text-indigo-200 border-indigo-700' },
-                  { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist', color: 'bg-teal-900/30 text-teal-200 border-teal-700' },
-                  { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm', color: 'bg-orange-900/30 text-orange-200 border-orange-700' },
-                  { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural', color: 'bg-blue-100/20 text-blue-100 border-blue-200/30' },
-                  { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio', color: 'bg-slate-700 text-slate-200 border-slate-500' },
-                  { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy', color: 'bg-red-900/30 text-red-200 border-red-700' },
-                  { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring', color: 'bg-pink-500/20 text-pink-300 border-pink-500/50' },
-                  { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer', color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/50' },
-                  { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn', color: 'bg-red-500/20 text-red-300 border-red-500/50' },
-                  { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter', color: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' },
+                  { val: Atmosphere.None, icon: <Cloud size={14} />, label: 'None' },
+                  { val: Atmosphere.Sunny, icon: <Sun size={14} />, label: 'atmSunny' },
+                  { val: Atmosphere.Sunset, icon: <Sun size={14} />, label: 'atmSunset' },
+                  { val: Atmosphere.Night, icon: <Moon size={14} />, label: 'atmNight' },
+                  { val: Atmosphere.Foggy, icon: <CloudFog size={14} />, label: 'atmFog' },
+                  { val: Atmosphere.Rainy, icon: <CloudRain size={14} />, label: 'atmRain' },
+                  { val: Atmosphere.Snowy, icon: <Snowflake size={14} />, label: 'atmSnow' },
+                  { val: Atmosphere.Stormy, icon: <CloudLightning size={14} />, label: 'atmStorm' },
+                  { val: Atmosphere.Misty, icon: <CloudFog size={14} />, label: 'atmMist' },
+                  { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={14} />, label: 'atmWarm' },
+                  { val: Atmosphere.NaturalLight, icon: <Sun size={14} />, label: 'atmNatural' },
+                  { val: Atmosphere.Studio, icon: <Aperture size={14} />, label: 'atmStudio' },
+                  { val: Atmosphere.Candlelight, icon: <Flame size={14} />, label: 'atmCozy' },
+                  { val: Atmosphere.Spring, icon: <Flower size={14} />, label: 'atmSpring' },
+                  { val: Atmosphere.Summer, icon: <ThermometerSun size={14} />, label: 'atmSummer' },
+                  { val: Atmosphere.Autumn, icon: <Leaf size={14} />, label: 'atmAutumn' },
+                  { val: Atmosphere.Winter, icon: <Snowflake size={14} />, label: 'atmWinter' },
                 ].filter(opt => {
                   if (editorMode !== 'interior') return true;
-                  // Only show these for interior mode
                   return [
                     Atmosphere.None,
                     Atmosphere.Sunny,
@@ -2120,23 +1988,36 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   ].includes(opt.val);
                 }).map(opt => {
                   const isSelected = atmosphere.includes(opt.val);
-                  return <button key={opt.val} onClick={() => toggleAtmosphere(opt.val)} className={`flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? `${opt.color} border-opacity-100 ring-1 ring-offset-1 ring-offset-slate-900` : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`}>{opt.icon}<span className="mt-1 text-[10px] text-center leading-none">{t(opt.label as any)}</span></button>;
+                  return (
+                    <button
+                      key={opt.val}
+                      onClick={() => toggleAtmosphere(opt.val)}
+                      className={isApple
+                        ? `flex flex-col items-center justify-center p-2.5 rounded-xl border text-xs font-medium transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md ring-2 ring-blue-400/30' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'}`
+                        : `flex flex-col items-center justify-center p-2 rounded border text-xs transition-all ${isSelected ? 'bg-indigo-600 text-white border-indigo-500' : 'bg-slate-900 border-slate-700 text-slate-400 hover:bg-slate-800'}`
+                      }
+                    >
+                      {opt.icon}
+                      <span className="mt-1 text-[10px] text-center leading-none font-semibold">{t(opt.label as any)}</span>
+                    </button>
+                  );
                 })}
               </div>
             </div>
 
             {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
+            {/* Sun & Time Dial Section */}
             {editorMode !== 'interior' && (
-              <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center transition-all duration-300">
+              <div className={isApple ? "apple-panel-group space-y-4 flex flex-col items-center" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center"}>
                 <div className="w-full flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                    <Sun size={14} className={useSunControl ? "text-amber-400" : "text-slate-600"} />
-                    Sun & Time
+                  <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                    <Sun size={14} className={useSunControl ? "text-amber-500" : "text-slate-400"} />
+                    Sun & Time Position
                   </label>
                   <button
                     onClick={() => setUseSunControl(!useSunControl)}
-                    className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                    className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-blue-600' : 'bg-slate-300'}`}
                   >
                     <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
                   </button>
@@ -2145,10 +2026,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 <div className={`w-full flex flex-col items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
                   <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
 
-                  <div className="w-full space-y-2 pt-4 border-t border-slate-800 mt-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <div className="w-full space-y-2 pt-4 border-t border-black/05 mt-2">
+                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 uppercase tracking-widest">
                       <span>Time of Day</span>
-                      <span className="text-indigo-400">{Math.floor(timeOfDay)}:00</span>
+                      <span className="text-blue-600">{Math.floor(timeOfDay)}:00</span>
                     </div>
                     <input
                       type="range"
@@ -2157,9 +2038,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       step="1"
                       value={timeOfDay}
                       onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
-                      className="w-full accent-indigo-600 h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                      className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                     />
-                    <div className="flex justify-between text-[8px] text-slate-600 font-medium">
+                    <div className="flex justify-between text-[8px] text-slate-500 font-medium">
                       <span>Night</span>
                       <span>Noon</span>
                       <span>Night</span>
@@ -2169,12 +2050,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             )}
 
-            <div className="space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50">
+            {/* Camera & Perspective Section */}
+            <div className={isApple ? "apple-panel-group space-y-4" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                  <Aperture size={14} className="text-indigo-400" /> Camera & Perspective
+                <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                  <Aperture size={14} className="text-indigo-500" /> Camera & Perspective
                 </label>
-                <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-500 hover:text-slate-300'}`}>
+                <button onClick={() => setLockCamera(!lockCamera)} className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${lockCamera ? 'bg-blue-600 border-blue-500 text-white' : 'bg-slate-200 border-slate-300 text-slate-600 hover:text-slate-900'}`}>
                   {lockCamera ? <Lock size={10} /> : <Lock size={10} className="opacity-50" />}
                   {lockCamera ? "Locked" : "Lock"}
                 </button>
@@ -2189,12 +2071,14 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         key={opt.val}
                         onClick={() => setCamera(opt.val)}
                         disabled={lockCamera}
-                        className={`group relative flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={isApple
+                          ? `group relative flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-xl border text-[10px] font-medium transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md font-semibold' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`
+                          : `group relative flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg border text-[10px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`
+                        }
                         title={opt.val}
                       >
                         {opt.icon}
-                        <span className="truncate w-full px-1 text-center">{opt.label}</span>
-                        {/* Hover Preview Implementation */}
+                        <span className="truncate w-full px-1 text-center font-semibold">{opt.label}</span>
                         <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-40 aspect-video rounded-lg overflow-hidden shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
                           <CameraAnglePreview angle={opt.val} />
                         </div>
@@ -2202,7 +2086,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     );
                   })}
                   <details className="col-span-4 group">
-                    <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-indigo-400 transition-colors">
+                    <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors font-medium">
                       <ChevronDown size={12} className="group-open:rotate-180 transition-transform mr-1" />
                       {camera.includes('Wide') || camera.includes('View') || camera.includes('Level') && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera) ? 'Custom Angle Selected' : 'Show More Angles'}
                     </summary>
@@ -2214,7 +2098,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                             key={opt.val}
                             onClick={() => setCamera(opt.val)}
                             disabled={lockCamera}
-                            className={`group relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={isApple
+                              ? `group relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-xl border text-[9px] font-medium transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md font-semibold' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`
+                              : `group relative flex flex-col items-center justify-center gap-1 py-1.5 rounded-lg border text-[9px] font-medium transition-all ${isSelected ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'} ${lockCamera ? 'opacity-50 cursor-not-allowed' : ''}`
+                            }
                             title={opt.val}
                           >
                             {opt.icon}
@@ -2237,7 +2124,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <select
                       value={lens || ''}
                       onChange={(e) => setLens(e.target.value as CameraLens)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"
+                      className={isApple ? "apple-input w-full px-2 py-2 text-[11px] font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
                     >
                       <option value="">Default Lens</option>
                       {LENS_CONFIGS.map(l => (
@@ -2254,41 +2141,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       value={aperture}
                       onChange={(e) => setAperture(e.target.value)}
                       placeholder="e.g. f/1.8"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"
+                      className={isApple ? "apple-input w-full px-2 py-2 text-[11px] font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"}
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <Layers size={14} className="text-emerald-400" /> Scene Elements
+            {/* Scene Elements Section */}
+            <div className={isApple ? "apple-panel-group space-y-3" : "space-y-3 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <Layers size={14} className="text-emerald-500" /> Scene Elements
               </label>
               <div className="grid grid-cols-2 gap-1.5">
-                <button onClick={() => toggleElement('people')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Users size={12} /> {t('people')}</button>
-                {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Car size={12} /> {t('cars')}</button>}
-                <button onClick={() => toggleElement('vegetation')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
-                {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Cloud size={12} /> {t('clouds')}</button>}
+                <button onClick={() => toggleElement('people')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.people ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Users size={12} /> {t('people')}</button>
+                {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.cars ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Car size={12} /> {t('cars')}</button>}
+                <button onClick={() => toggleElement('vegetation')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.vegetation ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
+                {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.clouds ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Cloud size={12} /> {t('clouds')}</button>}
                 {editorMode !== 'interior' && (
                   <>
-                    <button onClick={() => toggleElement('city')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Building2 size={12} /> {t('city')}</button>
-                    <button onClick={() => toggleElement('motionBlur')} className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Wind size={12} /> {t('motionBlur')}</button>
-                    <button onClick={() => toggleElement('enhanceFacade')} className={`col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300 shadow-lg shadow-indigo-500/10' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
+                    <button onClick={() => toggleElement('city')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.city ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Building2 size={12} /> {t('city')}</button>
+                    <button onClick={() => toggleElement('motionBlur')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.motionBlur ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Wind size={12} /> {t('motionBlur')}</button>
+                    <button onClick={() => toggleElement('enhanceFacade')} className={isApple ? `col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.enhanceFacade ? 'bg-blue-600 text-white border-blue-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
                   </>
                 )}
               </div>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-400 uppercase flex items-center gap-2"><LayoutTemplate size={14} /> {t('aspectRatio')}</label>
-                <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-950/40 backdrop-blur-sm rounded-xl ring-1 ring-white/5 shadow-inner">
-                  {['Original', '1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                    <button key={ratio} onClick={() => setAspectRatio(ratio as AspectRatio)} className={`px-2 py-2 text-xs font-bold rounded-lg transition-all ${aspectRatio === ratio ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-500/20 ring-1 ring-white/10' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>{ratio}</button>
-                  ))}
-                </div>
-              </div>
 
               {model === 'gemini-3.1-flash-image-preview' && (
                 <div className="space-y-2 bg-indigo-900/10 border border-indigo-500/20 p-3 rounded-xl backdrop-blur-sm">

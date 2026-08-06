@@ -89,15 +89,16 @@ const Home: React.FC = () => {
       }>
         {/* Logo */}
         <div
-          className="flex items-center h-full cursor-pointer select-none active:scale-95 transition-all duration-200"
+          className="flex items-center gap-2.5 h-full cursor-pointer select-none active:scale-95 transition-all duration-200"
           onClick={() => window.location.href = '/'}
           title="Reload HOUZ.AI"
         >
           <img
             src="/logo.png"
             alt="HOUZ.AI Logo"
-            className="h-9 w-auto object-contain brightness-110 contrast-125 drop-shadow-sm hover:scale-105 transition-transform duration-300"
+            className={`h-8 w-auto object-contain transition-transform duration-300 ${isApple ? 'contrast-150 brightness-90' : 'brightness-110 contrast-125'}`}
           />
+          {isApple && <span className="font-extrabold text-lg tracking-tight text-slate-900">houz<span className="text-[#0071e3]">.ai</span></span>}
         </div>
 
         {/* Center Section: Mode Switcher & UI Style Switcher */}
