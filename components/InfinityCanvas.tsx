@@ -1504,38 +1504,56 @@ const InfinityCanvas: React.FC = () => {
             <div className="absolute top-4 left-4 z-20 flex gap-2">
                 <button
                     onClick={() => setShowHistory(!showHistory)}
-                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    className={isApple
+                        ? "apple-glass-interactive rounded-full px-3.5 py-1.5 text-xs text-slate-200 flex items-center gap-2"
+                        : "flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    }
                 >
                     <HistoryIcon size={14} /> {t('history')}
                 </button>
                 <button
                     onClick={() => setProjectsMenu(!projectsMenu)}
-                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    className={isApple
+                        ? "apple-glass-interactive rounded-full px-3.5 py-1.5 text-xs text-slate-200 flex items-center gap-2"
+                        : "flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    }
                 >
                     <FolderOpen size={14} /> {t('projects')}
                 </button>
                 <button
                     onClick={saveProject}
-                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    className={isApple
+                        ? "apple-glass-interactive rounded-full px-3.5 py-1.5 text-xs text-slate-200 flex items-center gap-2"
+                        : "flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    }
                 >
                     <Save size={14} /> {t('save')}
                 </button>
                 <button
                     onClick={createNewProject}
-                    className="flex items-center gap-2 bg-emerald-600/80 backdrop-blur-md shadow-lg text-white px-3 py-2 rounded-lg border border-emerald-500 hover:bg-emerald-500 transition-all text-xs"
+                    className={isApple
+                        ? "apple-btn-primary px-3.5 py-1.5 text-xs flex items-center gap-1.5 font-semibold"
+                        : "flex items-center gap-2 bg-emerald-600/80 backdrop-blur-md shadow-lg text-white px-3 py-2 rounded-lg border border-emerald-500 hover:bg-emerald-500 transition-all text-xs"
+                    }
                     title="Create New Project"
                 >
                     <Plus size={14} /> New
                 </button>
                 <button
                     onClick={exportProject}
-                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    className={isApple
+                        ? "apple-glass-interactive rounded-full p-2 text-xs text-slate-200"
+                        : "flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs"
+                    }
                     title="Download Project File"
                 >
                     <Download size={14} />
                 </button>
                 <label
-                    className="flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs cursor-pointer"
+                    className={isApple
+                        ? "apple-glass-interactive rounded-full p-2 text-xs text-slate-200 cursor-pointer"
+                        : "flex items-center gap-2 bg-zinc-900/60 backdrop-blur-md shadow-lg text-zinc-300 px-3 py-2 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all text-xs cursor-pointer"
+                    }
                     title="Import Project File"
                 >
                     <Upload size={14} />

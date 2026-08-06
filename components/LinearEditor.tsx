@@ -1521,7 +1521,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
 
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-4 p-4 pb-safe relative overflow-y-auto lg:overflow-hidden">
+    <div className={`flex flex-col lg:flex-row h-full gap-5 p-5 pb-safe relative overflow-y-auto lg:overflow-hidden ${isApple ? 'apple-bg' : ''}`}>
 
 
       {/* Full Screen Preview */}
@@ -1546,7 +1546,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
 
       {/* History Sidebar */}
-      <div className={`absolute left-0 top-4 bottom-4 bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] z-30 transition-all duration-300 flex flex-col ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
+      <div className={`absolute left-0 top-4 bottom-4 z-30 transition-all duration-300 flex flex-col ${isApple ? 'apple-card rounded-r-3xl border-l-0 shadow-[0_20px_50px_rgba(0,0,0,0.75)]' : 'bg-slate-900/60 backdrop-blur-2xl border-r border-white/10 shadow-2xl'} ${showHistory ? 'w-64 translate-x-0' : 'w-64 -translate-x-full'}`}>
         <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10">
           <h3 className="font-bold text-slate-200 flex items-center gap-2"><HistoryIcon size={16} /> {t('history')}</h3>
           <button onClick={() => setShowHistory(false)} className="p-1 hover:bg-slate-800 rounded"><ChevronRight size={16} /></button>

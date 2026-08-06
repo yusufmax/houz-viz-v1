@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Film, Loader2, Download, Zap, Maximize2, Eye, Upload, Image as ImageIcon, X, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthProvider';
+import { useDesignMode } from '../contexts/DesignModeContext';
 import { getHouzaiFilename } from '../utils/filenameUtils';
 import { videoQuotaService } from '../services/quotaService';
 import { KlingModel, VideoGenerationSettings } from '../types';
@@ -8,6 +9,7 @@ import ImageUpload from './ImageUpload';
 
 const VideoEditor: React.FC = () => {
     const { user } = useAuth();
+    const { isApple } = useDesignMode();
     const [sourceImage, setSourceImage] = useState<string | null>(null);
     const [endImage, setEndImage] = useState<string | null>(null);
     const [imageReferences, setImageReferences] = useState<string[]>([]);
@@ -211,13 +213,13 @@ const VideoEditor: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col lg:flex-row h-full gap-6 p-6 max-w-[1600px] mx-auto">
+        <div className={`flex flex-col lg:flex-row h-full gap-6 p-6 max-w-[1600px] mx-auto ${isApple ? 'apple-bg' : ''}`}>
             {/* Left Column: Settings & Input */}
             <div className="w-full lg:w-1/3 flex flex-col gap-6">
 
                 {/* Image Input Section */}
                 {(videoSettings.model === KlingModel.Omni_1 || videoSettings.model === KlingModel.V3_Omni) ? (
-                    <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4">
+                    <div className={isApple ? "apple-card p-5" : "bg-slate-900/50 border border-slate-800 rounded-xl p-4"}>
                         <div className="flex items-center justify-between mb-3">
                             <h2 className="text-sm font-semibold text-white flex items-center gap-2">
                                 <ImageIcon size={16} className="text-indigo-400" />
