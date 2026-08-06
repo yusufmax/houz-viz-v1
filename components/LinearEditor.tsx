@@ -1902,6 +1902,24 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </select>
                   )}
                 </div>
+                {/* Aspect Ratio Selector */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 tracking-wider">
+                    <Maximize2 size={12} className={isApple ? "text-slate-600" : "text-purple-500"} /> Aspect Ratio
+                  </label>
+                  <select
+                    value={aspectRatio}
+                    onChange={(e) => setAspectRatio(e.target.value as AspectRatio)}
+                    className={isApple ? "apple-input w-full px-3 py-2 text-xs font-medium" : "w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300"}
+                  >
+                    <option value="Original">📐 Original</option>
+                    <option value="1:1">⬜ 1:1 (Square)</option>
+                    <option value="16:9">🖥️ 16:9 (Landscape)</option>
+                    <option value="9:16">📱 9:16 (Portrait)</option>
+                    <option value="4:3">🖼️ 4:3 (Standard)</option>
+                    <option value="3:4">📷 3:4 (Photo)</option>
+                  </select>
+                </div>
 
                 {/* Style Preset Selector */}
                 {!isApple && (
