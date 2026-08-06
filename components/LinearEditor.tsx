@@ -2066,6 +2066,38 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </button>
               </div>
 
+              {/* Lens & Aperture Inputs Row */}
+              <div className="grid grid-cols-2 gap-3 p-3 bg-white/50 border border-slate-200/80 rounded-2xl">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-600 uppercase flex items-center gap-1">
+                    <Maximize size={12} className="text-blue-500" /> Lens (Camera)
+                  </label>
+                  <select
+                    value={lens || ''}
+                    onChange={(e) => setLens(e.target.value as CameraLens)}
+                    className={isApple ? "apple-input w-full px-2.5 py-1.5 text-xs font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
+                  >
+                    <option value="">Default Lens</option>
+                    {LENS_CONFIGS.map(l => (
+                      <option key={l.val} value={l.val}>{l.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-600 uppercase flex items-center gap-1">
+                    <Sparkles size={12} className="text-amber-500" /> Aperture (f-stop)
+                  </label>
+                  <input
+                    type="text"
+                    value={aperture}
+                    onChange={(e) => setAperture(e.target.value)}
+                    placeholder="e.g. f/1.8"
+                    className={isApple ? "apple-input w-full px-2.5 py-1.5 text-xs font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"}
+                  />
+                </div>
+              </div>
+
+              {/* Camera Angle Selector Grid */}
               <div className="space-y-3">
                 <div className="grid grid-cols-4 gap-2">
                   {CAMERA_CONFIGS.slice(0, 8).map(opt => {
@@ -2119,58 +2151,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </div>
                   </details>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                      <Maximize size={12} /> Lens (Camera)
-                    </label>
-                    <select
-                      value={lens || ''}
-                      onChange={(e) => setLens(e.target.value as CameraLens)}
-                      className={isApple ? "apple-input w-full px-2 py-2 text-[11px] font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
-                    >
-                      <option value="">Default Lens</option>
-                      {LENS_CONFIGS.map(l => (
-                        <option key={l.val} value={l.val}>{l.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
-                      <Sparkles size={12} /> Aperture (f-stop)
-                    </label>
-                    <input
-                      type="text"
-                      value={aperture}
-                      onChange={(e) => setAperture(e.target.value)}
-                      placeholder="e.g. f/1.8"
-                      className={isApple ? "apple-input w-full px-2 py-2 text-[11px] font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 placeholder:text-slate-700"}
-                    />
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Scene Elements Section */}
+            {/* Scene Elements Section (Compact 3-column Grid) */}
             <div className={isApple ? "apple-panel-group space-y-3" : "space-y-3 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
                 <Layers size={14} className="text-emerald-500" /> Scene Elements
               </label>
-              <div className="grid grid-cols-2 gap-1.5">
-                <button onClick={() => toggleElement('people')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.people ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Users size={12} /> {t('people')}</button>
+              <div className="grid grid-cols-3 gap-1.5">
+                <button onClick={() => toggleElement('people')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.people ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Users size={12} /> {t('people')}</button>
                 {editorMode !== 'interior' && (
-                  <button onClick={() => toggleElement('cars')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.cars ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Car size={12} /> {t('cars')}</button>
+                  <button onClick={() => toggleElement('cars')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.cars ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Car size={12} /> {t('cars')}</button>
                 )}
-                <button onClick={() => toggleElement('vegetation')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.vegetation ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
+                <button onClick={() => toggleElement('vegetation')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.vegetation ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
                 {editorMode !== 'interior' && (
-                  <button onClick={() => toggleElement('clouds')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.clouds ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Cloud size={12} /> {t('clouds')}</button>
+                  <button onClick={() => toggleElement('clouds')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.clouds ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Cloud size={12} /> {t('clouds')}</button>
                 )}
                 {editorMode !== 'interior' && (
                   <>
-                    <button onClick={() => toggleElement('city')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.city ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Building2 size={12} /> {t('city')}</button>
-                    <button onClick={() => toggleElement('motionBlur')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.motionBlur ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Wind size={12} /> {t('motionBlur')}</button>
-                    <button onClick={() => toggleElement('enhanceFacade')} className={isApple ? `col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.enhanceFacade ? 'bg-blue-600 text-white border-blue-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `col-span-2 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
+                    <button onClick={() => toggleElement('city')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.city ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Building2 size={12} /> {t('city')}</button>
+                    <button onClick={() => toggleElement('motionBlur')} className={isApple ? `flex items-center justify-center gap-1.5 px-2 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.motionBlur ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.motionBlur ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Wind size={12} /> {t('motionBlur')}</button>
+                    <button onClick={() => toggleElement('enhanceFacade')} className={isApple ? `col-span-3 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.enhanceFacade ? 'bg-blue-600 text-white border-blue-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `col-span-3 flex items-center justify-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.enhanceFacade ? 'bg-indigo-600/20 border-indigo-500 text-indigo-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Zap size={12} /> {t('enhanceFacade')}</button>
                   </>
                 )}
               </div>
