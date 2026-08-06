@@ -18,6 +18,7 @@ import { generateImage, editImage, upscaleImage } from '../services/geminiServic
 import { upscaleImageReplicate } from '../services/replicateService';
 import { useAuth } from '../contexts/AuthProvider';
 import { useLanguage } from '../LanguageContext';
+import { useDesignMode } from '../contexts/DesignModeContext';
 import { useSearchParams } from 'react-router-dom';
 import { fetchUserReferenceImages, ReferenceImage } from '../services/referenceImageService';
 import { quotaService } from '../services/quotaService';

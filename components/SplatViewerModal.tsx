@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { X, RotateCcw, Play, Pause, Camera, Download, Box, Layers, Video, Loader2, Wand2 } from 'lucide-react';
 import { TrellisResult } from '../services/splatService';
+import { useDesignMode } from '../contexts/DesignModeContext';
 
 interface SplatViewerModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
   inline = false,
   baseImageUrl
 }) => {
+  const { isApple } = useDesignMode();
   const [tab, setTab] = useState<'splat' | 'mesh' | 'video'>(
     result.gaussian_ply ? 'splat' : result.model_file ? 'mesh' : 'video'
   );
@@ -467,7 +469,7 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
 
   if (inline) {
     return (
-      <div className="relative flex flex-col w-full h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+      <div className={`relative flex flex-col w-full h-full overflow-hidden shadow-xl ${isApple ? 'apple-card' : 'bg-slate-900 border border-slate-800 rounded-xl'}`}>
         {content}
       </div>
     );
@@ -475,7 +477,11 @@ export const SplatViewerModal: React.FC<SplatViewerModalProps> = ({
 
   return (
     <div className="fixed top-[76px] right-4 bottom-4 w-[50vw] min-w-[480px] max-w-[700px] z-[9999] pointer-events-none flex items-stretch justify-end">
-      <div className="relative flex flex-col w-full h-full bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl overflow-hidden shadow-2xl pointer-events-auto ring-1 ring-white/10">
+      <div className={`relative flex flex-col w-full h-full overflow-hidden pointer-events-auto transition-all duration-300 ${
+        isApple
+          ? 'apple-card border border-white/20 shadow-[0_25px_60px_rgba(0,0,0,0.7)] rounded-3xl'
+          : 'bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl ring-1 ring-white/10'
+      }`}>
         {content}
       </div>
     </div>

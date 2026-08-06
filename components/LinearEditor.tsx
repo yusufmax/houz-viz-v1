@@ -29,6 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { getHouzaiFilename } from '../utils/filenameUtils';
 import { useLanguage } from '../LanguageContext';
 import { useAuth } from '../contexts/AuthProvider';
+import { useDesignMode } from '../contexts/DesignModeContext';
 import { quotaService } from '../services/quotaService';
 import { videoQuotaService } from '../services/videoQuotaService';
 import { historyService } from '../services/historyService';
@@ -327,6 +328,7 @@ const CameraAnglePreview = ({ angle }: { angle: string }) => {
 const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
   const { t } = useLanguage();
   const { user, profile } = useAuth();
+  const { isApple } = useDesignMode();
   // const { setToolExecutor } = useAgentic();
   const [searchParams, setSearchParams] = useSearchParams();
   const projectId = searchParams.get('projectId');
@@ -1608,7 +1610,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 1: INPUT & CONTROLS (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 relative h-auto lg:h-full min-h-0 shrink-0 lg:shrink">
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6">
+        <div className={isApple
+          ? "apple-card p-6 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6"
+          : "bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl p-5 lg:overflow-y-auto custom-scrollbar relative flex flex-col gap-6"
+        }>
           {/* SOURCE SECTION */}
           <section className="flex flex-col flex-1 gap-4">
             <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
@@ -1638,7 +1643,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   title="Toggle Batch Mode"
                 >
                   <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
-                  <Layers size={12} className="relative z-10" /> <span className="relative z-10 font-medium">{batchMode ? 'Batch Mode On' : 'Batch Mode'}</span>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <Layers size={14} /> {batchMode ? 'Single Image Mode' : 'Batch Mode (Up to 10)'}
+                  </span>
                 </button>
                 {sourceImage && (
                   <button
@@ -2329,7 +2336,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
       {/* COLUMN 2: RESULT (50%) */}
       <div className="w-full lg:w-1/2 flex flex-col gap-4 min-h-[300px] h-[600px] lg:h-full min-h-0 shrink-0 lg:shrink lg:max-h-none overscroll-contain">
-        <div className="bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl flex-1 flex flex-col relative overflow-hidden">
+        <div className={isApple
+          ? "apple-card flex-1 flex flex-col relative overflow-hidden"
+          : "bg-slate-900/60 backdrop-blur-xl border border-white/10 border-b-black/50 shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),inset_0_24px_48px_rgba(255,255,255,0.05),0_10px_30px_rgba(0,0,0,0.5)] rounded-2xl flex-1 flex flex-col relative overflow-hidden"
+        }>
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
           <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">
