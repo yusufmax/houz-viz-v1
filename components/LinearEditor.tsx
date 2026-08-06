@@ -2088,7 +2088,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <details className="col-span-4 group">
                     <summary className="list-none cursor-pointer flex items-center justify-center py-1 text-[10px] text-slate-500 hover:text-blue-600 transition-colors font-medium">
                       <ChevronDown size={12} className="group-open:rotate-180 transition-transform mr-1" />
-                      {camera.includes('Wide') || camera.includes('View') || camera.includes('Level') && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera) ? 'Custom Angle Selected' : 'Show More Angles'}
+                      {((camera.includes('Wide') || camera.includes('View') || camera.includes('Level')) && !CAMERA_CONFIGS.slice(0, 8).some(c => c.val === camera)) ? 'Custom Angle Selected' : 'Show More Angles'}
                     </summary>
                     <div className="grid grid-cols-4 gap-2 pt-2">
                       {CAMERA_CONFIGS.slice(8).map(opt => {
@@ -2155,9 +2155,13 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 <button onClick={() => toggleElement('people')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.people ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.people ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Users size={12} /> {t('people')}</button>
-                {editorMode !== 'interior' && <button onClick={() => toggleElement('cars')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.cars ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Car size={12} /> {t('cars')}</button>}
+                {editorMode !== 'interior' && (
+                  <button onClick={() => toggleElement('cars')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.cars ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.cars ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Car size={12} /> {t('cars')}</button>
+                )}
                 <button onClick={() => toggleElement('vegetation')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.vegetation ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.vegetation ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Trees size={12} /> {editorMode === 'interior' ? "Plants" : t('greenery')}</button>
-                {editorMode !== 'interior' && <button onClick={() => toggleElement('clouds')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.clouds ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Cloud size={12} /> {t('clouds')}</button>}
+                {editorMode !== 'interior' && (
+                  <button onClick={() => toggleElement('clouds')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.clouds ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.clouds ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Cloud size={12} /> {t('clouds')}</button>
+                )}
                 {editorMode !== 'interior' && (
                   <>
                     <button onClick={() => toggleElement('city')} className={isApple ? `flex items-center gap-2 px-3 py-2 rounded-xl border text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 ${sceneElements.city ? 'bg-emerald-600 text-white border-emerald-500 shadow-sm' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}` : `flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all ${sceneElements.city ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500'}`}><Building2 size={12} /> {t('city')}</button>
@@ -2211,6 +2215,8 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <Pen size={14} /> Sketchify Current Image
                 </button>
               </div>
+            </div>
+          </div>
 
               <div className="relative pt-6 flex flex-col gap-2">
                 <div className="relative flex items-stretch gap-2">
