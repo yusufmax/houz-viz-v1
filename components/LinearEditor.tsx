@@ -1722,29 +1722,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             </div>
 
-            {/* Mode Switcher */}
-            <div className={isApple
-              ? "apple-segmented-wrapper flex my-2 p-1"
-              : "bg-slate-950/50 backdrop-blur-md p-1.5 rounded-2xl flex mb-6 ring-1 ring-white/10 relative overflow-hidden"
-            }>
-              {(['exterior', 'interior', 'general'] as EditorMode[]).map((mode) => (
-                <button
-                  key={mode}
-                  onClick={() => {
-                    setEditorMode(mode);
-                    if (style !== RenderStyle.None && !STYLE_CATEGORIES[mode].includes(style)) {
-                      setStyle(RenderStyle.None);
-                    }
-                  }}
-                  className={isApple
-                    ? `flex-1 py-1.5 text-xs font-semibold apple-segmented-item capitalize active:scale-95 ${editorMode === mode ? 'active' : 'text-slate-500 hover:text-slate-900'}`
-                    : `flex-1 py-2 text-xs font-bold rounded-xl capitalize transition-all duration-300 relative z-10 ${editorMode === mode ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`
-                  }
-                >
-                  {mode}
-                </button>
-              ))}
-            </div>
 
             {/* Instructions (Left) + Config (Right) — Side-by-Side */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
@@ -1850,6 +1827,28 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     ))}
                   </div>
                 )}
+
+                {/* Mode Selector (Exterior / Interior / General) */}
+                <div className="space-y-1 pt-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Settings size={11} className="text-slate-400" /> Mode
+                  </label>
+                  <select
+                    value={editorMode}
+                    onChange={(e) => {
+                      const newMode = e.target.value as EditorMode;
+                      setEditorMode(newMode);
+                      if (style !== RenderStyle.None && !STYLE_CATEGORIES[newMode].includes(style)) {
+                        setStyle(RenderStyle.None);
+                      }
+                    }}
+                    className={isApple ? "apple-input w-full px-2.5 py-2 text-xs font-medium capitalize" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50 capitalize"}
+                  >
+                    <option value="exterior">🏠 Exterior</option>
+                    <option value="interior">🛋️ Interior</option>
+                    <option value="general">🎨 General</option>
+                  </select>
+                </div>
               </div>
 
               {/* RIGHT: Model, Resolution, Lock Building (2/5 width) */}
