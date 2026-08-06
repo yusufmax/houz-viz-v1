@@ -268,6 +268,7 @@ const LENS_CONFIGS = [
 
 
 const CameraAnglePreview = ({ angle }: { angle: string }) => {
+  const { isApple } = useDesignMode();
   let cx = 50, cy = 50;
   let rx = 50, ry = 60;
 
@@ -308,9 +309,12 @@ const CameraAnglePreview = ({ angle }: { angle: string }) => {
   const rotation = Math.atan2(dy, dx) * (180 / Math.PI);
 
   return (
-    <div className="w-full h-full bg-slate-900 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-700">
-      <span className="text-[10px] text-slate-400 font-bold uppercase mb-1">{angle}</span>
-      <svg viewBox="0 0 100 100" className="w-full h-full text-indigo-400 overflow-visible">
+    <div className={isApple
+      ? "w-full h-full bg-white/95 backdrop-blur-xl flex flex-col items-center justify-center p-2 rounded-xl border border-slate-200 shadow-xl"
+      : "w-full h-full bg-slate-900 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-700"
+    }>
+      <span className={isApple ? "text-[10px] text-slate-700 font-bold uppercase mb-1" : "text-[10px] text-slate-400 font-bold uppercase mb-1"}>{angle}</span>
+      <svg viewBox="0 0 100 100" className={isApple ? "w-full h-full text-[#0071e3] overflow-visible" : "w-full h-full text-indigo-400 overflow-visible"}>
         <line x1="10" y1="80" x2="90" y2="80" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 2" />
         <path d="M40 80 V40 H60 V80 Z" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.6" />
         <path d="M45 50 H55 M45 60 H55 M45 70 H55" stroke="currentColor" strokeWidth="1" strokeOpacity="0.3" />
@@ -319,7 +323,7 @@ const CameraAnglePreview = ({ angle }: { angle: string }) => {
         <g transform={`translate(${cx}, ${cy}) rotate(${rotation})`}>
           <rect x="-6" y="-5" width="12" height="10" rx="2" fill="currentColor" />
           <path d="M6 -3 L12 -6 V6 L6 3 Z" fill="currentColor" />
-          <circle cx="0" cy="0" r="2.5" fill="#0f172a" />
+          <circle cx="0" cy="0" r="2.5" fill={isApple ? "#ffffff" : "#0f172a"} />
         </g>
       </svg>
     </div>
@@ -1616,9 +1620,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         }>
           {/* SOURCE SECTION */}
           <section className="flex flex-col flex-1 gap-4">
-            <div className="flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2">
+            <div className={isApple ? "flex items-center justify-between text-slate-800 font-bold uppercase tracking-wider text-xs border-b border-slate-200/80 pb-2.5" : "flex items-center justify-between text-indigo-400 font-semibold border-b border-slate-700/50 pb-2"}>
               <div className="flex items-center gap-2">
-                <ImageIcon size={18} />
+                <ImageIcon size={18} className={isApple ? "text-slate-600" : ""} />
                 <h2>{t('source')}</h2>
               </div>
               <div className="flex gap-2">
@@ -1712,7 +1716,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
           {/* CONTROLS SECTION */}
           <section className="space-y-6 pt-4 border-t border-black/10">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-blue-600 font-semibold">
+              <div className={isApple ? "flex items-center gap-2 text-slate-800 font-bold" : "flex items-center gap-2 text-blue-600 font-semibold"}>
                 <Settings size={18} />
                 <h2 className="text-sm font-bold tracking-tight uppercase">{t('controls')}</h2>
               </div>
@@ -1748,7 +1752,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {/* Model Selector */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 tracking-wider">
-                    <Zap size={12} className="text-blue-500" /> Model
+                    <Zap size={12} className={isApple ? "text-slate-600" : "text-blue-500"} /> Model
                   </label>
                   <select
                     value={model}
@@ -1773,7 +1777,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {/* Resolution Selector */}
                 <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 tracking-wider">
-                    <Maximize size={12} className="text-indigo-500" /> Resolution
+                    <Maximize size={12} className={isApple ? "text-slate-600" : "text-indigo-500"} /> Resolution
                   </label>
                   {model === 'gpt-image-2' ? (
                     <button
@@ -1797,30 +1801,32 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
 
               {/* Style Preset Selector */}
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Palette size={12} className="text-amber-500" /> {t('stylePreset')}
-                </label>
-                <select
-                  value={style}
-                  onChange={(e) => setStyle(e.target.value as RenderStyle)}
-                  className={isApple ? "apple-input w-full px-3 py-2 text-xs font-medium" : "w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"}
-                >
-                  <option value={RenderStyle.None}>{t('None')}</option>
-                  {Object.entries(groupedStyles).map(([group, styles]) => (
-                    <optgroup key={group} label={group} className="bg-white text-slate-500 text-[10px] uppercase font-bold">
-                      {(styles as RenderStyle[]).map(s => {
-                        const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                        return (
-                          <option key={s} value={s} className="text-slate-900 text-xs normal-case font-normal">
-                            {t(displayName as any) || displayName}
-                          </option>
-                        );
-                      })}
-                    </optgroup>
-                  ))}
-                </select>
-              </div>
+              {!isApple && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                    <Palette size={12} className="text-amber-500" /> {t('stylePreset')}
+                  </label>
+                  <select
+                    value={style}
+                    onChange={(e) => setStyle(e.target.value as RenderStyle)}
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
+                  >
+                    <option value={RenderStyle.None}>{t('None')}</option>
+                    {Object.entries(groupedStyles).map(([group, styles]) => (
+                      <optgroup key={group} label={group} className="bg-white text-slate-500 text-[10px] uppercase font-bold">
+                        {(styles as RenderStyle[]).map(s => {
+                          const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                          return (
+                            <option key={s} value={s} className="text-slate-900 text-xs normal-case font-normal">
+                              {t(displayName as any) || displayName}
+                            </option>
+                          );
+                        })}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Action Buttons: Building Lock & Fix Distorted Lines */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
@@ -2280,9 +2286,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
         }>
           {showInstructions && <GuideTooltip text={t('guideResult')} className="top-16 left-1/2" side="top" />}
 
-          <div className="flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50">
+          <div className={isApple ? "flex items-center justify-between p-4 text-slate-800 font-bold uppercase tracking-wider text-xs relative border-b border-slate-200/80" : "flex items-center justify-between p-4 text-indigo-400 font-semibold relative border-b border-slate-700/50"}>
             <div className="flex items-center gap-2">
-              <Maximize2 size={18} />
+              <Maximize2 size={18} className={isApple ? "text-slate-600" : ""} />
               <h2>{t('result')}</h2>
             </div>
 
@@ -2349,32 +2355,11 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         ? 'bg-gradient-to-r from-teal-600/80 to-indigo-600/80 border border-teal-500/30 text-white shadow-teal-950/20'
                         : 'bg-gradient-to-r from-fuchsia-600/80 to-indigo-600/80 border border-fuchsia-500/30 text-white shadow-fuchsia-950/20'
                     }`}
-                    title={
-                      isGeneratingSplat
-                        ? "Generating 3D model..."
-                        : splatResult
-                        ? "Toggle between 3D and 2D view"
-                        : "Generate 3D model to change perspective and regenerate"
-                    }
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
-                    <span className="relative z-10 flex items-center gap-2">
-                      {isGeneratingSplat ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" />
-                          Generating 3D...
-                        </>
-                      ) : splatResult ? (
-                        <>
-                          <Box size={14} />
-                          {show3DView ? 'Show 2D' : 'Show 3D'}
-                        </>
-                      ) : (
-                        <>
-                          <Box size={14} />
-                          3D
-                        </>
-                      )}
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      {isGeneratingSplat ? <Loader2 size={14} className="animate-spin text-fuchsia-300" /> : <Box size={14} className={show3DView ? "text-emerald-300" : "text-fuchsia-300"} />}
+                      {show3DView ? "Hide 3D Viewer" : splatResult ? "View Interactive 3D" : "Generate 3D Model"}
                     </span>
                   </button>
 
@@ -2418,7 +2403,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
             </div>
           </div>
 
-          <div className="flex-1 relative flex flex-col min-h-0 bg-slate-900/30">
+          <div className={isApple ? "flex-1 relative flex flex-col min-h-0 bg-white/40" : "flex-1 relative flex flex-col min-h-0 bg-slate-900/30"}>
             {batchMode ? (
               batchResults.length > 0 || isBatchProcessing ? (
                 <BatchResults
@@ -2428,19 +2413,19 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   }}
                 />
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
-                  <Layers size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Batch results will appear here</p>
-                  <p className="text-xs text-slate-500 mt-1">Upload images and click Generate Batch</p>
+                <div className={isApple ? "flex-1 flex flex-col items-center justify-center text-slate-500 text-center p-4" : "flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4"}>
+                  <Layers size={48} className={isApple ? "mx-auto mb-3 text-slate-300 stroke-[1.5]" : "mx-auto mb-2 opacity-30"} />
+                  <p className="text-sm font-semibold">Batch results will appear here</p>
+                  <p className="text-xs text-slate-400 mt-1">Upload images and click Generate Batch</p>
                 </div>
               )
             ) : (
               isGenerating ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4">
-                  <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                <div className={isApple ? "flex-1 flex flex-col items-center justify-center text-blue-600 animate-pulse p-4" : "flex-1 flex flex-col items-center justify-center text-indigo-400 animate-pulse p-4"}>
+                  <div className={`w-16 h-16 border-4 ${isApple ? 'border-blue-600' : 'border-indigo-500'} border-t-transparent rounded-full animate-spin mb-4`}></div>
                   <p className="text-sm font-mono">{t('simulating')}</p>
-                  {generationCount > 1 && <p className="text-xs text-slate-500 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
-                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-500 mt-2">{t('enhanceFacade')}...</p>}
+                  {generationCount > 1 && <p className="text-xs text-slate-400 mt-1">Generating {batchProgress.current} of {batchProgress.total}...</p>}
+                  {sceneElements.enhanceFacade && <p className="text-xs text-slate-400 mt-2">{t('enhanceFacade')}...</p>}
                 </div>
               ) : multiResults.length > 1 ? (
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -2493,9 +2478,9 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   <img src={resultImage} alt="Result" className="w-full h-full object-contain" />
                 )
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4">
-                  <ImageIcon size={48} className="mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">Generations will appear here</p>
+                <div className={isApple ? "flex-1 flex flex-col items-center justify-center text-slate-500 text-center p-4" : "flex-1 flex flex-col items-center justify-center text-slate-600 text-center p-4"}>
+                  <ImageIcon size={48} className={isApple ? "mx-auto mb-3 text-slate-300 stroke-[1.5]" : "mx-auto mb-2 opacity-30"} />
+                  <p className="text-sm font-semibold">Generations will appear here</p>
                 </div>
               )
             )}

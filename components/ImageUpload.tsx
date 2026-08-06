@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { Upload, Image as ImageIcon, X, FileText } from 'lucide-react';
 import PdfPageSelector from './PdfPageSelector';
+import { useDesignMode } from '../contexts/DesignModeContext';
 
 interface ImageUploadProps {
   onImageSelected: (base64: string | null) => void;
@@ -11,6 +12,7 @@ interface ImageUploadProps {
 }
 
 const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImage, label = "Upload Image", compact = false, acceptVideo = false }) => {
+  const { isApple } = useDesignMode();
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -155,8 +157,11 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`relative flex flex-col items-center justify-center w-full ${compact ? 'h-32' : 'flex-1 min-h-[200px]'} 
-          border-2 border-dashed rounded-lg transition-all cursor-pointer
-          ${isDragging ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50'}`}
+          border-2 border-dashed rounded-2xl transition-all cursor-pointer ${
+            isApple
+              ? (isDragging ? 'border-blue-500 bg-blue-50/80 shadow-md' : 'border-slate-200 hover:border-blue-400 bg-white/70 hover:bg-white shadow-sm')
+              : (isDragging ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-700 hover:border-slate-500 bg-slate-800/50')
+          }`}
       >
         <input
           type="file"
@@ -165,17 +170,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({ onImageSelected, selectedImag
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isProcessing}
         />
-        <div className="flex flex-col items-center justify-center pt-5 pb-6 text-slate-400">
+        <div className={`flex flex-col items-center justify-center pt-5 pb-6 ${isApple ? 'text-slate-600' : 'text-slate-400'}`}>
           {isProcessing ? (
             <div className="animate-pulse flex flex-col items-center">
-              <div className="h-8 w-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <div className={`h-8 w-8 border-2 ${isApple ? 'border-blue-600' : 'border-indigo-500'} border-t-transparent rounded-full animate-spin mb-2`}></div>
               <span className="text-xs">Processing...</span>
             </div>
           ) : (
             <>
-              {compact ? <Upload size={24} className="mb-2" /> : <ImageIcon size={48} className="mb-4 opacity-50" />}
-              <p className={`text-sm font-medium ${compact ? 'text-xs' : ''}`}>{label}</p>
-              {!compact && <p className="text-xs text-slate-500 mt-2">{acceptVideo ? "Images, Videos, or PDF" : "Images or PDF"}</p>}
+              {compact ? <Upload size={24} className="mb-2" /> : <ImageIcon size={48} className={`mb-4 ${isApple ? 'text-slate-400 stroke-[1.5]' : 'opacity-50'}`} />}
+              <p className={`text-sm font-semibold ${compact ? 'text-xs' : ''} ${isApple ? 'text-slate-700' : ''}`}>{label}</p>
+              {!compact && <p className={`text-xs ${isApple ? 'text-slate-400' : 'text-slate-500'} mt-2`}>{acceptVideo ? "Images, Videos, or PDF" : "Images or PDF"}</p>}
             </>
           )}
         </div>
