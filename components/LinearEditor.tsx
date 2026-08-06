@@ -2341,13 +2341,16 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               <h2>{t('result')}</h2>
             </div>
 
-            <div className="flex items-center gap-2 relative">
+            <div className="flex items-center gap-2 relative flex-wrap">
               {showInstructions && resultImage && <GuideTooltip text={t('guideTools')} className="-bottom-16 right-0" side="top" />}
               {resultImage && (
                 <>
                   <button
                     onClick={() => setPreviewImage(resultImage)}
-                    className="relative overflow-hidden group p-1.5 text-xs bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
+                    className={isApple
+                      ? "relative overflow-hidden group p-1.5 text-xs bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 rounded-lg transition-all duration-300"
+                      : "relative overflow-hidden group p-1.5 text-xs bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 hover:border-white/20 text-slate-200 rounded-md transition-all duration-300"
+                    }
                     title={t('fullScreen')}
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"></div>
@@ -2414,7 +2417,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
                   <button
                     onClick={() => setDrawingTarget('result')}
-                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-indigo-600/80 hover:bg-indigo-500 backdrop-blur-md border border-indigo-500/30 text-white px-3 py-1.5 rounded-md transition-all"
+                    className={isApple
+                      ? "relative overflow-hidden group flex items-center gap-2 text-xs bg-[#0071e3] hover:bg-[#0077ED] border border-blue-600 text-white px-3 py-1.5 rounded-lg transition-all shadow-sm font-semibold"
+                      : "relative overflow-hidden group flex items-center gap-2 text-xs bg-indigo-600/80 hover:bg-indigo-500 backdrop-blur-md border border-indigo-500/30 text-white px-3 py-1.5 rounded-md transition-all"
+                    }
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
                     <span className="relative z-10 flex items-center gap-2">
@@ -2440,7 +2446,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                         alert(`Download failed: ${err.message} `);
                       }
                     }}
-                    className="relative overflow-hidden group flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/30 text-white px-3 py-1.5 rounded-md transition-all"
+                    className={isApple
+                      ? "relative overflow-hidden group flex items-center gap-2 text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3 py-1.5 rounded-lg transition-all shadow-sm font-semibold"
+                      : "relative overflow-hidden group flex items-center gap-2 text-xs bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 hover:border-white/30 text-white px-3 py-1.5 rounded-md transition-all"
+                    }
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"></div>
                     <span className="relative z-10 flex items-center gap-2">
