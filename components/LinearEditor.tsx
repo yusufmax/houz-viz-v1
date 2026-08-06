@@ -2026,52 +2026,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
-            {/* Sun & Time Dial Section (2-Grid Layout) */}
-            {editorMode !== 'interior' && (
-              <div className={isApple ? "apple-panel-group space-y-4 flex flex-col items-center" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50 flex flex-col items-center"}>
-                <div className="w-full flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
-                    <Sun size={14} className={useSunControl ? "text-amber-500" : "text-slate-400"} />
-                    Sun & Time Position
-                  </label>
-                  <button
-                    onClick={() => setUseSunControl(!useSunControl)}
-                    className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-blue-600' : 'bg-slate-300'}`}
-                  >
-                    <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
-                  </button>
-                </div>
-
-                <div className={`w-full grid grid-cols-1 sm:grid-cols-2 gap-4 items-center transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
-                  <div className="flex flex-col items-center justify-center p-2">
-                    <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
-                  </div>
-
-                  <div className="w-full space-y-2">
-                    <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 uppercase tracking-widest">
-                      <span>Time of Day</span>
-                      <span className="text-blue-600">{Math.floor(timeOfDay)}:00</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="24"
-                      step="1"
-                      value={timeOfDay}
-                      onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
-                      className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[8px] text-slate-500 font-medium">
-                      <span>Night</span>
-                      <span>Noon</span>
-                      <span>Night</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Camera & Perspective + Scene Elements (Side-by-Side 2-Grid) */}
+            {/* Camera & Perspective + Scene Elements + Sun & Time (Side-by-Side 2-Grid) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* LEFT: Camera & Perspective */}
               <div className={isApple ? "apple-panel-group space-y-4" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
@@ -2195,6 +2150,51 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </>
                   )}
                 </div>
+
+                {/* Sun & Time Position (below Scene Elements) */}
+                {editorMode !== 'interior' && (
+                  <div className="mt-4 pt-4 border-t border-slate-200/60 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700 uppercase flex items-center gap-2">
+                        <Sun size={14} className={useSunControl ? "text-amber-500" : "text-slate-400"} />
+                        Sun & Time
+                      </label>
+                      <button
+                        onClick={() => setUseSunControl(!useSunControl)}
+                        className={`w-8 h-4 rounded-full p-0.5 transition-colors relative ${useSunControl ? 'bg-blue-600' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-3 h-3 bg-white rounded-full shadow-sm transition-transform ${useSunControl ? 'translate-x-4' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    <div className={`space-y-3 transition-all duration-300 ${useSunControl ? 'opacity-100' : 'opacity-40 grayscale pointer-events-none blur-[1px]'}`}>
+                      <div className="flex justify-center">
+                        <SunPositionSelector value={sunPosition || 135} onChange={setSunPosition} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+                          <span>Time of Day</span>
+                          <span className="text-blue-600">{Math.floor(timeOfDay)}:00</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="24"
+                          step="1"
+                          value={timeOfDay}
+                          onChange={(e) => setTimeOfDay(parseInt(e.target.value))}
+                          className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-[8px] text-slate-500 font-medium">
+                          <span>Night</span>
+                          <span>Noon</span>
+                          <span>Night</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
