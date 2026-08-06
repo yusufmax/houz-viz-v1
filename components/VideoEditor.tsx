@@ -512,13 +512,13 @@ const VideoEditor: React.FC = () => {
                                             />
                                             
                                             {/* Preview detected tags */}
-                                            {shot.prompt.match(/@\d+/g) && Array.from(new Set(shot.prompt.match(/@\d+/g)))
-                                                .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
-                                                .length > 0 && (
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {Array.from(new Set(shot.prompt.match(/@\d+/g)))
-                                                        .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
-                                                        .map(tag => {
+                                            {(() => {
+                                                const tags = Array.from(new Set<string>(shot.prompt.match(/@\d+/g) || []));
+                                                const validTags = tags.filter(t => imageReferences[parseInt(t.substring(1)) - 1]);
+                                                if (validTags.length === 0) return null;
+                                                return (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {validTags.map(tag => {
                                                             const ref = imageReferences[parseInt(tag.substring(1)) - 1];
                                                             const isVideo = ref.startsWith('data:video/');
                                                             return (
@@ -532,8 +532,9 @@ const VideoEditor: React.FC = () => {
                                                                 </div>
                                                             );
                                                         })}
-                                                </div>
-                                            )}
+                                                    </div>
+                                                );
+                                            })()}
 
                                             <div className="flex items-center gap-2">
                                                 <span className="text-[10px] text-slate-400 uppercase font-medium">Duration:</span>
@@ -577,13 +578,13 @@ const VideoEditor: React.FC = () => {
                                     />
                                     
                                     {/* Preview detected tags */}
-                                    {videoSettings.prompt.match(/@\d+/g) && Array.from(new Set(videoSettings.prompt.match(/@\d+/g)))
-                                        .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
-                                        .length > 0 && (
-                                        <div className="flex flex-wrap gap-2 mt-2">
-                                            {Array.from(new Set(videoSettings.prompt.match(/@\d+/g)))
-                                                .filter(t => imageReferences[parseInt(t.substring(1)) - 1])
-                                                .map(tag => {
+                                    {(() => {
+                                        const tags = Array.from(new Set<string>(videoSettings.prompt.match(/@\d+/g) || []));
+                                        const validTags = tags.filter(t => imageReferences[parseInt(t.substring(1)) - 1]);
+                                        if (validTags.length === 0) return null;
+                                        return (
+                                            <div className="flex flex-wrap gap-2 mt-2">
+                                                {validTags.map(tag => {
                                                     const ref = imageReferences[parseInt(tag.substring(1)) - 1];
                                                     const isVideo = ref.startsWith('data:video/');
                                                     return (
@@ -597,8 +598,9 @@ const VideoEditor: React.FC = () => {
                                                         </div>
                                                     );
                                                 })}
-                                        </div>
-                                    )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Quick Prompts */}
