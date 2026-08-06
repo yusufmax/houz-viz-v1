@@ -93,11 +93,21 @@ const Home: React.FC = () => {
           onClick={() => window.location.href = '/'}
           title="Reload HOUZ.AI"
         >
-          <img
-            src="/logo.png"
-            alt="HOUZ.AI Logo"
-            className={`h-8 w-auto object-contain transition-transform duration-300 ${isApple ? 'contrast-150 brightness-90' : 'brightness-110 contrast-125'}`}
-          />
+          {isApple ? (
+            <div className="h-8 w-8 overflow-hidden rounded-xl shrink-0 flex items-center justify-start">
+              <img
+                src="/logo.png"
+                alt="HOUZ.AI Logo"
+                className="h-8 w-auto max-w-none object-left object-cover"
+              />
+            </div>
+          ) : (
+            <img
+              src="/logo.png"
+              alt="HOUZ.AI Logo"
+              className="h-8 w-auto object-contain transition-transform duration-300 brightness-110 contrast-125"
+            />
+          )}
           {isApple && <span className="font-extrabold text-lg tracking-tight text-slate-900">houz<span className="text-[#0071e3]">.ai</span></span>}
         </div>
 

@@ -1625,7 +1625,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {!sourceImage && (
                   <button
                     onClick={() => setDrawingTarget('source')}
-                    className="relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-md border border-slate-600 hover:border-indigo-400 text-slate-200 rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)]"
+                    className={isApple
+                      ? "relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 bg-white/80 hover:bg-white border border-slate-200 text-slate-700 rounded-xl shadow-sm transition-all duration-300"
+                      : "relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 bg-slate-800/80 hover:bg-slate-700/80 backdrop-blur-md border border-slate-600 hover:border-indigo-400 text-slate-200 rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)]"
+                    }
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
                     <Pencil size={12} className="relative z-10" /> <span className="relative z-10 font-medium">Blank Canvas</span>
@@ -1639,7 +1642,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       setBatchResults([]);
                     }
                   }}
-                  className={`relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 backdrop-blur-md border rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)] ${batchMode ? 'bg-indigo-600/80 border-indigo-400 text-white shadow-[0_0_15px_rgba(79,70,229,0.4)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`}
+                  className={isApple
+                    ? `relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl border transition-all duration-300 shadow-sm ${batchMode ? 'bg-[#0071e3] text-white border-blue-600 font-semibold' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white'}`
+                    : `relative overflow-hidden group flex items-center gap-1.5 text-xs px-3 py-1.5 backdrop-blur-md border rounded-lg transition-all duration-300 hover:shadow-[0_0_15px_rgba(79,70,229,0.2)] ${batchMode ? 'bg-indigo-600/80 border-indigo-400 text-white shadow-[0_0_15px_rgba(79,70,229,0.4)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`
+                  }
                   title="Toggle Batch Mode"
                 >
                   <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
@@ -1669,7 +1675,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 {sourceImage && (
                   <button
                     onClick={() => setIs3DRotatedView(!is3DRotatedView)}
-                    className={`relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 backdrop-blur-md border rounded-md transition-all duration-300 ${is3DRotatedView ? 'bg-amber-500/20 border-amber-500 text-amber-250 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`}
+                    className={isApple
+                      ? `relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl border transition-all duration-300 ${is3DRotatedView ? 'bg-amber-500 text-white border-amber-600 shadow-sm font-semibold' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'}`
+                      : `relative overflow-hidden group flex items-center gap-1 text-xs px-2.5 py-1 backdrop-blur-md border rounded-md transition-all duration-300 ${is3DRotatedView ? 'bg-amber-500/20 border-amber-500 text-amber-250 shadow-[0_0_10px_rgba(245,158,11,0.2)]' : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-600 hover:border-indigo-400 text-slate-200'}`
+                    }
                     title="Fix distorted lines from 3D Gaussian Splats"
                   >
                     <div className="absolute inset-0 -translate-x-[150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 pointer-events-none"></div>
@@ -2197,31 +2206,33 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
               )}
 
-            <div className="pt-6 space-y-3">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Sketch Style</span>
-                  <div className="flex gap-1">
-                    {(['handdrawn', 'pen', 'pencil', 'watercolor'] as const).map((style) => (
-                      <button
-                        key={style}
-                        onClick={() => setSketchStyle(style)}
-                        className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
-                      >
-                        {style.charAt(0).toUpperCase() + style.slice(1)}
-                      </button>
-                    ))}
+            {!isApple && (
+              <div className="pt-6 space-y-3">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Sketch Style</span>
+                    <div className="flex gap-1">
+                      {(['handdrawn', 'pen', 'pencil', 'watercolor'] as const).map((style) => (
+                        <button
+                          key={style}
+                          onClick={() => setSketchStyle(style)}
+                          className={`px-2 py-0.5 text-[9px] rounded-full border transition-all ${sketchStyle === style ? 'bg-amber-500/20 border-amber-500 text-amber-200' : 'bg-slate-900 border-slate-800 text-slate-500 hover:border-slate-700'}`}
+                        >
+                          {style.charAt(0).toUpperCase() + style.slice(1)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                  <button
+                    onClick={handleSketchify}
+                    disabled={isGenerating || (!sourceImage && !resultImage)}
+                    className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
+                  >
+                    <Pen size={14} /> Sketchify Current Image
+                  </button>
                 </div>
-                <button
-                  onClick={handleSketchify}
-                  disabled={isGenerating || (!sourceImage && !resultImage)}
-                  className={`w-full py-2.5 rounded-lg font-bold text-xs shadow-xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2 ${(isGenerating || (!sourceImage && !resultImage)) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-900/20'}`}
-                >
-                  <Pen size={14} /> Sketchify Current Image
-                </button>
               </div>
-            </div>
+            )}
 
               <div className="relative pt-6 flex flex-col gap-2">
                 <div className="relative flex items-stretch gap-2">
@@ -2230,7 +2241,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     <button
                       onClick={() => batchMode ? processBatch() : handleGenerate()}
                       disabled={batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))}
-                      className={`w-full py-6 rounded-xl font-bold text-xl shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? 'bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10'}`}
+                      className={`w-full py-5 rounded-2xl font-extrabold text-lg shadow-2xl transition-all transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-3 ${(batchMode ? (isBatchProcessing || batchImages.length === 0) : (isGenerating || (!sourceImage && !prompt))) ? (isApple ? 'bg-slate-200/90 text-slate-400 border border-slate-300/50 cursor-not-allowed' : 'bg-slate-700 text-slate-400 cursor-not-allowed') : (isApple ? 'bg-[#0071e3] hover:bg-[#0077ed] text-white shadow-lg shadow-blue-500/25 active:scale-[0.99]' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:via-purple-500 hover:to-pink-500 text-white shadow-indigo-500/40 ring-1 ring-white/10')}`}
                     >
                       {batchMode ? (isBatchProcessing ? <><Loader2 size={24} className="animate-spin" />Processing {batchProgress.current}/{batchProgress.total}...</> : <><Layers size={24} />Generate Batch {batchImages.length > 0 ? `(${batchImages.length})` : ''}</>) : (isGenerating ? <><Loader2 size={24} className="animate-spin" />{t('generating')} {generationCount > 1 ? `(${batchProgress.current}/${batchProgress.total})` : ''}</> : <><Zap size={24} fill="currentColor" />{t('generate')}</>)}
                     </button>
@@ -2242,7 +2253,10 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                       <select
                         value={generationCount}
                         onChange={(e) => setGenerationCount(parseInt(e.target.value))}
-                        className="h-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 text-slate-200 font-bold focus:border-indigo-500 transition-colors cursor-pointer appearance-none text-center outline-none"
+                        className={isApple
+                          ? "h-full bg-white/90 border border-slate-200 rounded-2xl px-4 text-slate-800 font-bold focus:border-blue-500 transition-colors cursor-pointer appearance-none text-center outline-none shadow-sm"
+                          : "h-full bg-slate-800 border-2 border-slate-700 rounded-xl px-4 text-slate-200 font-bold focus:border-indigo-500 transition-colors cursor-pointer appearance-none text-center outline-none"
+                        }
                         style={{ height: 'calc(100% - 14px)' }}
                       >
                         {[1, 2, 3, 4].map(num => (
