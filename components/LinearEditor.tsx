@@ -2186,7 +2186,6 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   </div>
                 </div>
               )}
-            </div>
 
             <div className="pt-6 space-y-3">
               <div className="flex flex-col gap-2">
@@ -2243,8 +2242,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                   )}
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
         </div>
       </div>
 
