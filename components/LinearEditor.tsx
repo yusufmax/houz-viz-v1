@@ -1746,11 +1746,116 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               ))}
             </div>
 
-            {/* Primary Configuration Grid: Model & Resolution */}
-            <div className={isApple ? "apple-panel-group space-y-4" : "p-4 bg-slate-900/50 rounded-xl border border-slate-800 space-y-4"}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Instructions (Left) + Config (Right) — Side-by-Side */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {/* LEFT: Instructions / Prompt (3/5 width) */}
+              <div className="lg:col-span-3 space-y-2 relative">
+                {showInstructions && <GuideTooltip text={t('guidePrompt')} className="-top-12 left-0" side="top" />}
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('instructionsLabel')}</label>
+                  <div className="flex items-center gap-3">
+                    {/* Template Selector */}
+                    <div className="relative group">
+                      <button
+                        onClick={() => setShowTemplateManager(!showTemplateManager)}
+                        className="text-[10px] flex items-center gap-1 text-emerald-600 font-semibold hover:text-emerald-500"
+                      >
+                        <FileJson size={10} /> Templates
+                      </button>
+
+                      {showTemplateManager && (
+                        <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden text-slate-800">
+                          <div className="p-2 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">My Templates</span>
+                            <button onClick={() => setShowTemplateManager(false)} className="text-slate-400 hover:text-slate-700"><X size={10} /></button>
+                          </div>
+                          <div className="max-h-48 overflow-y-auto custom-scrollbar">
+                            {savedTemplates.length === 0 && (
+                              <div className="p-4 text-center text-[10px] text-slate-400 italic">No templates saved yet</div>
+                            )}
+                            {savedTemplates.map(tpl => (
+                              <div key={tpl.id} className="p-2 hover:bg-slate-100 border-b border-slate-100 flex items-center justify-between group/tpl cursor-pointer" onClick={() => { setPrompt(tpl.prompt); setShowTemplateManager(false); }}>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-[10px] text-slate-800 font-medium truncate">{tpl.name}</div>
+                                  <div className="text-[9px] text-slate-400 truncate">{tpl.prompt}</div>
+                                </div>
+                                <button onClick={(e) => handleDeleteTemplate(tpl.id, e)} className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover/tpl:opacity-100 transition-opacity">
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="p-2 bg-slate-50 border-t border-slate-200">
+                            <div className="flex gap-1">
+                              <input
+                                type="text"
+                                placeholder="Template Name"
+                                value={newTemplateName}
+                                onChange={(e) => setNewTemplateName(e.target.value)}
+                                className="flex-1 bg-white border border-slate-300 rounded px-2 py-1 text-[9px] text-slate-800 outline-none focus:border-blue-500"
+                              />
+                              <button
+                                onClick={handleSaveTemplate}
+                                disabled={isSavingTemplate || !prompt || !newTemplateName}
+                                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-1 rounded transition-colors"
+                              >
+                                {isSavingTemplate ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <button onClick={handleEnhancePrompt} disabled={isEnhancing || !prompt} className="text-[10px] flex items-center gap-1 text-blue-600 font-semibold hover:text-blue-500 disabled:opacity-50">
+                      <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative group">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    placeholder={t('instructionsPlaceholder')}
+                    className={isApple
+                      ? "apple-input w-full h-32 p-3 pr-10 text-sm shadow-sm resize-none relative z-10"
+                      : "w-full h-32 bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-xl p-3 pr-10 text-sm focus:border-indigo-500 outline-none resize-none relative z-10 text-slate-200 placeholder:text-slate-500"
+                    }
+                  />
+                  <button
+                    onClick={handleVoiceInput}
+                    className={`absolute bottom-3 right-3 p-2 rounded-full transition-all z-20 shadow-md ${isRecording ? 'bg-red-500 text-white shadow-red-500/50 animate-pulse ring-2 ring-red-400' : (isApple ? 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white' : 'bg-slate-800 text-slate-400 hover:text-white')}`}
+                    title={isRecording ? "Stop Recording" : "Voice Input"}
+                  >
+                    {isRecording ? <MicOff size={14} /> : <Mic size={14} />}
+                  </button>
+                </div>
+
+                {/* Quick Templates Badges */}
+                {savedTemplates.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {savedTemplates.slice(0, 5).map(tpl => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => setPrompt(tpl.prompt)}
+                        className={isApple
+                          ? "px-2.5 py-1 apple-glass-interactive rounded-full text-[10px] text-slate-600 hover:text-blue-600 transition-all truncate max-w-[120px]"
+                          : "px-2.5 py-1 bg-slate-800/80 border border-slate-700 rounded-lg text-[10px] text-slate-400 hover:text-indigo-400 transition-all truncate max-w-[120px]"
+                        }
+                        title={tpl.prompt}
+                      >
+                        {tpl.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT: Model, Resolution, Lock Building (2/5 width) */}
+              <div className={`lg:col-span-2 ${isApple ? "apple-panel-group space-y-3" : "p-4 bg-slate-900/50 rounded-xl border border-slate-800 space-y-3"}`}>
                 {/* Model Selector */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 tracking-wider">
                     <Zap size={12} className={isApple ? "text-slate-600" : "text-blue-500"} /> Model
                   </label>
@@ -1775,7 +1880,7 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                 </div>
 
                 {/* Resolution Selector */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1.5 tracking-wider">
                     <Maximize size={12} className={isApple ? "text-slate-600" : "text-indigo-500"} /> Resolution
                   </label>
@@ -1798,161 +1903,57 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
                     </select>
                   )}
                 </div>
-              </div>
 
-              {/* Style Preset Selector */}
-              {!isApple && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Palette size={12} className="text-amber-500" /> {t('stylePreset')}
-                  </label>
-                  <select
-                    value={style}
-                    onChange={(e) => setStyle(e.target.value as RenderStyle)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
-                  >
-                    <option value={RenderStyle.None}>{t('None')}</option>
-                    {Object.entries(groupedStyles).map(([group, styles]) => (
-                      <optgroup key={group} label={group} className="bg-white text-slate-500 text-[10px] uppercase font-bold">
-                        {(styles as RenderStyle[]).map(s => {
-                          const displayName = s.includes(': ') ? s.split(': ')[1] : s;
-                          return (
-                            <option key={s} value={s} className="text-slate-900 text-xs normal-case font-normal">
-                              {t(displayName as any) || displayName}
-                            </option>
-                          );
-                        })}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Action Buttons: Building Lock & Fix Distorted Lines */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                {editorMode === 'exterior' && (
-                  <button
-                    onClick={() => setKeepBuilding(!keepBuilding)}
-                    className={`py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 border active:scale-95 ${keepBuilding ? 'bg-blue-600 text-white border-blue-500 shadow-sm' : (isApple ? 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white' : 'bg-slate-900 border-slate-700 text-slate-400')}`}
-                  >
-                    <Lock size={12} />
-                    {keepBuilding ? 'Building Locked' : 'Lock Building'}
-                  </button>
-                )}
-                {sourceImage && (
-                  <button
-                    onClick={() => setIs3DRotatedView(!is3DRotatedView)}
-                    className={`py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 border active:scale-95 ${is3DRotatedView ? 'bg-amber-500 text-white border-amber-400 shadow-sm' : (isApple ? 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white' : 'bg-slate-900 border-slate-700 text-slate-400')}`}
-                  >
-                    <Wand2 size={12} className={is3DRotatedView ? 'animate-pulse text-amber-200' : ''} />
-                    {is3DRotatedView ? '3D Splat Fix: On' : 'Fix 3D Splat Lines'}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Instructions / Prompt Section */}
-            <div className="space-y-2 relative">
-              {showInstructions && <GuideTooltip text={t('guidePrompt')} className="-top-12 left-0" side="top" />}
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t('instructionsLabel')}</label>
-                <div className="flex items-center gap-3">
-                  {/* Template Selector */}
-                  <div className="relative group">
-                    <button
-                      onClick={() => setShowTemplateManager(!showTemplateManager)}
-                      className="text-[10px] flex items-center gap-1 text-emerald-600 font-semibold hover:text-emerald-500"
+                {/* Style Preset Selector */}
+                {!isApple && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                      <Palette size={12} className="text-amber-500" /> {t('stylePreset')}
+                    </label>
+                    <select
+                      value={style}
+                      onChange={(e) => setStyle(e.target.value as RenderStyle)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200"
                     >
-                      <FileJson size={10} /> Templates
-                    </button>
-
-                    {showTemplateManager && (
-                      <div className="absolute top-full right-0 mt-1 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 overflow-hidden text-slate-800">
-                        <div className="p-2 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">My Templates</span>
-                          <button onClick={() => setShowTemplateManager(false)} className="text-slate-400 hover:text-slate-700"><X size={10} /></button>
-                        </div>
-                        <div className="max-h-48 overflow-y-auto custom-scrollbar">
-                          {savedTemplates.length === 0 && (
-                            <div className="p-4 text-center text-[10px] text-slate-400 italic">No templates saved yet</div>
-                          )}
-                          {savedTemplates.map(tpl => (
-                            <div key={tpl.id} className="p-2 hover:bg-slate-100 border-b border-slate-100 flex items-center justify-between group/tpl cursor-pointer" onClick={() => { setPrompt(tpl.prompt); setShowTemplateManager(false); }}>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-[10px] text-slate-800 font-medium truncate">{tpl.name}</div>
-                                <div className="text-[9px] text-slate-400 truncate">{tpl.prompt}</div>
-                              </div>
-                              <button onClick={(e) => handleDeleteTemplate(tpl.id, e)} className="p-1 text-slate-400 hover:text-red-500 opacity-0 group-hover/tpl:opacity-100 transition-opacity">
-                                <Trash2 size={10} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="p-2 bg-slate-50 border-t border-slate-200">
-                          <div className="flex gap-1">
-                            <input
-                              type="text"
-                              placeholder="Template Name"
-                              value={newTemplateName}
-                              onChange={(e) => setNewTemplateName(e.target.value)}
-                              className="flex-1 bg-white border border-slate-300 rounded px-2 py-1 text-[9px] text-slate-800 outline-none focus:border-blue-500"
-                            />
-                            <button
-                              onClick={handleSaveTemplate}
-                              disabled={isSavingTemplate || !prompt || !newTemplateName}
-                              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white p-1 rounded transition-colors"
-                            >
-                              {isSavingTemplate ? <Loader2 size={10} className="animate-spin" /> : <Save size={10} />}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                      <option value={RenderStyle.None}>{t('None')}</option>
+                      {Object.entries(groupedStyles).map(([group, styles]) => (
+                        <optgroup key={group} label={group} className="bg-white text-slate-500 text-[10px] uppercase font-bold">
+                          {(styles as RenderStyle[]).map(s => {
+                            const displayName = s.includes(': ') ? s.split(': ')[1] : s;
+                            return (
+                              <option key={s} value={s} className="text-slate-900 text-xs normal-case font-normal">
+                                {t(displayName as any) || displayName}
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      ))}
+                    </select>
                   </div>
+                )}
 
-                  <button onClick={handleEnhancePrompt} disabled={isEnhancing || !prompt} className="text-[10px] flex items-center gap-1 text-blue-600 font-semibold hover:text-blue-500 disabled:opacity-50">
-                    <Wand2 size={10} /> {isEnhancing ? t('enhancing') : t('enhance')}
-                  </button>
-                </div>
-              </div>
-
-              <div className="relative group">
-                <textarea
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  placeholder={t('instructionsPlaceholder')}
-                  className={isApple
-                    ? "apple-input w-full h-24 p-3 pr-10 text-sm shadow-sm resize-none relative z-10"
-                    : "w-full h-24 bg-slate-900/50 backdrop-blur-md border border-white/10 rounded-xl p-3 pr-10 text-sm focus:border-indigo-500 outline-none resize-none relative z-10 text-slate-200 placeholder:text-slate-500"
-                  }
-                />
-                <button
-                  onClick={handleVoiceInput}
-                  className={`absolute bottom-3 right-3 p-2 rounded-full transition-all z-20 shadow-md ${isRecording ? 'bg-red-500 text-white shadow-red-500/50 animate-pulse ring-2 ring-red-400' : (isApple ? 'bg-slate-100 text-slate-600 hover:bg-blue-600 hover:text-white' : 'bg-slate-800 text-slate-400 hover:text-white')}`}
-                  title={isRecording ? "Stop Recording" : "Voice Input"}
-                >
-                  {isRecording ? <MicOff size={14} /> : <Mic size={14} />}
-                </button>
-              </div>
-
-              {/* Quick Templates Badges */}
-              {savedTemplates.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2">
-                  {savedTemplates.slice(0, 5).map(tpl => (
+                {/* Action Buttons: Building Lock & Fix Distorted Lines */}
+                <div className="grid grid-cols-1 gap-2 pt-1">
+                  {editorMode === 'exterior' && (
                     <button
-                      key={tpl.id}
-                      onClick={() => setPrompt(tpl.prompt)}
-                      className={isApple
-                        ? "px-2.5 py-1 apple-glass-interactive rounded-full text-[10px] text-slate-600 hover:text-blue-600 transition-all truncate max-w-[120px]"
-                        : "px-2.5 py-1 bg-slate-800/80 border border-slate-700 rounded-lg text-[10px] text-slate-400 hover:text-indigo-400 transition-all truncate max-w-[120px]"
-                      }
-                      title={tpl.prompt}
+                      onClick={() => setKeepBuilding(!keepBuilding)}
+                      className={`py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 border active:scale-95 ${keepBuilding ? 'bg-blue-600 text-white border-blue-500 shadow-sm' : (isApple ? 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white' : 'bg-slate-900 border-slate-700 text-slate-400')}`}
                     >
-                      {tpl.name}
+                      <Lock size={12} />
+                      {keepBuilding ? 'Building Locked' : 'Lock Building'}
                     </button>
-                  ))}
+                  )}
+                  {sourceImage && (
+                    <button
+                      onClick={() => setIs3DRotatedView(!is3DRotatedView)}
+                      className={`py-2 px-3 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 border active:scale-95 ${is3DRotatedView ? 'bg-amber-500 text-white border-amber-400 shadow-sm' : (isApple ? 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white' : 'bg-slate-900 border-slate-700 text-slate-400')}`}
+                    >
+                      <Wand2 size={12} className={is3DRotatedView ? 'animate-pulse text-amber-200' : ''} />
+                      {is3DRotatedView ? '3D Splat Fix: On' : 'Fix 3D Splat Lines'}
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
             {model === 'gemini-3.1-flash-image-preview' && (
               <div className={isApple ? "apple-panel-group flex items-center justify-between p-3" : "flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-800"}>
