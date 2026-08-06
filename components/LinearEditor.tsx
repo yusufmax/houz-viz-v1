@@ -1969,117 +1969,102 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
               </div>
             )}
 
-            {/* Atmosphere Selectors — Season, Time, Weather */}
-            <div className={isApple ? "apple-panel-group space-y-4" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
-
-              {/* Season Selector */}
+            {/* Atmosphere — Season, Time, Weather (3 Dropdowns in One Row) */}
+            <div className={`grid ${editorMode !== 'interior' ? 'grid-cols-3' : 'grid-cols-1'} gap-3`}>
+              {/* Season Dropdown */}
               {editorMode !== 'interior' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <Leaf size={12} className="text-emerald-500" /> Season
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Leaf size={11} className="text-emerald-500" /> Season
                   </label>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {[
-                      { val: Atmosphere.Spring, icon: <Flower size={13} />, label: 'Spring' },
-                      { val: Atmosphere.Summer, icon: <ThermometerSun size={13} />, label: 'Summer' },
-                      { val: Atmosphere.Autumn, icon: <Leaf size={13} />, label: 'Autumn' },
-                      { val: Atmosphere.Winter, icon: <Snowflake size={13} />, label: 'Winter' },
-                    ].map(opt => {
-                      const isSelected = atmosphere.includes(opt.val);
-                      return (
-                        <button
-                          key={opt.val}
-                          onClick={() => toggleAtmosphere(opt.val)}
-                          className={isApple
-                            ? `flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-semibold transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'}`
-                            : `flex flex-col items-center justify-center gap-1 py-2 rounded-lg border text-[10px] font-semibold transition-all ${isSelected ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'}`
-                          }
-                        >
-                          {opt.icon}
-                          <span>{opt.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <select
+                    value={(() => {
+                      const seasons = [Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter];
+                      return atmosphere.find(a => seasons.includes(a)) || '';
+                    })()}
+                    onChange={(e) => {
+                      const seasons = [Atmosphere.Spring, Atmosphere.Summer, Atmosphere.Autumn, Atmosphere.Winter];
+                      const newAtm = atmosphere.filter(a => !seasons.includes(a) && a !== Atmosphere.None);
+                      if (e.target.value) {
+                        setAtmosphere([...newAtm, e.target.value as Atmosphere]);
+                      } else {
+                        setAtmosphere(newAtm.length ? newAtm : [Atmosphere.None]);
+                      }
+                    }}
+                    className={isApple ? "apple-input w-full px-2.5 py-2 text-xs font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
+                  >
+                    <option value="">None</option>
+                    <option value={Atmosphere.Spring}>🌸 Spring</option>
+                    <option value={Atmosphere.Summer}>☀️ Summer</option>
+                    <option value={Atmosphere.Autumn}>🍂 Autumn</option>
+                    <option value={Atmosphere.Winter}>❄️ Winter</option>
+                  </select>
                 </div>
               )}
 
-              {/* Time of Day Selector */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sun size={12} className="text-amber-500" /> Time of Day
+              {/* Time of Day Dropdown */}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Sun size={11} className="text-amber-500" /> Time
                 </label>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {[
-                    { val: Atmosphere.Sunny, icon: <Sun size={13} />, label: t('atmSunny') },
-                    { val: Atmosphere.Sunset, icon: <Sun size={13} />, label: t('atmSunset') },
-                    { val: Atmosphere.Night, icon: <Moon size={13} />, label: t('atmNight') },
-                    { val: Atmosphere.NaturalLight, icon: <Sun size={13} />, label: t('atmNatural') },
-                    { val: Atmosphere.WarmTungsten, icon: <Lightbulb size={13} />, label: t('atmWarm') },
-                    { val: Atmosphere.Studio, icon: <Aperture size={13} />, label: t('atmStudio') },
-                  ].map(opt => {
-                    const isSelected = atmosphere.includes(opt.val);
-                    return (
-                      <button
-                        key={opt.val}
-                        onClick={() => toggleAtmosphere(opt.val)}
-                        className={isApple
-                          ? `flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-semibold transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'}`
-                          : `flex flex-col items-center justify-center gap-1 py-2 rounded-lg border text-[10px] font-semibold transition-all ${isSelected ? 'bg-amber-600/20 border-amber-500 text-amber-300' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'}`
-                        }
-                      >
-                        {opt.icon}
-                        <span>{opt.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                <select
+                  value={(() => {
+                    const times = [Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.NaturalLight, Atmosphere.WarmTungsten, Atmosphere.Studio];
+                    return atmosphere.find(a => times.includes(a)) || '';
+                  })()}
+                  onChange={(e) => {
+                    const times = [Atmosphere.Sunny, Atmosphere.Sunset, Atmosphere.Night, Atmosphere.NaturalLight, Atmosphere.WarmTungsten, Atmosphere.Studio];
+                    const newAtm = atmosphere.filter(a => !times.includes(a) && a !== Atmosphere.None);
+                    if (e.target.value) {
+                      setAtmosphere([...newAtm, e.target.value as Atmosphere]);
+                    } else {
+                      setAtmosphere(newAtm.length ? newAtm : [Atmosphere.None]);
+                    }
+                  }}
+                  className={isApple ? "apple-input w-full px-2.5 py-2 text-xs font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
+                >
+                  <option value="">None</option>
+                  <option value={Atmosphere.Sunny}>☀️ {t('atmSunny')}</option>
+                  <option value={Atmosphere.Sunset}>🌅 {t('atmSunset')}</option>
+                  <option value={Atmosphere.Night}>🌙 {t('atmNight')}</option>
+                  <option value={Atmosphere.NaturalLight}>💡 {t('atmNatural')}</option>
+                  <option value={Atmosphere.WarmTungsten}>🔆 {t('atmWarm')}</option>
+                  <option value={Atmosphere.Studio}>📸 {t('atmStudio')}</option>
+                </select>
               </div>
 
-              {/* Weather Selector */}
+              {/* Weather Dropdown */}
               {editorMode !== 'interior' && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                    <CloudRain size={12} className="text-blue-500" /> Weather
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <CloudRain size={11} className="text-blue-500" /> Weather
                   </label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {[
-                      { val: Atmosphere.Foggy, icon: <CloudFog size={13} />, label: t('atmFog') },
-                      { val: Atmosphere.Rainy, icon: <CloudRain size={13} />, label: t('atmRain') },
-                      { val: Atmosphere.Snowy, icon: <Snowflake size={13} />, label: t('atmSnow') },
-                      { val: Atmosphere.Stormy, icon: <CloudLightning size={13} />, label: t('atmStorm') },
-                      { val: Atmosphere.Misty, icon: <CloudFog size={13} />, label: t('atmMist') },
-                      { val: Atmosphere.Overcast, icon: <Cloud size={13} />, label: 'Overcast' },
-                    ].map(opt => {
-                      const isSelected = atmosphere.includes(opt.val);
-                      return (
-                        <button
-                          key={opt.val}
-                          onClick={() => toggleAtmosphere(opt.val)}
-                          className={isApple
-                            ? `flex flex-col items-center justify-center gap-1 py-2 rounded-xl border text-[10px] font-semibold transition-all active:scale-95 ${isSelected ? 'bg-[#0071e3] text-white border-blue-600 shadow-md' : 'bg-white/80 border-slate-200 text-slate-700 hover:bg-white shadow-sm'}`
-                            : `flex flex-col items-center justify-center gap-1 py-2 rounded-lg border text-[10px] font-semibold transition-all ${isSelected ? 'bg-blue-600/20 border-blue-500 text-blue-300' : 'bg-slate-950/50 border-slate-800 text-slate-500 hover:border-slate-700 hover:text-slate-300'}`
-                          }
-                        >
-                          {opt.icon}
-                          <span>{opt.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <select
+                    value={(() => {
+                      const weather = [Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Overcast];
+                      return atmosphere.find(a => weather.includes(a)) || '';
+                    })()}
+                    onChange={(e) => {
+                      const weather = [Atmosphere.Foggy, Atmosphere.Rainy, Atmosphere.Snowy, Atmosphere.Stormy, Atmosphere.Misty, Atmosphere.Overcast];
+                      const newAtm = atmosphere.filter(a => !weather.includes(a) && a !== Atmosphere.None);
+                      if (e.target.value) {
+                        setAtmosphere([...newAtm, e.target.value as Atmosphere]);
+                      } else {
+                        setAtmosphere(newAtm.length ? newAtm : [Atmosphere.None]);
+                      }
+                    }}
+                    className={isApple ? "apple-input w-full px-2.5 py-2 text-xs font-medium" : "w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-[11px] text-slate-400 outline-none focus:border-indigo-500/50"}
+                  >
+                    <option value="">None</option>
+                    <option value={Atmosphere.Foggy}>🌫️ {t('atmFog')}</option>
+                    <option value={Atmosphere.Rainy}>🌧️ {t('atmRain')}</option>
+                    <option value={Atmosphere.Snowy}>🌨️ {t('atmSnow')}</option>
+                    <option value={Atmosphere.Stormy}>⛈️ {t('atmStorm')}</option>
+                    <option value={Atmosphere.Misty}>🌁 {t('atmMist')}</option>
+                    <option value={Atmosphere.Overcast}>☁️ Overcast</option>
+                  </select>
                 </div>
               )}
-
-              {/* None / Reset */}
-              <button
-                onClick={() => toggleAtmosphere(Atmosphere.None)}
-                className={isApple
-                  ? `w-full flex items-center justify-center gap-2 py-1.5 rounded-xl border text-[10px] font-semibold transition-all active:scale-[0.98] ${atmosphere.includes(Atmosphere.None) || atmosphere.length === 0 ? 'bg-slate-100 border-slate-300 text-slate-800' : 'bg-white/60 border-slate-200 text-slate-500 hover:bg-white'}`
-                  : `w-full flex items-center justify-center gap-2 py-1.5 rounded-lg border text-[10px] font-semibold transition-all ${atmosphere.includes(Atmosphere.None) || atmosphere.length === 0 ? 'bg-slate-700 border-slate-600 text-slate-200' : 'bg-slate-950/50 border-slate-800 text-slate-600 hover:text-slate-400'}`
-                }
-              >
-                <X size={12} /> Clear Atmosphere
-              </button>
             </div>
 
             {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
