@@ -80,11 +80,11 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen font-sans selection:bg-indigo-500/30 selection:text-indigo-200 flex flex-col transition-colors duration-500 ${isApple ? 'bg-[#080b13] text-slate-100' : 'bg-slate-950 text-slate-200'}`}>
+    <div className={`min-h-screen font-sans flex flex-col transition-colors duration-500 ${isApple ? 'ui-apple apple-bg text-[#1d1d1f]' : 'bg-slate-950 text-slate-200'}`}>
 
       {/* Header */}
       <header className={isApple 
-        ? "h-16 bg-[#0f1322]/70 backdrop-blur-2xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none border-b border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)] transition-all duration-300 relative"
+        ? "h-16 bg-white/80 backdrop-blur-2xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none border-b border-black/[0.08] shadow-[0_2px_15px_rgba(0,0,0,0.04)] transition-all duration-300 relative text-[#1d1d1f]"
         : "h-16 bg-slate-950/60 backdrop-blur-xl sticky top-0 z-40 px-6 flex items-center justify-between flex-none border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/[0.08] before:to-transparent before:pointer-events-none"
       }>
         {/* Logo */}
