@@ -52,6 +52,7 @@ const CATEGORY_ICONS: Record<string, any> = {
 
 const InfinityCanvas: React.FC = () => {
     const { t } = useLanguage();
+    const { isApple } = useDesignMode();
 
     // ---- Constants ----
     const baseSettings: GenerationSettings = {
