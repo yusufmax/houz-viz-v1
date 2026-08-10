@@ -2087,6 +2087,169 @@ const LinearEditor: React.FC<LinearEditorProps> = ({ showInstructions }) => {
 
             {editorMode === 'interior' && <InteriorCustomization settings={interiorSettings} onChange={setInteriorSettings} />}
 
+            {/* Reference Uploads: Atmosphere, Architecture, Custom */}
+            <div className={isApple ? "apple-panel-group space-y-4" : "space-y-4 p-4 bg-slate-900/50 rounded-xl border border-slate-800/50"}>
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                <ImageIcon size={14} className="text-violet-500" /> Reference Images
+              </label>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Atmosphere Reference */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">🌅 Atmosphere Ref</label>
+                  {atmosphereRefImage ? (
+                    <div className="relative group rounded-xl overflow-hidden border border-slate-200">
+                      <img src={atmosphereRefImage} alt="Atmosphere ref" className="w-full h-24 object-cover" />
+                      <button
+                        onClick={() => setAtmosphereRefImage(null)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={`flex flex-col items-center justify-center h-24 rounded-xl border-2 border-dashed cursor-pointer transition-all ${isApple ? 'border-slate-300 hover:border-blue-400 bg-white/60 hover:bg-blue-50/50' : 'border-slate-700 hover:border-indigo-500/50 bg-slate-950/30 hover:bg-slate-900/50'}`}>
+                      <Upload size={16} className="text-slate-400 mb-1" />
+                      <span className="text-[9px] text-slate-500 font-medium">Drop or click</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setAtmosphereRefImage(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }} />
+                    </label>
+                  )}
+                </div>
+
+                {/* Architecture Reference */}
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">🏛️ Architecture Ref</label>
+                  {architectureRefImage ? (
+                    <div className="relative group rounded-xl overflow-hidden border border-slate-200">
+                      <img src={architectureRefImage} alt="Architecture ref" className="w-full h-24 object-cover" />
+                      <button
+                        onClick={() => setArchitectureRefImage(null)}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className={`flex flex-col items-center justify-center h-24 rounded-xl border-2 border-dashed cursor-pointer transition-all ${isApple ? 'border-slate-300 hover:border-blue-400 bg-white/60 hover:bg-blue-50/50' : 'border-slate-700 hover:border-indigo-500/50 bg-slate-950/30 hover:bg-slate-900/50'}`}>
+                      <Upload size={16} className="text-slate-400 mb-1" />
+                      <span className="text-[9px] text-slate-500 font-medium">Drop or click</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => setArchitectureRefImage(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Custom Categorical References */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <Layers size={11} className="text-amber-500" /> Custom References
+                  </label>
+                  <button
+                    onClick={() => setShowAdvancedRefs(!showAdvancedRefs)}
+                    className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-all ${showAdvancedRefs ? (isApple ? 'bg-blue-600 text-white' : 'bg-indigo-600 text-white') : (isApple ? 'bg-slate-200 text-slate-500' : 'bg-slate-800 text-slate-500')}`}
+                  >
+                    {showAdvancedRefs ? 'ON' : 'OFF'}
+                  </button>
+                </div>
+
+                {showAdvancedRefs && (
+                  <div className="space-y-2">
+                    {customReferences.map((ref, idx) => (
+                      <div key={ref.id} className={`flex items-start gap-2 p-2 rounded-xl border ${isApple ? 'bg-white/60 border-slate-200' : 'bg-slate-950/50 border-slate-800'}`}>
+                        {ref.image ? (
+                          <div className="relative group shrink-0">
+                            <img src={ref.image} alt={ref.category} className="w-16 h-16 rounded-lg object-cover border border-slate-300" />
+                            <button
+                              onClick={() => {
+                                const updated = [...customReferences];
+                                updated[idx] = { ...updated[idx], image: '' };
+                                setCustomReferences(updated);
+                              }}
+                              className="absolute -top-1 -right-1 p-0.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                            >
+                              <X size={8} />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className={`w-16 h-16 shrink-0 flex flex-col items-center justify-center rounded-lg border-2 border-dashed cursor-pointer ${isApple ? 'border-slate-300 hover:border-blue-400' : 'border-slate-700 hover:border-indigo-500'}`}>
+                            <Upload size={12} className="text-slate-400" />
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const updated = [...customReferences];
+                                  updated[idx] = { ...updated[idx], image: reader.result as string };
+                                  setCustomReferences(updated);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }} />
+                          </label>
+                        )}
+                        <div className="flex-1 space-y-1 min-w-0">
+                          <select
+                            value={ref.category}
+                            onChange={(e) => {
+                              const updated = [...customReferences];
+                              updated[idx] = { ...updated[idx], category: e.target.value as CustomReference['category'] };
+                              setCustomReferences(updated);
+                            }}
+                            className={isApple ? "apple-input w-full px-2 py-1 text-[10px] font-medium" : "w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-300 outline-none"}
+                          >
+                            <option value="Greenery">🌿 Greenery</option>
+                            <option value="People">👥 People</option>
+                            <option value="Materials">🧱 Materials</option>
+                            <option value="Atmosphere">🌅 Atmosphere</option>
+                            <option value="Custom">✏️ Custom</option>
+                          </select>
+                          <input
+                            type="text"
+                            value={ref.prompt}
+                            onChange={(e) => {
+                              const updated = [...customReferences];
+                              updated[idx] = { ...updated[idx], prompt: e.target.value };
+                              setCustomReferences(updated);
+                            }}
+                            placeholder="Describe this reference..."
+                            className={isApple ? "apple-input w-full px-2 py-1 text-[10px]" : "w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-300 placeholder:text-slate-600 outline-none"}
+                          />
+                        </div>
+                        <button
+                          onClick={() => setCustomReferences(customReferences.filter((_, i) => i !== idx))}
+                          className="p-1 text-slate-400 hover:text-red-500 transition-colors shrink-0"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+
+                    <button
+                      onClick={() => setCustomReferences([...customReferences, { id: crypto.randomUUID(), category: 'Custom', image: '', prompt: '' }])}
+                      className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border-2 border-dashed text-[10px] font-semibold transition-all ${isApple ? 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600' : 'border-slate-700 text-slate-500 hover:border-indigo-500 hover:text-indigo-400'}`}
+                    >
+                      <Plus size={12} /> Add Reference
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Camera & Perspective + Scene Elements + Sun & Time (Side-by-Side 2-Grid) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {/* LEFT: Camera & Perspective */}
